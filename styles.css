@@ -1,0 +1,773 @@
+.format-selfstudy-dashboard {
+    display: grid;
+    gap: 1rem;
+    margin: 1rem 0 1.5rem;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.format-selfstudy-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    align-items: center;
+}
+
+.format-selfstudy-progress {
+    display: grid;
+    gap: .5rem;
+    grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+}
+
+.format-selfstudy-progressitem {
+    border: 1px solid #d7dfe8;
+    border-radius: .5rem;
+    padding: .75rem 1rem;
+    background: #fff;
+    font-weight: 600;
+}
+
+.format-selfstudy-progress-required {
+    border-left: .35rem solid #f59e0b;
+}
+
+.format-selfstudy-progress-optional {
+    border-left: .35rem solid #22c55e;
+}
+
+.format-selfstudy-mapnotice {
+    border: 1px solid #d7dfe8;
+    border-radius: .5rem;
+    padding: 1rem;
+    background: #f7fafc;
+}
+
+.format-selfstudy-sections {
+    display: grid;
+    gap: .75rem;
+    margin: 1rem 0;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.format-selfstudy-section {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    border: 1px solid #d7dfe8;
+    border-radius: .5rem;
+    padding: 1rem;
+    background: #fff;
+}
+
+.format-selfstudy-section-complete {
+    background: #f8fbf9;
+}
+
+.format-selfstudy-section-inprogress {
+    border-color: #9cc3ff;
+}
+
+.format-selfstudy-sectionheader {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.format-selfstudy-sectiontitle {
+    flex: 1 1 14rem;
+    margin: 0;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.format-selfstudy-badges {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: .35rem;
+    align-items: center;
+}
+
+.format-selfstudy-sectionmeta {
+    display: flex;
+    flex: 0 0 auto;
+    flex-wrap: nowrap;
+    gap: .35rem;
+    align-items: center;
+    margin-left: auto;
+}
+
+.format-selfstudy-badge {
+    border-radius: 999px;
+    padding: .15rem .55rem;
+    font-size: .75rem;
+    font-weight: 600;
+    background: #edf2f7;
+    color: #243447;
+}
+
+.format-selfstudy-badge-required {
+    background: #ffe8d9;
+    color: #7a3300;
+}
+
+.format-selfstudy-badge-optional {
+    background: #e1f4ea;
+    color: #165c34;
+}
+
+.format-selfstudy-goal {
+    margin: .5rem 0;
+    color: #334155;
+}
+
+.format-selfstudy-sectionactions {
+    margin: .5rem 0;
+}
+
+.format-selfstudy-activities {
+    margin: .75rem 0 0;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.format-selfstudy-activities > .section,
+.format-selfstudy-activities ul.section,
+.format-selfstudy-activities .course-section,
+.format-selfstudy-activities .section.cmlist {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: .5rem;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    margin-left: 0;
+    margin-right: 0;
+    padding-left: 0;
+    padding-right: 0;
+}
+
+.format-selfstudy-activities .activity,
+.format-selfstudy-activities .activity-item {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.format-selfstudy-activities .activity {
+    display: block;
+    margin-left: 0;
+    margin-right: 0;
+}
+
+.format-selfstudy-activities .modtype_h5pactivity,
+.format-selfstudy-activities .modtype_hvp {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.format-selfstudy-activities .activity-item {
+    display: flex;
+    flex: 1 1 auto;
+    gap: .5rem;
+    align-items: center;
+    margin-left: 0;
+    margin-right: 0;
+}
+
+.format-selfstudy-activitymain {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.format-selfstudy-activitygoal {
+    margin-top: .18rem;
+    color: #475569;
+    font-size: .84rem;
+    line-height: 1.35;
+}
+
+.format-selfstudy-activitystatus {
+    flex: 0 0 auto;
+    margin-left: auto;
+    border-radius: 999px;
+    padding: .12rem .5rem;
+    font-size: .72rem;
+    font-weight: 700;
+    line-height: 1.35;
+    white-space: nowrap;
+    background: #edf2f7;
+    color: #243447;
+}
+
+.format-selfstudy-activitystatus-complete {
+    background: #dcfce7;
+    color: #14532d;
+}
+
+.format-selfstudy-activitystatus-notstarted {
+    background: #fee2e2;
+    color: #7f1d1d;
+}
+
+.format-selfstudy-activitystatus-available {
+    background: #e2e8f0;
+    color: #334155;
+}
+
+.format-selfstudy-activities .mod-indent-outer,
+.format-selfstudy-activities .mod-indent,
+.format-selfstudy-activities .contentwithoutlink,
+.format-selfstudy-activities .activityinstance,
+.format-selfstudy-activities .activityname,
+.format-selfstudy-activities .modtype_h5pactivity .activity-item,
+.format-selfstudy-activities .modtype_h5pactivity .activityinstance,
+.format-selfstudy-activities .modtype_h5pactivity .activityname,
+.format-selfstudy-activities .modtype_hvp .activity-item,
+.format-selfstudy-activities .modtype_hvp .activityinstance,
+.format-selfstudy-activities .modtype_hvp .activityname {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+}
+
+.format-selfstudy-activities .aalink {
+    overflow-wrap: anywhere;
+}
+
+.format-selfstudy-cmcontrols {
+    display: inline-flex;
+    flex: 0 0 auto;
+    margin-left: auto;
+}
+
+.format-selfstudy-activities .format-selfstudy-cmcontrols {
+    margin-left: .25rem;
+}
+
+.format-selfstudy-sectioncontrols {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+}
+
+.format-selfstudy-section-actionmenu .dropdown-toggle::after,
+.format-selfstudy-cm-actionmenu .dropdown-toggle::after {
+    display: none;
+}
+
+.format-selfstudy-menu-delete,
+.format-selfstudy-menu-delete .icon {
+    color: #d9230f;
+}
+
+.format-selfstudy-activitynav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    margin: 1rem 0;
+}
+
+.format-selfstudy-gamemap-mode {
+    overflow: hidden;
+    background: #f7fafc;
+}
+
+.format-selfstudy-gamemap-mode .navbar,
+.format-selfstudy-gamemap-mode .primary-navigation,
+.format-selfstudy-gamemap-mode .secondary-navigation:not(.format-selfstudy-popover-secondarynav),
+.format-selfstudy-gamemap-mode #page-header,
+.format-selfstudy-gamemap-mode #page-navbar,
+.format-selfstudy-gamemap-mode > .navbar,
+.format-selfstudy-gamemap-mode .drawer-toggles,
+.format-selfstudy-gamemap-mode .drawer,
+.format-selfstudy-gamemap-mode .activity-navigation,
+.format-selfstudy-gamemap-mode #page-footer {
+    display: none !important;
+}
+
+.format-selfstudy-gamemap-stage {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    background: #f7fafc;
+}
+
+.format-selfstudy-gamemap-frame {
+    width: 100%;
+    height: 100%;
+    border: 0;
+}
+
+.format-selfstudy-avatar-marker {
+    position: absolute;
+    z-index: 32;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.1rem;
+    height: 2.1rem;
+    border: .12rem solid #fff;
+    border-radius: 50%;
+    background: #0f172a;
+    color: #fff;
+    font-size: .9rem;
+    font-weight: 700;
+    line-height: 1;
+    box-shadow: 0 .3rem .8rem rgba(15, 23, 42, .3), 0 0 0 .12rem rgba(37, 99, 235, .68);
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+}
+
+.format-selfstudy-avatar-viewport-overlay {
+    position: fixed;
+}
+
+.format-selfstudy-avatar-marker[hidden],
+.format-selfstudy-avatar-connector[hidden],
+.format-selfstudy-avatar-target-ring[hidden] {
+    display: none;
+}
+
+.format-selfstudy-avatar-connector {
+    position: absolute;
+    z-index: 30;
+    height: .18rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, .95);
+    box-shadow: 0 0 0 .08rem rgba(15, 23, 42, .48), 0 .12rem .35rem rgba(15, 23, 42, .24);
+    pointer-events: none;
+    transform-origin: 0 50%;
+}
+
+.format-selfstudy-avatar-target-ring {
+    position: absolute;
+    z-index: 33;
+    display: block;
+    width: 1.85rem;
+    height: 1.85rem;
+    border: .2rem solid #fff;
+    border-radius: 50%;
+    background: rgba(37, 99, 235, .13);
+    box-shadow: 0 0 0 .16rem rgba(37, 99, 235, .82), 0 .18rem .5rem rgba(15, 23, 42, .34);
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+}
+
+.format-selfstudy-avatar-marker::after {
+    position: absolute;
+    right: .06rem;
+    bottom: -.16rem;
+    width: .55rem;
+    height: .55rem;
+    border: .1rem solid #fff;
+    border-radius: 50%;
+    background: #22c55e;
+    content: "";
+}
+
+.format-selfstudy-avatar-marker img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.learningmap-place.format-selfstudy-status-complete {
+    stroke-width: 5px !important;
+    stroke: #ffffff !important;
+    filter: drop-shadow(0 0 .18rem rgba(34, 197, 94, .75));
+}
+
+.learningmap-place.format-selfstudy-status-notstarted {
+    stroke-width: 4px !important;
+    stroke: #ffffff !important;
+    filter: drop-shadow(0 0 .14rem rgba(192, 28, 40, .6));
+}
+
+.learningmap-place.format-selfstudy-status-available {
+    stroke-width: 4px !important;
+    stroke: #e2e8f0 !important;
+    filter: drop-shadow(0 0 .12rem rgba(148, 163, 184, .55));
+}
+
+.format-selfstudy-avatar-marker span {
+    display: block;
+}
+
+.format-selfstudy-gamemap-mode #page,
+.format-selfstudy-gamemap-mode #page.drawers,
+.format-selfstudy-gamemap-mode #page-content,
+.format-selfstudy-gamemap-mode #region-main,
+.format-selfstudy-gamemap-mode #region-main-box {
+    width: 100vw;
+    max-width: none;
+    height: 100vh;
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+    position: relative;
+    z-index: 1;
+    background: transparent;
+    pointer-events: none;
+}
+
+.format-selfstudy-gamemap-mode #page,
+.format-selfstudy-gamemap-mode #page-content,
+.format-selfstudy-gamemap-mode #region-main-box {
+    display: block;
+}
+
+.format-selfstudy-gamemap-mode #page-header {
+    display: none;
+}
+
+.format-selfstudy-activity-popover {
+    position: fixed;
+    top: clamp(1rem, 4vh, 2rem);
+    right: clamp(1rem, 4vw, 3rem);
+    bottom: clamp(1rem, 4vh, 2rem);
+    z-index: 20;
+    width: min(42rem, calc(100vw - 2rem));
+    max-width: 42rem;
+    padding: 1rem;
+    overflow: auto;
+    border: 1px solid rgba(148, 163, 184, .55);
+    border-radius: .75rem;
+    background: rgba(255, 255, 255, .94);
+    box-shadow: 0 1.25rem 4rem rgba(15, 23, 42, .22);
+    backdrop-filter: blur(.5rem);
+    pointer-events: auto;
+}
+
+.format-selfstudy-activity-popover .format-selfstudy-activitynav {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    margin: -.25rem 0 .75rem;
+    padding: .25rem 0 .75rem;
+    background: linear-gradient(rgba(255, 255, 255, .98), rgba(255, 255, 255, .86));
+}
+
+.format-selfstudy-popover-secondarynav {
+    margin: 0 0 1rem;
+}
+
+.format-selfstudy-popover-secondarynav .moremenu,
+.format-selfstudy-popover-secondarynav .navigation,
+.format-selfstudy-popover-secondarynav .nav-tabs,
+.format-selfstudy-popover-secondarynav [role="menubar"] {
+    width: 100%;
+    max-width: 100%;
+}
+
+.format-selfstudy-activity-popover > *,
+.format-selfstudy-activity-popover .box,
+.format-selfstudy-activity-popover .generalbox,
+.format-selfstudy-activity-popover .no-overflow,
+.format-selfstudy-activity-popover .modified,
+.format-selfstudy-activity-popover .activity-header,
+.format-selfstudy-activity-popover .activity-information,
+.format-selfstudy-activity-popover .mod_introbox,
+.format-selfstudy-activity-popover .resourcecontent,
+.format-selfstudy-activity-popover .h5p-iframe-wrapper,
+.format-selfstudy-activity-popover .h5p-content,
+.format-selfstudy-activity-popover .h5p-container {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+}
+
+.format-selfstudy-activity-popover img,
+.format-selfstudy-activity-popover video,
+.format-selfstudy-activity-popover canvas,
+.format-selfstudy-activity-popover object,
+.format-selfstudy-activity-popover embed,
+.format-selfstudy-activity-popover iframe {
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.format-selfstudy-activity-popover img,
+.format-selfstudy-activity-popover video,
+.format-selfstudy-activity-popover canvas {
+    height: auto;
+}
+
+.format-selfstudy-activity-popover table {
+    width: 100%;
+    max-width: 100%;
+}
+
+.format-selfstudy-activity-popover .no-overflow {
+    overflow-x: auto;
+}
+
+.path-mod .format-selfstudy-activitynav,
+.path-mod .secondary-navigation,
+.path-mod #region-main,
+.path-mod #region-main-box,
+.path-mod [role="main"] {
+    width: min(100%, 64rem);
+    max-width: 64rem;
+    box-sizing: border-box;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.path-mod .secondary-navigation .moremenu,
+.path-mod .secondary-navigation .navigation,
+.path-mod .secondary-navigation .nav-tabs {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.path-mod #page-header + .format-selfstudy-activitynav + nav,
+.path-mod #page-header + .format-selfstudy-activitynav + nav .moremenu,
+.path-mod #page-header + .format-selfstudy-activitynav + nav .nav-tabs,
+.path-mod #page-header + .format-selfstudy-activitynav + nav [role="menubar"] {
+    width: min(100%, 64rem);
+    max-width: 64rem;
+    box-sizing: border-box;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.path-mod [role="main"] {
+    min-width: 0;
+}
+
+.path-mod .format-selfstudy-activity-popover {
+    width: min(42rem, calc(100vw - 2rem));
+    max-width: 42rem;
+    margin-left: 0;
+    margin-right: 0;
+}
+
+.path-mod [role="main"] > *,
+.path-mod .activity-header,
+.path-mod .activity-information,
+.path-mod .generalbox,
+.path-mod .box,
+.path-mod .no-overflow,
+.path-mod .modified,
+.path-mod .completion-info,
+.path-mod .course-content,
+.path-mod .mod_introbox,
+.path-mod .resourcecontent,
+.path-mod .mediaplugin,
+.path-mod .que,
+.path-mod .quizattempt,
+.path-mod .formulation,
+.path-mod-h5pactivity [role="main"] > *,
+.path-mod-hvp [role="main"] > *,
+.path-mod-h5pactivity .activity-header,
+.path-mod-hvp .activity-header,
+.path-mod-h5pactivity .activity-information,
+.path-mod-hvp .activity-information,
+.path-mod-h5pactivity .h5p-iframe-wrapper,
+.path-mod-hvp .h5p-iframe-wrapper,
+.path-mod-h5pactivity .h5p-content,
+.path-mod-hvp .h5p-content,
+.path-mod-h5pactivity .h5p-container,
+.path-mod-hvp .h5p-container,
+.path-mod-h5pactivity iframe,
+.path-mod-hvp iframe {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.path-mod .format-selfstudy-activity-popover {
+    position: fixed;
+    width: min(42rem, calc(100vw - 2rem));
+    max-width: 42rem;
+}
+
+.format-selfstudy-fullscreen-toggle {
+    position: fixed;
+    top: 5rem;
+    right: .75rem;
+    z-index: 1050;
+}
+
+.format-selfstudy-learningmap-fullscreen .format-selfstudy-fullscreen-toggle {
+    top: .75rem;
+}
+
+.format-selfstudy-learningmap-fullscreen {
+    overflow: hidden;
+    background: #0f172a;
+}
+
+.format-selfstudy-learningmap-fullscreen .navbar,
+.format-selfstudy-learningmap-fullscreen .primary-navigation,
+.format-selfstudy-learningmap-fullscreen .secondary-navigation,
+.format-selfstudy-learningmap-fullscreen #page-header,
+.format-selfstudy-learningmap-fullscreen #page-navbar,
+.format-selfstudy-learningmap-fullscreen .drawer,
+.format-selfstudy-learningmap-fullscreen .drawer-toggles,
+.format-selfstudy-learningmap-fullscreen .activity-navigation,
+.format-selfstudy-learningmap-fullscreen #page-footer,
+.format-selfstudy-learningmap-fullscreen footer {
+    display: none !important;
+}
+
+.format-selfstudy-learningmap-fullscreen #page,
+.format-selfstudy-learningmap-fullscreen #page.drawers,
+.format-selfstudy-learningmap-fullscreen #page-content,
+.format-selfstudy-learningmap-fullscreen #region-main-box,
+.format-selfstudy-learningmap-fullscreen #region-main,
+.format-selfstudy-learningmap-fullscreen [role="main"] {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 1;
+    width: 100vw !important;
+    max-width: none !important;
+    height: 100vh !important;
+    min-height: 100vh !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    background: #0f172a !important;
+    box-shadow: none !important;
+    overflow: hidden !important;
+}
+
+.format-selfstudy-learningmap-fullscreen [role="application"] {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    max-width: none !important;
+    height: 100vh !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    z-index: 2;
+}
+
+.format-selfstudy-learningmap-fullscreen [role="application"] img,
+.format-selfstudy-learningmap-fullscreen [role="application"] canvas,
+.format-selfstudy-learningmap-fullscreen [role="application"] svg {
+    max-width: none !important;
+}
+
+.format-selfstudy-learningmap-fullscreen [role="application"] img {
+    width: 100vw !important;
+    height: 100vh !important;
+    object-fit: contain !important;
+    object-position: center center !important;
+}
+
+.format-selfstudy-learningmap-fullscreen [role="application"] .format-selfstudy-avatar-marker img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+}
+
+.format-selfstudy-map-popup-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1040;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: clamp(1rem, 4vw, 3rem);
+    background: rgba(15, 23, 42, .22);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .22s ease;
+}
+
+.format-selfstudy-map-popup-overlay.format-selfstudy-map-popup-open {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.format-selfstudy-map-popup {
+    position: relative;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    width: min(72rem, 82vw);
+    height: min(44rem, 82vh);
+    border: 1px solid rgba(148, 163, 184, .55);
+    border-radius: .75rem;
+    background: #fff;
+    box-shadow: 0 1.5rem 5rem rgba(15, 23, 42, .32);
+    opacity: 0;
+    transform: translateY(.75rem) scale(.965);
+    transition: opacity .24s ease, transform .24s cubic-bezier(.2, .8, .2, 1);
+}
+
+.format-selfstudy-map-popup-open .format-selfstudy-map-popup {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+
+.format-selfstudy-map-popup-closing .format-selfstudy-map-popup {
+    opacity: 0;
+    transform: translateY(.5rem) scale(.975);
+}
+
+.format-selfstudy-map-popup-header {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    justify-content: space-between;
+    min-width: 0;
+    padding: .75rem .875rem;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.format-selfstudy-map-popup-title {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 700;
+}
+
+.format-selfstudy-map-popup-frame {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    border-radius: 0 0 .75rem .75rem;
+}
+
+.format-selfstudy-map-popup-close {
+    flex: 0 0 auto;
+}
+
+.format-selfstudy-map-popup-arrow {
+    position: absolute;
+    top: 50%;
+    z-index: 2;
+    width: 3rem;
+    height: 4.5rem;
+    border: 0;
+    border-radius: .5rem;
+    background: rgba(15, 23, 42, .76);
+    color: #fff;
+    font-size: 3rem;
+    line-height: 1;
+    transform: translateY(-50%);
+}
+
+.format-selfstudy-map-popup-arrow:disabled {
+    opacity: .25;
+}
+
+.format-selfstudy-map-popup-prev {
+    left: -4rem;
+}
+
+.format-selfstudy-map-popup-next {
+    right: -4rem;
+}
