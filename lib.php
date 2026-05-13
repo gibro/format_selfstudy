@@ -185,14 +185,12 @@ class format_selfstudy extends core_courseformat\base {
         global $USER;
 
         try {
-            $repository = new \format_selfstudy\local\path_repository();
-            $activepath = $repository->get_active_path((int)$this->courseid, (int)$USER->id);
-            if (!$activepath || empty($activepath->enabled)) {
+            $baseview = \format_selfstudy\local\base_view::create($this->get_course(), (int)$USER->id);
+            if (empty($baseview->path)) {
                 return [];
             }
 
-            $outline = \format_selfstudy\local\path_progress::outline($this->get_course(), (int)$activepath->id,
-                (int)$USER->id);
+            $outline = $baseview->outline;
         } catch (Throwable $exception) {
             return [];
         }

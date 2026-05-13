@@ -55,15 +55,10 @@ if (!empty($formatoptions['mainlearningmap'])) {
     }
 }
 
-$repository = new \format_selfstudy\local\path_repository();
-$activepath = $repository->get_active_path((int)$course->id, (int)$USER->id);
-if ($activepath && empty($activepath->enabled)) {
-    $activepath = null;
-}
-$progress = $activepath ?
-    \format_selfstudy\local\path_progress::calculate($course, (int)$activepath->id, (int)$USER->id) : null;
-$outline = $activepath ?
-    \format_selfstudy\local\path_progress::outline($course, (int)$activepath->id, (int)$USER->id) : [];
+$baseview = \format_selfstudy\local\base_view::create($course, (int)$USER->id);
+$activepath = $baseview->path;
+$progress = $baseview->progress;
+$outline = $baseview->outline;
 
 echo $OUTPUT->header();
 echo html_writer::start_div('format-selfstudy-dashboard');

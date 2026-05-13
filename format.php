@@ -51,14 +51,10 @@ $courseurl = new moodle_url('/course/view.php', ['id' => $course->id]);
 $pathrepository = new \format_selfstudy\local\path_repository();
 $learningpaths = $pathrepository->get_paths((int)$course->id, true);
 $showpathui = !empty($formatoptions['allowpersonalpaths']) || count($learningpaths) > 1;
-$activepath = $pathrepository->get_active_path((int)$course->id, (int)$USER->id);
-if ($activepath && empty($activepath->enabled)) {
-    $activepath = null;
-}
-$activepathprogress = $activepath ?
-    \format_selfstudy\local\path_progress::calculate($course, (int)$activepath->id, (int)$USER->id) : null;
-$activepathoutline = $activepath ?
-    \format_selfstudy\local\path_progress::outline($course, (int)$activepath->id, (int)$USER->id) : [];
+$baseview = \format_selfstudy\local\base_view::create($course, (int)$USER->id);
+$activepath = $baseview->path;
+$activepathprogress = $baseview->progress;
+$activepathoutline = $baseview->outline;
 $visibleactivepathoutline = format_selfstudy_filter_locked_outline($activepathoutline, $showlockedactivities);
 $continueurl = format_selfstudy_get_continue_url($course, $mainmapcm, $activepathprogress, $nextcm);
 $continuelabel = !empty($activepathprogress->total) && $activepathprogress->complete >= $activepathprogress->total ?
@@ -122,7 +118,7 @@ if ($enabledashboard) {
             ['class' => 'btn btn-secondary']
         );
     }
-    if ($showpathui && $activepath && $visibleactivepathoutline) {
+    if ($activepath && $visibleactivepathoutline) {
         echo html_writer::link(
             new moodle_url('/course/format/selfstudy/accessible_path.php', ['id' => $course->id]),
             get_string('learningpathaccessibleview', 'format_selfstudy'),
