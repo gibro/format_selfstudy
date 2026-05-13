@@ -45,6 +45,8 @@ class format_selfstudy_path_publish_service_test extends advanced_testcase {
 
         $this->assertTrue($result->published);
         $this->assertTrue($result->snapshot);
+        $this->assertSame(1, (int)$result->revision);
+        $this->assertGreaterThan(0, (int)$result->timepublished);
         $this->assertSame(7, $result->written);
         $this->assertSame(1, $result->skipped);
         $this->assertSame(1, (int)$repository->get_path($pathid)->enabled);
@@ -54,6 +56,8 @@ class format_selfstudy_path_publish_service_test extends advanced_testcase {
         $this->assertSame($pathid, (int)$stored->pathid);
         $this->assertSame((int)$course->id, (int)$stored->courseid);
         $this->assertSame(64, strlen($stored->sourcehash));
+        $this->assertSame(1, (int)$stored->revision);
+        $this->assertSame(\format_selfstudy\local\path_snapshot_repository::STATUS_PUBLISHED, $stored->status);
         $this->assertSame(['milestone-start'], $snapshots->get_decoded_snapshot($pathid)['root']);
     }
 
@@ -93,8 +97,10 @@ class format_selfstudy_path_publish_service_test extends advanced_testcase {
 
         $this->assertFalse($result->published);
         $this->assertFalse($result->snapshot);
+        $this->assertSame(0, (int)$result->revision);
         $this->assertSame(['sync failed'], $result->errors);
         $this->assertNull($snapshots->get_snapshot($pathid));
+        $this->assertSame([], $snapshots->get_revisions($pathid));
     }
 }
 

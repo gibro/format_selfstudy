@@ -39,6 +39,11 @@ class backup_format_selfstudy_plugin extends backup_format_plugin {
         $snapshot = new backup_nested_element('snapshot', ['id'], [
             'pathid', 'courseid', 'userid', 'schema', 'snapshotjson', 'sourcehash', 'timecreated', 'timemodified',
         ]);
+        $revisions = new backup_nested_element('revisions');
+        $revision = new backup_nested_element('revision', ['id'], [
+            'pathid', 'courseid', 'userid', 'revision', 'schema', 'snapshotjson', 'sourcehash',
+            'publishedby', 'timepublished', 'status', 'active', 'timecreated', 'timemodified',
+        ]);
         $choices = new backup_nested_element('choices');
         $choice = new backup_nested_element('choice', ['id'], [
             'courseid', 'userid', 'pathid', 'timecreated', 'timemodified',
@@ -59,6 +64,8 @@ class backup_format_selfstudy_plugin extends backup_format_plugin {
         $items->add_child($item);
         $path->add_child($snapshots);
         $snapshots->add_child($snapshot);
+        $path->add_child($revisions);
+        $revisions->add_child($revision);
         $wrapper->add_child($choices);
         $choices->add_child($choice);
         $wrapper->add_child($milestones);
@@ -77,6 +84,8 @@ class backup_format_selfstudy_plugin extends backup_format_plugin {
         $item->set_source_table('format_selfstudy_path_items', ['pathid' => backup::VAR_PARENTID],
             'parentid ASC, sortorder ASC, id ASC');
         $snapshot->set_source_table('format_selfstudy_snapshots', ['pathid' => backup::VAR_PARENTID]);
+        $revision->set_source_table('format_selfstudy_revisions', ['pathid' => backup::VAR_PARENTID],
+            'revision ASC, id ASC');
 
         if ($this->task->get_setting_value('users')) {
             $choice->set_source_table('format_selfstudy_choices', ['courseid' => backup::VAR_COURSEID],

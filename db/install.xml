@@ -129,5 +129,32 @@
         <INDEX NAME="course_user_ix" UNIQUE="false" FIELDS="courseid, userid"/>
       </INDEXES>
     </TABLE>
+    <TABLE NAME="format_selfstudy_revisions" COMMENT="Published runtime snapshot revisions for selfstudy learning paths">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="pathid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="courseid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="revision" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="1" SEQUENCE="false"/>
+        <FIELD NAME="schema" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="1" SEQUENCE="false"/>
+        <FIELD NAME="snapshotjson" TYPE="text" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="sourcehash" TYPE="char" LENGTH="64" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="publishedby" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timepublished" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="status" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="published" SEQUENCE="false"/>
+        <FIELD NAME="active" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1" SEQUENCE="false"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="path_fk" TYPE="foreign" FIELDS="pathid" REFTABLE="format_selfstudy_paths" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="path_revision_uix" UNIQUE="true" FIELDS="pathid, revision"/>
+        <INDEX NAME="path_active_ix" UNIQUE="false" FIELDS="pathid, active"/>
+        <INDEX NAME="course_user_ix" UNIQUE="false" FIELDS="courseid, userid"/>
+      </INDEXES>
+    </TABLE>
   </TABLES>
 </XMLDB>

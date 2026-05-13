@@ -21,6 +21,7 @@ require_once($CFG->libdir . '/completionlib.php');
 use format_selfstudy\local\path_repository;
 use format_selfstudy\local\path_publish_service;
 use format_selfstudy\local\path_grid_service;
+use format_selfstudy\local\path_snapshot_repository;
 use format_selfstudy\local\activity_filter;
 
 if (empty($FORMAT_SELFSTUDY_PATH_EDITOR_FUNCTIONS_ONLY)) {
@@ -142,6 +143,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $message = get_string('learningpathpublished', 'format_selfstudy', (object)[
                 'written' => $result->written,
                 'skipped' => $result->skipped,
+                'revision' => $result->revision,
             ]);
             redirect(new moodle_url($baseurl, ['pathid' => $pathid]), $message, null,
                 \core\output\notification::NOTIFY_SUCCESS);
@@ -174,6 +176,7 @@ $activities = format_selfstudy_path_editor_get_activities($course);
 $missingcmids = format_selfstudy_path_editor_get_missing_path_cmids($currentpath, $activities);
 $grid = format_selfstudy_path_editor_grid_from_path($currentpath, $activities, $editorsections);
 $usedcmids = format_selfstudy_path_editor_get_grid_cmids($grid);
+$activerevision = $currentpath ? (new path_snapshot_repository())->get_active_revision((int)$currentpath->id) : null;
 
 echo $OUTPUT->header();
 
@@ -242,10 +245,14 @@ echo format_selfstudy_path_editor_text_input('imageurl', get_string('learningpat
     $currentpath->imageurl ?? '');
 echo format_selfstudy_path_editor_text_input('icon', get_string('learningpathicon', 'format_selfstudy'),
     $currentpath->icon ?? '');
-echo html_writer::div(get_string(
-    !empty($currentpath->enabled) ? 'learningpathstatuspublished' : 'learningpathstatusdraft',
-    'format_selfstudy'
-), 'format-selfstudy-patheditor-publishstatus');
+$status = !empty($currentpath->enabled) && $activerevision ?
+    get_string('learningpathstatuspublishedrevision', 'format_selfstudy', (object)[
+        'revision' => (int)$activerevision->revision,
+        'timepublished' => userdate((int)$activerevision->timepublished),
+    ]) :
+    get_string(!empty($currentpath->enabled) ? 'learningpathstatuspublished' : 'learningpathstatusdraft',
+        'format_selfstudy');
+echo html_writer::div($status, 'format-selfstudy-patheditor-publishstatus');
 echo html_writer::end_div();
 
 echo html_writer::empty_tag('input', [

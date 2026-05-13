@@ -41,6 +41,8 @@ class format_selfstudy_path_runtime_test extends advanced_testcase {
         $this->assertTrue($snapshot->persisted);
         $this->assertSame($pathid, $snapshot->pathid);
         $this->assertSame(str_repeat('d', 64), $snapshot->sourcehash);
+        $this->assertSame(1, (int)$snapshot->revision);
+        $this->assertSame(\format_selfstudy\local\path_snapshot_repository::STATUS_PUBLISHED, $snapshot->status);
         $this->assertSame(['stored-node'], $snapshot->decoded['root']);
         $this->assertSame(['stored-node'], $runtime->get_decoded_runtime_snapshot($course, $pathid)['root']);
     }

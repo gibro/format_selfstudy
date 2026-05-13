@@ -25,6 +25,9 @@ class path_repository {
     /** @var string Runtime snapshot table. */
     private const TABLE_SNAPSHOTS = 'format_selfstudy_snapshots';
 
+    /** @var string Runtime snapshot revision table. */
+    private const TABLE_REVISIONS = 'format_selfstudy_revisions';
+
     /** @var string Station item type. */
     public const ITEM_STATION = 'station';
 
@@ -218,6 +221,7 @@ class path_repository {
         }
 
         $DB->delete_records(self::TABLE_CHOICES, ['pathid' => $pathid]);
+        $DB->delete_records(self::TABLE_REVISIONS, ['pathid' => $pathid]);
         $DB->delete_records(self::TABLE_SNAPSHOTS, ['pathid' => $pathid]);
         $DB->delete_records(self::TABLE_ITEMS, ['pathid' => $pathid]);
         $DB->delete_records(self::TABLE_PATHS, ['id' => $pathid]);

@@ -53,6 +53,9 @@ class path_publish_service {
             'errors' => [],
             'fixed' => 0,
             'snapshot' => false,
+            'revision' => 0,
+            'publishedby' => 0,
+            'timepublished' => 0,
         ];
 
         $diagnosis = $this->sync->diagnose($course, $pathid);
@@ -93,10 +96,16 @@ class path_publish_service {
             return $result;
         }
 
+        $publishedby = (int)($GLOBALS['USER']->id ?? 0);
+        $timepublished = time();
+        $revision = $this->snapshotrepository->save_revision($pathid, (int)$course->id, 0, $snapshot, $publishedby,
+            $timepublished);
         $this->repository->publish_course_path((int)$course->id, $pathid);
-        $this->snapshotrepository->save_snapshot($pathid, (int)$course->id, 0, $snapshot);
         $result->snapshot = true;
         $result->published = true;
+        $result->revision = (int)$revision->revision;
+        $result->publishedby = $publishedby;
+        $result->timepublished = $timepublished;
 
         return $result;
     }

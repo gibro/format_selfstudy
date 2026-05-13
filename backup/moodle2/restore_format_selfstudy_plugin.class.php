@@ -26,6 +26,7 @@ class restore_format_selfstudy_plugin extends restore_format_plugin {
             new restore_path_element('format_selfstudy_path', $this->get_pathfor('/paths/path')),
             new restore_path_element('format_selfstudy_item', $this->get_pathfor('/paths/path/items/item')),
             new restore_path_element('format_selfstudy_snapshot', $this->get_pathfor('/paths/path/snapshots/snapshot')),
+            new restore_path_element('format_selfstudy_revision', $this->get_pathfor('/paths/path/revisions/revision')),
             new restore_path_element('format_selfstudy_choice', $this->get_pathfor('/choices/choice')),
             new restore_path_element('format_selfstudy_milestone', $this->get_pathfor('/milestones/milestone')),
             new restore_path_element('format_selfstudy_cmgoal', $this->get_pathfor('/cmgoals/cmgoal')),
@@ -123,6 +124,69 @@ class restore_format_selfstudy_plugin extends restore_format_plugin {
         }
 
         $DB->insert_record('format_selfstudy_snapshots', $data);
+    }
+
+    /**
+     * Restores one published runtime snapshot revision.
+     *
+     * @param array $data
+     */
+    public function process_format_selfstudy_revision(array $data): void {
+        global $DB;
+
+        $data = (object)$data;
+        $data->pathid = $this->get_mappingid('format_selfstudy_path', $data->pathid, 0);
+        if (empty($data->pathid)) {
+            return;
+        }
+
+        $olduserid = (int)($data->userid ?? 0);
+        $oldpublishedby = (int)($data->publishedby ?? 0);
+        $data->courseid = $this->step->get_task()->get_courseid();
+        $data->userid = empty($olduserid) ? 0 : $this->get_mappingid('user', $olduserid, 0);
+        $data->publishedby = empty($oldpublishedby) ? 0 : $this->get_mappingid('user', $oldpublishedby, 0);
+        if (($olduserid && empty($data->userid)) || ($oldpublishedby && empty($data->publishedby))) {
+            return;
+        }
+
+        $data->snapshotjson = $this->remap_snapshot_json((string)($data->snapshotjson ?? ''), (int)$data->pathid,
+            (int)$data->courseid, (int)$data->userid);
+        if ($data->snapshotjson === '') {
+            return;
+        }
+        $data->sourcehash = hash('sha256', $data->snapshotjson);
+        $data->revision = max(1, (int)($data->revision ?? 1));
+        $data->status = clean_param((string)($data->status ?? 'published'), PARAM_ALPHANUMEXT);
+        $data->active = empty($data->active) ? 0 : 1;
+
+        if ($data->active) {
+            $DB->set_field('format_selfstudy_revisions', 'active', 0, ['pathid' => $data->pathid, 'active' => 1]);
+            $DB->set_field('format_selfstudy_revisions', 'status', 'archived', ['pathid' => $data->pathid, 'active' => 0]);
+        }
+
+        $existing = $DB->get_record('format_selfstudy_revisions', [
+            'pathid' => $data->pathid,
+            'revision' => $data->revision,
+        ], '*', IGNORE_MISSING);
+        if ($existing) {
+            $data->id = $existing->id;
+            $DB->update_record('format_selfstudy_revisions', $data);
+        } else {
+            $DB->insert_record('format_selfstudy_revisions', $data);
+        }
+
+        if (!empty($data->active)) {
+            $snapshot = clone($data);
+            unset($snapshot->revision, $snapshot->publishedby, $snapshot->timepublished, $snapshot->status, $snapshot->active);
+            $existing = $DB->get_record('format_selfstudy_snapshots', ['pathid' => $snapshot->pathid], '*', IGNORE_MISSING);
+            if ($existing) {
+                $snapshot->id = $existing->id;
+                $DB->update_record('format_selfstudy_snapshots', $snapshot);
+            } else {
+                unset($snapshot->id);
+                $DB->insert_record('format_selfstudy_snapshots', $snapshot);
+            }
+        }
     }
 
     /**

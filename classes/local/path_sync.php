@@ -8,6 +8,10 @@ defined('MOODLE_INTERNAL') || die();
 global $CFG;
 require_once($CFG->libdir . '/completionlib.php');
 require_once($CFG->libdir . '/gradelib.php');
+require_once(__DIR__ . '/availability_complexity.php');
+require_once(__DIR__ . '/availability_compiler.php');
+require_once(__DIR__ . '/availability_rule_builder.php');
+require_once(__DIR__ . '/path_snapshot_builder.php');
 
 /**
  * Diagnoses and prepares Moodle availability rules for selfstudy learning paths.
@@ -43,7 +47,7 @@ class path_sync {
         $completion = new \completion_info($course);
         $cminfo = $this->get_course_module_diagnosis($course, $modinfo, $completion);
         $items = $this->prepare_items($path, $modinfo, $completion, $cminfo);
-        $rules = $this->preview_rules($items);
+        $rules = $this->preview_rules_from_snapshot($course, $path, $items, $cminfo);
         $repairablecompletionmissing = $this->collect_missing_completion_source_items($rules);
 
         return (object)[
@@ -284,28 +288,27 @@ class path_sync {
      * @return string
      */
     public function build_completion_availability_json(array $sourcecmids, bool $requireany = false): string {
-        $conditions = [];
+        $rules = [];
         foreach (array_values(array_unique(array_map('intval', $sourcecmids))) as $cmid) {
-            if ($cmid <= 0) {
-                continue;
+            if ($cmid > 0) {
+                $rules[] = [
+                    'type' => 'completion',
+                    'cmid' => $cmid,
+                ];
             }
-            $conditions[] = [
-                'type' => 'completion',
-                'cm' => $cmid,
-                'e' => COMPLETION_COMPLETE,
-            ];
         }
 
-        if (!$conditions) {
+        if (!$rules) {
             return '';
         }
 
-        return json_encode([
-            'op' => $requireany ? '|' : '&',
-            'c' => $conditions,
-            'showc' => array_fill(0, count($conditions), true),
-            'show' => true,
+        $compiler = new availability_compiler();
+        $compiled = $compiler->compile([
+            'type' => $requireany ? 'any_of' : 'all_of',
+            'rules' => $rules,
         ]);
+
+        return $compiled->available ? $compiled->json : '';
     }
 
     /**
@@ -524,6 +527,251 @@ class path_sync {
         }
 
         return $prepared;
+    }
+
+    /**
+     * Builds planned sync rules from the runtime snapshot and compiler.
+     *
+     * @param \stdClass $course
+     * @param \stdClass $path
+     * @param \stdClass[] $items
+     * @param \stdClass[] $cminfo
+     * @return \stdClass[]
+     */
+    private function preview_rules_from_snapshot(\stdClass $course, \stdClass $path, array $items, array $cminfo): array {
+        $snapshot = (new path_snapshot_builder())->build_snapshot($course, $path);
+        $decoded = json_decode($snapshot->json, true);
+        if (!is_array($decoded)) {
+            return $this->preview_rules($items);
+        }
+
+        $nodes = $this->index_snapshot_nodes($decoded['nodes'] ?? []);
+        $preparedbycmid = $this->index_prepared_items_by_cmid($items);
+        $compiler = new availability_compiler();
+        $rules = [];
+
+        foreach ((new availability_rule_builder())->build_rules($decoded) as $definition) {
+            $targetcmid = (int)($definition->targetcmid ?? 0);
+            $target = $this->diagnosis_item_from_cmid($targetcmid, $preparedbycmid, $cminfo,
+                (string)($definition->targetkey ?? ''));
+            $source = $this->diagnosis_source_from_rule($definition, $nodes, $preparedbycmid, $cminfo);
+            $compiled = $compiler->compile(is_array($definition->rule ?? null) ? $definition->rule : []);
+
+            $rule = (object)[
+                'source' => $source,
+                'target' => $target,
+                'context' => (string)($definition->context ?? ''),
+                'rulekind' => $this->rule_kind_label(is_array($definition->rule ?? null) ? $definition->rule : []),
+                'sourcecmids' => $this->collect_rule_cmids(is_array($definition->rule ?? null) ? $definition->rule : []),
+                'requireany' => $this->is_any_rule(is_array($definition->rule ?? null) ? $definition->rule : []),
+                'translatable' => true,
+                'reason' => '',
+                'availabilityjson' => '',
+                'existingtargetavailability' => '',
+                'existingcompletioncmids' => [],
+                'compiler' => $compiled,
+                'sourcekeys' => array_values($definition->sourcekeys ?? []),
+                'targetkey' => (string)($definition->targetkey ?? ''),
+            ];
+
+            if (!empty($target->activity)) {
+                $rule->existingtargetavailability = $target->activity->availability;
+                $rule->existingcompletioncmids = $target->activity->completionconditioncmids;
+            }
+
+            if ($target->itemtype !== path_repository::ITEM_STATION || empty($target->cmid)) {
+                $rule->translatable = false;
+                $rule->reason = get_string('learningpathsyncunsupportedtarget', 'format_selfstudy');
+                $rules[] = $rule;
+                continue;
+            }
+
+            if (!$rule->sourcecmids) {
+                $rule->translatable = false;
+                $rule->reason = get_string('learningpathsyncmissingsource', 'format_selfstudy');
+                $rules[] = $rule;
+                continue;
+            }
+
+            $missingcompletion = [];
+            foreach ($this->get_source_items($source) as $sourceitem) {
+                if (!empty($sourceitem->cmid) && empty($sourceitem->completionenabled)) {
+                    $missingcompletion[] = $sourceitem->label;
+                }
+            }
+            if ($missingcompletion) {
+                $rule->translatable = false;
+                $rule->reason = get_string('learningpathsyncsourcecompletionmissing', 'format_selfstudy',
+                    implode(', ', $missingcompletion));
+                $rules[] = $rule;
+                continue;
+            }
+
+            if (!$compiled->available) {
+                $rule->translatable = false;
+                $rule->reason = implode(' ', $compiled->errors);
+                $rules[] = $rule;
+                continue;
+            }
+
+            $rule->availabilityjson = $compiled->json;
+            $rules[] = $rule;
+        }
+
+        return $rules;
+    }
+
+    /**
+     * Indexes snapshot nodes by key.
+     *
+     * @param mixed $nodes
+     * @return array
+     */
+    private function index_snapshot_nodes($nodes): array {
+        if (!is_array($nodes)) {
+            return [];
+        }
+
+        $indexed = [];
+        foreach ($nodes as $node) {
+            if (is_array($node) && !empty($node['key'])) {
+                $indexed[(string)$node['key']] = $node;
+            }
+        }
+
+        return $indexed;
+    }
+
+    /**
+     * Indexes prepared editor items by course module id.
+     *
+     * @param \stdClass[] $items
+     * @return array
+     */
+    private function index_prepared_items_by_cmid(array $items): array {
+        $indexed = [];
+        foreach ($items as $item) {
+            if (!empty($item->cmid)) {
+                $indexed[(int)$item->cmid] = $item;
+            }
+            foreach ($item->children ?? [] as $child) {
+                if (!empty($child->cmid)) {
+                    $indexed[(int)$child->cmid] = $child;
+                }
+            }
+        }
+
+        return $indexed;
+    }
+
+    /**
+     * Creates a diagnosis item for one course module id.
+     *
+     * @param int $cmid
+     * @param array $preparedbycmid
+     * @param \stdClass[] $cminfo
+     * @param string $fallbacklabel
+     * @return \stdClass
+     */
+    private function diagnosis_item_from_cmid(int $cmid, array $preparedbycmid, array $cminfo,
+            string $fallbacklabel): \stdClass {
+        if ($cmid > 0 && isset($preparedbycmid[$cmid])) {
+            return $preparedbycmid[$cmid];
+        }
+
+        $activity = $cmid > 0 ? ($cminfo[$cmid] ?? null) : null;
+        return (object)[
+            'itemtype' => path_repository::ITEM_STATION,
+            'cmid' => $cmid,
+            'label' => $activity ? $activity->name : ($fallbacklabel !== '' ? $fallbacklabel :
+                get_string('learningpathactivity', 'format_selfstudy')),
+            'children' => [],
+            'activity' => $activity,
+            'completionenabled' => $activity ? (bool)$activity->completionenabled : false,
+        ];
+    }
+
+    /**
+     * Creates the diagnosis source object represented by a rule definition.
+     *
+     * @param \stdClass $definition
+     * @param array $nodes
+     * @param array $preparedbycmid
+     * @param \stdClass[] $cminfo
+     * @return \stdClass
+     */
+    private function diagnosis_source_from_rule(\stdClass $definition, array $nodes, array $preparedbycmid,
+            array $cminfo): \stdClass {
+        $sourcekeys = array_values($definition->sourcekeys ?? []);
+        $children = [];
+        foreach ($sourcekeys as $key) {
+            $node = $nodes[(string)$key] ?? null;
+            $cmid = $node ? (int)($node['cmid'] ?? 0) : 0;
+            if ($cmid > 0) {
+                $children[] = $this->diagnosis_item_from_cmid($cmid, $preparedbycmid, $cminfo, (string)$key);
+            }
+        }
+
+        if (count($children) === 1) {
+            return $children[0];
+        }
+
+        $label = get_string('learningpathsyncpreviousmilestonegroup', 'format_selfstudy');
+        if (count($sourcekeys) === 1 && isset($nodes[(string)$sourcekeys[0]])) {
+            $label = (string)($nodes[(string)$sourcekeys[0]]['title'] ?? $label);
+        }
+
+        return (object)[
+            'itemtype' => path_repository::ITEM_ALTERNATIVE,
+            'label' => $label,
+            'children' => $children,
+            'completionenabled' => true,
+        ];
+    }
+
+    /**
+     * Returns a human-readable rule kind label.
+     *
+     * @param array $rule
+     * @return string
+     */
+    private function rule_kind_label(array $rule): string {
+        $type = (string)($rule['type'] ?? '');
+        if ($type === 'any_of' || $type === 'min_count') {
+            return get_string('learningpathsyncruleanyof', 'format_selfstudy');
+        }
+
+        return get_string('learningpathsyncruleallof', 'format_selfstudy');
+    }
+
+    /**
+     * Returns whether the top-level rule accepts alternatives.
+     *
+     * @param array $rule
+     * @return bool
+     */
+    private function is_any_rule(array $rule): bool {
+        return in_array((string)($rule['type'] ?? ''), ['any_of', 'min_count'], true);
+    }
+
+    /**
+     * Collects completion cmids from an internal rule tree.
+     *
+     * @param array $rule
+     * @return int[]
+     */
+    private function collect_rule_cmids(array $rule): array {
+        $cmids = [];
+        if (($rule['type'] ?? '') === 'completion' && !empty($rule['cmid'])) {
+            $cmids[] = (int)$rule['cmid'];
+        }
+        foreach (($rule['rules'] ?? []) as $child) {
+            if (is_array($child)) {
+                $cmids = array_merge($cmids, $this->collect_rule_cmids($child));
+            }
+        }
+
+        return array_values(array_unique(array_filter($cmids)));
     }
 
     /**

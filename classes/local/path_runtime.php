@@ -64,6 +64,10 @@ class path_runtime {
                 'sourcehash' => (string)$stored->sourcehash,
                 'json' => (string)$stored->snapshotjson,
                 'decoded' => $decoded,
+                'revision' => (int)($stored->revision ?? 0),
+                'publishedby' => (int)($stored->publishedby ?? 0),
+                'timepublished' => (int)($stored->timepublished ?? 0),
+                'status' => (string)($stored->status ?? ''),
             ];
         }
 
