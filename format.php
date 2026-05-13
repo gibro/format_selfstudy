@@ -5,12 +5,27 @@ defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->libdir . '/completionlib.php');
 
+global $USER;
+
+if (empty($FORMAT_SELFSTUDY_FUNCTIONS_ONLY)) {
 $format = course_get_format($course);
 $formatoptions = $format->get_format_options();
+$pathpointcolor = format_selfstudy_normalise_hex_color($formatoptions['pathpointcolor'] ?? '#6f1ab1');
+$defaultview = in_array(($formatoptions['defaultview'] ?? 'dashboard'), ['dashboard', 'map', 'list'], true) ?
+    $formatoptions['defaultview'] : 'dashboard';
+$enabledashboard = !empty($formatoptions['enabledashboard']) && $defaultview !== 'list';
+$enablelistview = !empty($formatoptions['enablelistview']) || $defaultview === 'list';
+$showlockedactivities = !array_key_exists('showlockedactivities', $formatoptions) ||
+    !empty($formatoptions['showlockedactivities']);
 $modinfo = get_fast_modinfo($course);
 $sections = $modinfo->get_section_info_all();
 $completion = new completion_info($course);
 $learningsummaries = format_selfstudy_get_learning_summaries($course, $format, $modinfo, $sections, $completion);
+if (empty($formatoptions['enablesectionmaps'])) {
+    foreach ($learningsummaries as $summary) {
+        $summary->sectionmapcm = null;
+    }
+}
 $coursecontext = context_course::instance($course->id);
 $caneditsections = $PAGE->user_is_editing() && has_capability('moodle/course:update', $coursecontext);
 $courserenderer = $PAGE->get_renderer('core', 'course');
@@ -33,57 +48,108 @@ $requiredcomplete = format_selfstudy_count_sections($learningsummaries, 'require
 $optionalopen = format_selfstudy_count_sections($learningsummaries, 'optional', false);
 $optionalcomplete = format_selfstudy_count_sections($learningsummaries, 'optional', true);
 $courseurl = new moodle_url('/course/view.php', ['id' => $course->id]);
-
-echo html_writer::start_div('format-selfstudy-dashboard');
-echo html_writer::tag('h2', get_string('dashboard', 'format_selfstudy'));
-
-echo html_writer::start_div('format-selfstudy-progress');
-echo html_writer::div(
-    get_string('required', 'format_selfstudy') . ': ' .
-        get_string('statuscomplete', 'format_selfstudy') . ' ' . $requiredcomplete . ', ' .
-        get_string('statusavailable', 'format_selfstudy') . ' ' . $requiredopen,
-    'format-selfstudy-progressitem format-selfstudy-progress-required'
-);
-echo html_writer::div(
-    get_string('optional', 'format_selfstudy') . ': ' .
-        get_string('statuscomplete', 'format_selfstudy') . ' ' . $optionalcomplete . ', ' .
-        get_string('statusavailable', 'format_selfstudy') . ' ' . $optionalopen,
-    'format-selfstudy-progressitem format-selfstudy-progress-optional'
-);
-echo html_writer::end_div();
-
-echo html_writer::start_div('format-selfstudy-actions');
-if ($nextcm) {
-    echo html_writer::link(
-        new moodle_url('/mod/' . $nextcm->modname . '/view.php', ['id' => $nextcm->id]),
-        get_string('startlearning', 'format_selfstudy'),
-        ['class' => 'btn btn-primary']
-    );
+$pathrepository = new \format_selfstudy\local\path_repository();
+$learningpaths = $pathrepository->get_paths((int)$course->id, true);
+$showpathui = !empty($formatoptions['allowpersonalpaths']) || count($learningpaths) > 1;
+$activepath = $pathrepository->get_active_path((int)$course->id, (int)$USER->id);
+if ($activepath && empty($activepath->enabled)) {
+    $activepath = null;
 }
-if ($mainmapcm) {
-    echo html_writer::link(
-        new moodle_url('/mod/learningmap/view.php', ['id' => $mainmapcm->id]),
-        get_string('learningmap', 'format_selfstudy'),
-        ['class' => 'btn btn-secondary']
-    );
+$activepathprogress = $activepath ?
+    \format_selfstudy\local\path_progress::calculate($course, (int)$activepath->id, (int)$USER->id) : null;
+$activepathoutline = $activepath ?
+    \format_selfstudy\local\path_progress::outline($course, (int)$activepath->id, (int)$USER->id) : [];
+$visibleactivepathoutline = format_selfstudy_filter_locked_outline($activepathoutline, $showlockedactivities);
+$continueurl = format_selfstudy_get_continue_url($course, $mainmapcm, $activepathprogress, $nextcm);
+$continuelabel = !empty($activepathprogress->total) && $activepathprogress->complete >= $activepathprogress->total ?
+    get_string('learningpathcompleteoverview', 'format_selfstudy') :
+    get_string('startlearning', 'format_selfstudy');
+if ($showpathui && $visibleactivepathoutline) {
+    $PAGE->requires->js_call_amd('format_selfstudy/navigation', 'init', [[
+        'showNavigation' => false,
+        'courseId' => (int)$course->id,
+        'currentCmId' => 0,
+        'completionUrl' => $courseurl->out(false),
+        'completionLabel' => get_string('learningpathcompleteoverview', 'format_selfstudy'),
+        'completionTitle' => get_string('learningpathcompleteoverviewtitle', 'format_selfstudy'),
+        'currentStatusLabel' => get_string('learningpathstatuscurrent', 'format_selfstudy'),
+        'competenciesLabel' => get_string('activitycompetencies', 'format_selfstudy'),
+        'pathTitle' => get_string('learningpathcurrent', 'format_selfstudy'),
+        'pathOutline' => format_selfstudy_prepare_path_outline_for_js($visibleactivepathoutline),
+        'showPathOutline' => true,
+        'pathPointColor' => $pathpointcolor,
+    ]]);
 }
-echo html_writer::end_div();
 
-echo html_writer::start_div('format-selfstudy-mapnotice');
-if ($mainmapcm) {
-    echo html_writer::tag('strong', get_string('mainlearningmap', 'format_selfstudy') . ': ');
-    echo html_writer::link(
-        new moodle_url('/mod/learningmap/view.php', ['id' => $mainmapcm->id]),
-        format_string($mainmapcm->name)
+if ($enabledashboard) {
+    echo html_writer::start_div('format-selfstudy-dashboard');
+    echo html_writer::tag('h2', get_string('dashboard', 'format_selfstudy'));
+
+    echo html_writer::start_div('format-selfstudy-progress');
+    echo html_writer::div(
+        get_string('required', 'format_selfstudy') . ': ' .
+            get_string('statuscomplete', 'format_selfstudy') . ' ' . $requiredcomplete . ', ' .
+            get_string('statusavailable', 'format_selfstudy') . ' ' . $requiredopen,
+        'format-selfstudy-progressitem format-selfstudy-progress-required'
     );
-} else {
-    echo html_writer::span(get_string('nolearningmap', 'format_selfstudy'));
-}
-echo html_writer::end_div();
-echo html_writer::end_div();
+    echo html_writer::div(
+        get_string('optional', 'format_selfstudy') . ': ' .
+            get_string('statuscomplete', 'format_selfstudy') . ' ' . $optionalcomplete . ', ' .
+            get_string('statusavailable', 'format_selfstudy') . ' ' . $optionalopen,
+        'format-selfstudy-progressitem format-selfstudy-progress-optional'
+    );
+    echo html_writer::end_div();
 
-if (!empty($formatoptions['enablelistview'])) {
+    echo html_writer::start_div('format-selfstudy-actions');
+    if ($continueurl) {
+        echo html_writer::link(
+            $continueurl,
+            $continuelabel,
+            ['class' => 'btn btn-primary']
+        );
+    }
+    if ($mainmapcm) {
+        echo html_writer::link(
+            new moodle_url('/mod/learningmap/view.php', ['id' => $mainmapcm->id]),
+            get_string('learningmap', 'format_selfstudy'),
+            ['class' => 'btn btn-secondary']
+        );
+    }
+    if ($showpathui && !empty($formatoptions['allowpersonalpaths'])) {
+        echo html_writer::link(
+            new moodle_url('/course/format/selfstudy/personal_path.php', ['id' => $course->id]),
+            get_string('learningpathpersonal', 'format_selfstudy'),
+            ['class' => 'btn btn-secondary']
+        );
+    }
+    if ($showpathui && $activepath && $visibleactivepathoutline) {
+        echo html_writer::link(
+            new moodle_url('/course/format/selfstudy/accessible_path.php', ['id' => $course->id]),
+            get_string('learningpathaccessibleview', 'format_selfstudy'),
+            ['class' => 'btn btn-secondary']
+        );
+    }
+    if ($caneditsections) {
+        echo html_writer::link(
+            new moodle_url('/course/format/selfstudy/teacher_analytics.php', ['id' => $course->id]),
+            get_string('teacheranalytics', 'format_selfstudy'),
+            ['class' => 'btn btn-secondary']
+        );
+        echo html_writer::link(
+            new moodle_url('/course/format/selfstudy/path_editor.php', ['id' => $course->id]),
+            get_string('learningpatheditor', 'format_selfstudy'),
+            ['class' => 'btn btn-secondary']
+        );
+    }
+    echo html_writer::end_div();
+
+    echo html_writer::end_div();
+}
+
+if ($enablelistview) {
     echo html_writer::start_div('format-selfstudy-sections');
+    echo html_writer::tag('h2', get_string('learningpathcoursesections', 'format_selfstudy'),
+        ['class' => 'format-selfstudy-sections-title']);
 
     foreach ($learningsummaries as $summary) {
         $section = $summary->section;
@@ -147,9 +213,10 @@ if (!empty($formatoptions['enablelistview'])) {
         echo format_selfstudy_render_standard_cm_list(
             $course,
             $section,
-            !empty($formatoptions['showactivitystatus']),
+            true,
             $completion,
-            $caneditsections
+            $caneditsections,
+            $showlockedactivities
         );
         echo html_writer::end_div();
 
@@ -161,6 +228,7 @@ if (!empty($formatoptions['enablelistview'])) {
     }
 
     echo html_writer::end_div();
+}
 }
 
 /**
@@ -180,6 +248,108 @@ function format_selfstudy_get_section_title(stdClass $course, section_info $sect
 }
 
 /**
+ * Renders the main learning map notice.
+ *
+ * @param cm_info|null $mainmapcm
+ * @return string
+ */
+function format_selfstudy_render_map_notice(?cm_info $mainmapcm): string {
+    $output = html_writer::start_div('format-selfstudy-mapnotice');
+    if ($mainmapcm) {
+        $output .= html_writer::tag('strong', get_string('mainlearningmap', 'format_selfstudy') . ': ');
+        $output .= html_writer::link(
+            new moodle_url('/mod/learningmap/view.php', ['id' => $mainmapcm->id]),
+            format_string($mainmapcm->name)
+        );
+    } else {
+        $output .= html_writer::span(get_string('nolearningmap', 'format_selfstudy'));
+    }
+    $output .= html_writer::end_div();
+    return $output;
+}
+
+/**
+ * Renders anonymised teacher analytics.
+ *
+ * @param stdClass $course
+ * @param core_courseformat\base $format
+ * @return string
+ */
+function format_selfstudy_render_teacher_analytics(stdClass $course, core_courseformat\base $format): string {
+    $report = \format_selfstudy\local\teacher_analytics::get_course_report($course, $format);
+
+    $output = html_writer::start_tag('section', ['class' => 'format-selfstudy-teacheranalytics']);
+    $output .= html_writer::tag('h3', get_string('teacheranalytics', 'format_selfstudy'));
+    $output .= html_writer::div(get_string('teacheranalyticsintro', 'format_selfstudy', $report->enrolled),
+        'text-muted');
+    $output .= html_writer::start_div('format-selfstudy-teacheranalytics-grid');
+    $output .= format_selfstudy_render_teacher_analytics_list(
+        get_string('teacheranalyticsstartedsections', 'format_selfstudy'),
+        $report->frequentstartedsections,
+        'started'
+    );
+    $output .= format_selfstudy_render_teacher_analytics_list(
+        get_string('teacheranalyticsdropoffs', 'format_selfstudy'),
+        $report->dropoffsections,
+        'incomplete'
+    );
+    $output .= format_selfstudy_render_teacher_analytics_list(
+        get_string('teacheranalyticsoptionalsections', 'format_selfstudy'),
+        $report->selectedoptionalsections,
+        'selected'
+    );
+    $output .= format_selfstudy_render_teacher_analytics_list(
+        get_string('teacheranalyticsopenrequired', 'format_selfstudy'),
+        $report->openrequiredstations,
+        'open'
+    );
+    $output .= format_selfstudy_render_teacher_analytics_list(
+        get_string('teacheranalyticsbottlenecks', 'format_selfstudy'),
+        $report->bottlenecks,
+        'bottleneck'
+    );
+    $output .= html_writer::end_div();
+    $output .= html_writer::end_tag('section');
+
+    return $output;
+}
+
+/**
+ * Renders one analytics list.
+ *
+ * @param string $title
+ * @param stdClass[] $items
+ * @param string $field
+ * @return string
+ */
+function format_selfstudy_render_teacher_analytics_list(string $title, array $items, string $field): string {
+    $output = html_writer::start_div('format-selfstudy-teacheranalytics-panel');
+    $output .= html_writer::tag('h4', $title);
+
+    if (!$items) {
+        $output .= html_writer::div(get_string('teacheranalyticsnone', 'format_selfstudy'), 'text-muted');
+        $output .= html_writer::end_div();
+        return $output;
+    }
+
+    $rows = [];
+    foreach ($items as $item) {
+        $label = s($item->title);
+        if (!empty($item->modname)) {
+            $label .= html_writer::div(s($item->modname), 'text-muted small');
+        }
+        $rows[] = html_writer::tag('li',
+            html_writer::span((string)(int)$item->{$field}, 'format-selfstudy-teacheranalytics-count') .
+            html_writer::span($label, 'format-selfstudy-teacheranalytics-title')
+        );
+    }
+
+    $output .= html_writer::tag('ol', implode('', $rows), ['class' => 'format-selfstudy-teacheranalytics-list']);
+    $output .= html_writer::end_div();
+    return $output;
+}
+
+/**
  * Renders the standard Moodle activity list for a section.
  *
  * @param stdClass $course
@@ -190,11 +360,12 @@ function format_selfstudy_get_section_title(stdClass $course, section_info $sect
  * @return string
  */
 function format_selfstudy_render_standard_cm_list(stdClass $course, section_info $section, bool $showstatus = false,
-        ?completion_info $completion = null, bool $showactions = false): string {
+        ?completion_info $completion = null, bool $showactions = false, bool $showlockedactivities = true): string {
     $modinfo = get_fast_modinfo($course);
 
     if ($showstatus) {
-        return format_selfstudy_render_fallback_cm_list($course, $section, $modinfo, true, $completion, $showactions);
+        return format_selfstudy_render_fallback_cm_list($course, $section, $modinfo, true, $completion, $showactions,
+            $showlockedactivities);
     }
 
     if (function_exists('print_section')) {
@@ -207,7 +378,8 @@ function format_selfstudy_render_standard_cm_list(stdClass $course, section_info
         }
     }
 
-    return format_selfstudy_render_fallback_cm_list($course, $section, $modinfo, false, null, $showactions);
+    return format_selfstudy_render_fallback_cm_list($course, $section, $modinfo, false, null, $showactions,
+        $showlockedactivities);
 }
 
 /**
@@ -222,7 +394,8 @@ function format_selfstudy_render_standard_cm_list(stdClass $course, section_info
  * @return string
  */
 function format_selfstudy_render_fallback_cm_list(stdClass $course, section_info $section, course_modinfo $modinfo,
-        bool $showstatus = false, ?completion_info $completion = null, bool $showactions = false): string {
+        bool $showstatus = false, ?completion_info $completion = null, bool $showactions = false,
+        bool $showlockedactivities = true): string {
     if (empty($modinfo->sections[$section->section])) {
         return '';
     }
@@ -231,6 +404,10 @@ function format_selfstudy_render_fallback_cm_list(stdClass $course, section_info
     foreach ($modinfo->sections[$section->section] as $cmid) {
         $cm = $modinfo->get_cm($cmid);
         if (!$cm->uservisible || empty($cm->url)) {
+            continue;
+        }
+        if (!$showlockedactivities && $showstatus && $completion &&
+                format_selfstudy_get_cm_status_key($cm, $completion) === 'locked') {
             continue;
         }
 
@@ -247,12 +424,21 @@ function format_selfstudy_render_fallback_cm_list(stdClass $course, section_info
             $activitymain .= html_writer::div(format_text($learninggoal, FORMAT_PLAIN),
                 'format-selfstudy-activitygoal');
         }
+        $competencies = format_selfstudy_get_cm_core_competency_labels((int)$course->id, (int)$cm->id);
+        if ($competencies) {
+            $activitymain .= html_writer::div(
+                s(get_string('activitycompetencies', 'format_selfstudy') . ': ' . implode(', ', $competencies)),
+                'format-selfstudy-activitycompetencies'
+            );
+        }
         $status = '';
         if ($showstatus && $completion && format_selfstudy_is_learning_activity($cm)) {
             $statuskey = format_selfstudy_get_cm_status_key($cm, $completion);
+            $statuslabel = format_selfstudy_get_cm_status_label($cm, $completion);
             $status = html_writer::span(
-                format_selfstudy_get_cm_status_label($cm, $completion),
-                'format-selfstudy-activitystatus format-selfstudy-activitystatus-' . $statuskey
+                $statuslabel,
+                'format-selfstudy-activitystatus format-selfstudy-activitystatus-' . $statuskey,
+                ['aria-label' => get_string('learningpathaccessiblestatus', 'format_selfstudy', $statuslabel)]
             );
         }
         $content = html_writer::span($icon, 'activityiconcontainer') .
@@ -282,6 +468,633 @@ function format_selfstudy_render_fallback_cm_list(stdClass $course, section_info
         'data-for' => 'cmlist',
         'data-id' => $section->id,
     ]);
+}
+
+/**
+ * Renders the learner's active learning path choice and progress.
+ *
+ * @param stdClass $course
+ * @param stdClass[] $paths
+ * @param stdClass|null $activepath
+ * @param stdClass|null $progress
+ * @param stdClass[] $outline
+ * @param string $pathpointcolor
+ * @return string
+ */
+function format_selfstudy_render_path_choice(stdClass $course, array $paths, ?stdClass $activepath,
+        ?stdClass $progress, array $outline = [], string $pathpointcolor = '#6f1ab1'): string {
+    $renderer = new \format_selfstudy\local\base_renderer();
+    return $renderer->render_path_choice($course, $paths, $activepath, $progress, $outline, $pathpointcolor);
+}
+
+/**
+ * Renders a learner-facing builder for a personal path from course sections.
+ *
+ * @param stdClass $course
+ * @param stdClass[] $summaries
+ * @param stdClass|null $activepath
+ * @return string
+ */
+function format_selfstudy_render_personal_path_builder(stdClass $course, array $summaries, ?stdClass $activepath): string {
+    $repository = new \format_selfstudy\local\path_repository();
+    $templates = $repository->get_paths((int)$course->id, true, 0);
+    if ($templates) {
+        $template = $repository->get_path_with_items((int)$templates[0]->id);
+        if ($template) {
+            $output = format_selfstudy_render_personal_path_template_builder($course, $template, $activepath);
+            if ($output !== '') {
+                return $output;
+            }
+        }
+    }
+
+    $sections = array_values(array_filter($summaries, static function(stdClass $summary): bool {
+        return !empty($summary->cms);
+    }));
+    if (!$sections) {
+        return '';
+    }
+
+    $selectedsectionids = format_selfstudy_get_personal_path_sectionids($activepath);
+    $output = html_writer::start_tag('section', ['class' => 'format-selfstudy-personalpath']);
+    $output .= html_writer::tag('h3', get_string('learningpathpersonal', 'format_selfstudy'));
+    $output .= html_writer::tag('p', get_string('learningpathpersonalintro', 'format_selfstudy'), ['class' => 'text-muted']);
+    $output .= html_writer::start_tag('form', [
+        'method' => 'post',
+        'action' => (new moodle_url('/course/format/selfstudy/path_select.php'))->out(false),
+        'class' => 'format-selfstudy-personalpath-form',
+    ]);
+    $output .= html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'id', 'value' => $course->id]);
+    $output .= html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'action', 'value' => 'personal']);
+    $output .= html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'sesskey', 'value' => sesskey()]);
+
+    $output .= html_writer::start_div('format-selfstudy-personalpath-options');
+    foreach ($sections as $summary) {
+        $section = $summary->section;
+        $sectionid = (int)$section->id;
+        $isrequired = $summary->pathkind !== 'optional';
+        $checked = $isrequired || in_array($sectionid, $selectedsectionids, true);
+        $inputid = 'format-selfstudy-personal-section-' . $sectionid;
+        $meta = get_string($isrequired ? 'required' : 'optional', 'format_selfstudy') . ' - ' . $summary->statuslabel;
+
+        if ($isrequired) {
+            $output .= html_writer::empty_tag('input', [
+                'type' => 'hidden',
+                'name' => 'sectionids[]',
+                'value' => $sectionid,
+            ]);
+        }
+
+        $output .= html_writer::start_div('format-selfstudy-personalpath-option');
+        $output .= html_writer::empty_tag('input', [
+            'type' => 'checkbox',
+            'name' => 'sectionids[]',
+            'value' => $sectionid,
+            'id' => $inputid,
+            'checked' => $checked ? 'checked' : null,
+            'disabled' => $isrequired ? 'disabled' : null,
+        ]);
+        $output .= html_writer::start_div('format-selfstudy-personalpath-optionbody');
+        $output .= html_writer::label(format_selfstudy_get_section_title($course, $section), $inputid, false,
+            ['class' => 'format-selfstudy-personalpath-title']);
+        $output .= html_writer::div($meta, 'format-selfstudy-personalpath-meta');
+        if ($summary->learninggoal !== '') {
+            $output .= html_writer::div(format_text($summary->learninggoal, FORMAT_PLAIN),
+                'format-selfstudy-personalpath-goal');
+        }
+        $output .= html_writer::end_div();
+        $output .= html_writer::end_div();
+    }
+    $output .= html_writer::end_div();
+
+    $output .= html_writer::empty_tag('input', [
+        'type' => 'submit',
+        'class' => 'btn btn-primary',
+        'value' => get_string('learningpathpersonalbutton', 'format_selfstudy'),
+    ]);
+    $output .= html_writer::end_tag('form');
+    $output .= html_writer::end_tag('section');
+
+    return $output;
+}
+
+/**
+ * Renders a learner-facing builder based on a published milestone path.
+ *
+ * @param stdClass $course
+ * @param stdClass $template
+ * @param stdClass|null $activepath
+ * @return string
+ */
+function format_selfstudy_render_personal_path_template_builder(stdClass $course, stdClass $template,
+        ?stdClass $activepath): string {
+    $blocks = format_selfstudy_get_milestone_blocks_from_path_items($template->items ?? [], $course);
+    if (!$blocks) {
+        return '';
+    }
+
+    $selectedkeys = format_selfstudy_get_personal_path_milestone_keys($activepath);
+    $groups = format_selfstudy_group_milestone_blocks($blocks);
+    $output = html_writer::start_tag('section', ['class' => 'format-selfstudy-personalpath']);
+    $output .= html_writer::tag('h3', get_string('learningpathpersonal', 'format_selfstudy'));
+    $output .= html_writer::tag('p', get_string('learningpathpersonalintro', 'format_selfstudy'), ['class' => 'text-muted']);
+    $output .= html_writer::start_tag('form', [
+        'method' => 'post',
+        'action' => (new moodle_url('/course/format/selfstudy/path_select.php'))->out(false),
+        'class' => 'format-selfstudy-personalpath-form',
+    ]);
+    $output .= html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'id', 'value' => $course->id]);
+    $output .= html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'action', 'value' => 'personal']);
+    $output .= html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'templatepathid', 'value' => (int)$template->id]);
+    $output .= html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'sesskey', 'value' => sesskey()]);
+
+    $output .= html_writer::start_div('format-selfstudy-personalpath-options');
+    foreach ($groups as $groupindex => $group) {
+        $isalternativegroup = count($group) > 1;
+        $output .= html_writer::start_div('format-selfstudy-personalpath-optiongroup');
+        if ($isalternativegroup) {
+            $output .= html_writer::div(get_string('learningpathpersonalchooseone', 'format_selfstudy'),
+                'format-selfstudy-personalpath-meta');
+        }
+        foreach ($group as $block) {
+            $key = $block->key;
+            $checked = !$isalternativegroup || in_array($key, $selectedkeys, true) ||
+                ($isalternativegroup && !$selectedkeys && $block === $group[0]);
+            $inputid = 'format-selfstudy-personal-milestone-' . $groupindex . '-' . clean_param($key, PARAM_ALPHANUMEXT);
+            if (!$isalternativegroup) {
+                $output .= html_writer::empty_tag('input', [
+                    'type' => 'hidden',
+                    'name' => 'milestonekeys[]',
+                    'value' => $key,
+                ]);
+            }
+            $output .= html_writer::start_div('format-selfstudy-personalpath-option');
+            $output .= html_writer::empty_tag('input', [
+                'type' => 'checkbox',
+                'name' => 'milestonekeys[]',
+                'value' => $key,
+                'id' => $inputid,
+                'checked' => $checked ? 'checked' : null,
+                'disabled' => !$isalternativegroup ? 'disabled' : null,
+            ]);
+            $output .= html_writer::start_div('format-selfstudy-personalpath-optionbody');
+            $output .= html_writer::label($block->title, $inputid, false,
+                ['class' => 'format-selfstudy-personalpath-title']);
+            $output .= html_writer::div(get_string($isalternativegroup ? 'learningpathmilestonealternative' :
+                'required', 'format_selfstudy'), 'format-selfstudy-personalpath-meta');
+            $output .= html_writer::end_div();
+            $output .= html_writer::end_div();
+        }
+        $output .= html_writer::end_div();
+    }
+    $output .= html_writer::end_div();
+
+    $output .= html_writer::empty_tag('input', [
+        'type' => 'submit',
+        'class' => 'btn btn-primary',
+        'value' => get_string('learningpathpersonalbutton', 'format_selfstudy'),
+    ]);
+    $output .= html_writer::end_tag('form');
+    $output .= html_writer::end_tag('section');
+
+    return $output;
+}
+
+/**
+ * Returns section ids stored in the active personal path.
+ *
+ * @param stdClass|null $activepath
+ * @return int[]
+ */
+function format_selfstudy_get_personal_path_sectionids(?stdClass $activepath): array {
+    global $USER;
+
+    if (!$activepath || (int)($activepath->userid ?? 0) !== (int)$USER->id) {
+        return [];
+    }
+
+    $repository = new \format_selfstudy\local\path_repository();
+    $sectionids = [];
+    foreach ($repository->get_path_items((int)$activepath->id) as $item) {
+        if ($item->itemtype === \format_selfstudy\local\path_repository::ITEM_SEQUENCE && !empty($item->sectionid)) {
+            $sectionids[] = (int)$item->sectionid;
+        }
+    }
+
+    return array_values(array_unique($sectionids));
+}
+
+/**
+ * Returns milestone keys stored in the active personal path.
+ *
+ * @param stdClass|null $activepath
+ * @return string[]
+ */
+function format_selfstudy_get_personal_path_milestone_keys(?stdClass $activepath): array {
+    global $USER;
+
+    if (!$activepath || (int)($activepath->userid ?? 0) !== (int)$USER->id) {
+        return [];
+    }
+
+    $repository = new \format_selfstudy\local\path_repository();
+    $keys = [];
+    foreach ($repository->get_path_items((int)$activepath->id) as $item) {
+        if ($item->itemtype !== \format_selfstudy\local\path_repository::ITEM_MILESTONE) {
+            continue;
+        }
+        $key = format_selfstudy_get_path_item_config_value($item, 'milestonekey');
+        if ($key !== '') {
+            $keys[] = $key;
+        }
+    }
+
+    return array_values(array_unique($keys));
+}
+
+/**
+ * Returns milestone blocks from a flat path item list.
+ *
+ * @param stdClass[] $items
+ * @param stdClass|null $course
+ * @return stdClass[]
+ */
+function format_selfstudy_get_milestone_blocks_from_path_items(array $items, ?stdClass $course = null): array {
+    $children = [];
+    foreach ($items as $item) {
+        if (!empty($item->parentid)) {
+            $children[(int)$item->parentid][] = $item;
+        }
+    }
+    $rootitems = array_values(array_filter($items, static function(stdClass $item): bool {
+        return empty($item->parentid);
+    }));
+    usort($rootitems, static function(stdClass $left, stdClass $right): int {
+        return ((int)($left->sortorder ?? 0) <=> (int)($right->sortorder ?? 0)) ?:
+            ((int)($left->id ?? 0) <=> (int)($right->id ?? 0));
+    });
+
+    $blocks = [];
+    $current = null;
+    foreach ($rootitems as $item) {
+        if ($item->itemtype === \format_selfstudy\local\path_repository::ITEM_MILESTONE) {
+            if ($current) {
+                $blocks[] = format_selfstudy_prepare_milestone_block_for_personal_path($current, $course, $children);
+            }
+            $current = (object)[
+                'item' => $item,
+                'items' => [$item],
+            ];
+            continue;
+        }
+        if ($current) {
+            $current->items[] = $item;
+        }
+    }
+    if ($current) {
+        $blocks[] = format_selfstudy_prepare_milestone_block_for_personal_path($current, $course, $children);
+    }
+
+    return array_values(array_filter($blocks));
+}
+
+/**
+ * Prepares one milestone block for the personal path builder.
+ *
+ * @param stdClass $block
+ * @param stdClass|null $course
+ * @param array $children
+ * @return stdClass|null
+ */
+function format_selfstudy_prepare_milestone_block_for_personal_path(stdClass $block, ?stdClass $course,
+        array $children): ?stdClass {
+    $item = $block->item;
+    $key = format_selfstudy_get_path_item_config_value($item, 'milestonekey');
+    if ($key === '') {
+        return null;
+    }
+    $title = format_string($item->title, true);
+    $sectiontitle = format_selfstudy_get_path_item_section_title($item, $course);
+    if ($sectiontitle === '') {
+        $sectiontitle = format_selfstudy_get_path_item_section_title_from_block_items($block->items, $course, $children);
+    }
+    if ($sectiontitle !== '') {
+        $title = $sectiontitle;
+    }
+
+    return (object)[
+        'key' => $key,
+        'alternativepeers' => format_selfstudy_get_path_item_config_array($item, 'alternativepeers'),
+        'title' => $title,
+    ];
+}
+
+/**
+ * Returns a milestone section title from configdata.
+ *
+ * @param stdClass $item
+ * @param stdClass|null $course
+ * @return string
+ */
+function format_selfstudy_get_path_item_section_title(stdClass $item, ?stdClass $course): string {
+    if (!$course) {
+        return '';
+    }
+    $sectionnum = (int)format_selfstudy_get_path_item_config_value($item, 'sectionnum');
+    if ($sectionnum <= 0) {
+        return '';
+    }
+    $modinfo = get_fast_modinfo($course);
+    $section = $modinfo->get_section_info($sectionnum, IGNORE_MISSING);
+    if (!$section) {
+        return '';
+    }
+    $title = trim((string)($section->name ?? ''));
+    if ($title === '') {
+        $title = trim(get_section_name($course, $section));
+    }
+    return $title !== '' ? $title : get_string('section') . ' ' . $sectionnum;
+}
+
+/**
+ * Returns the section title of the first activity in a milestone block.
+ *
+ * @param stdClass[] $items
+ * @param stdClass|null $course
+ * @param array $children
+ * @return string
+ */
+function format_selfstudy_get_path_item_section_title_from_block_items(array $items, ?stdClass $course,
+        array $children): string {
+    if (!$course) {
+        return '';
+    }
+    $modinfo = get_fast_modinfo($course);
+    foreach ($items as $item) {
+        $cmids = [];
+        if ($item->itemtype === \format_selfstudy\local\path_repository::ITEM_STATION && !empty($item->cmid)) {
+            $cmids[] = (int)$item->cmid;
+        }
+        foreach ($children[(int)($item->id ?? 0)] ?? [] as $child) {
+            if ($child->itemtype === \format_selfstudy\local\path_repository::ITEM_STATION && !empty($child->cmid)) {
+                $cmids[] = (int)$child->cmid;
+            }
+        }
+        foreach ($cmids as $cmid) {
+            try {
+                $cm = $modinfo->get_cm($cmid);
+            } catch (Throwable $exception) {
+                continue;
+            }
+            $section = $modinfo->get_section_info((int)$cm->sectionnum, IGNORE_MISSING);
+            if ($section) {
+                $title = trim((string)($section->name ?? ''));
+                if ($title === '') {
+                    $title = trim(get_section_name($course, $section));
+                }
+                return $title !== '' ? $title : get_string('section') . ' ' . (int)$cm->sectionnum;
+            }
+        }
+    }
+
+    return '';
+}
+
+/**
+ * Groups milestone blocks by alternative peer relationships.
+ *
+ * @param stdClass[] $blocks
+ * @return array
+ */
+function format_selfstudy_group_milestone_blocks(array $blocks): array {
+    $bykey = [];
+    foreach ($blocks as $index => $block) {
+        $bykey[$block->key] = $index;
+    }
+
+    $visited = [];
+    $groups = [];
+    foreach ($blocks as $index => $block) {
+        if (!empty($visited[$index])) {
+            continue;
+        }
+        $indexes = [];
+        format_selfstudy_collect_milestone_block_group($index, $blocks, $bykey, $visited, $indexes);
+        sort($indexes);
+        $groups[] = array_map(static function(int $groupindex) use ($blocks): stdClass {
+            return $blocks[$groupindex];
+        }, $indexes);
+    }
+
+    return $groups;
+}
+
+/**
+ * Collects one connected alternative milestone group.
+ *
+ * @param int $index
+ * @param stdClass[] $blocks
+ * @param array $bykey
+ * @param array $visited
+ * @param int[] $indexes
+ */
+function format_selfstudy_collect_milestone_block_group(int $index, array $blocks, array $bykey, array &$visited,
+        array &$indexes): void {
+    if (!empty($visited[$index])) {
+        return;
+    }
+    $visited[$index] = true;
+    $indexes[] = $index;
+    foreach ($blocks[$index]->alternativepeers as $peerkey) {
+        if (isset($bykey[$peerkey])) {
+            format_selfstudy_collect_milestone_block_group($bykey[$peerkey], $blocks, $bykey, $visited, $indexes);
+        }
+    }
+}
+
+/**
+ * Returns one path item config value.
+ *
+ * @param stdClass $item
+ * @param string $name
+ * @return string
+ */
+function format_selfstudy_get_path_item_config_value(stdClass $item, string $name): string {
+    $config = json_decode((string)($item->configdata ?? ''), true);
+    return is_array($config) ? clean_param((string)($config[$name] ?? ''), PARAM_ALPHANUMEXT) : '';
+}
+
+/**
+ * Returns one path item config array.
+ *
+ * @param stdClass $item
+ * @param string $name
+ * @return string[]
+ */
+function format_selfstudy_get_path_item_config_array(stdClass $item, string $name): array {
+    $config = json_decode((string)($item->configdata ?? ''), true);
+    $values = is_array($config) && is_array($config[$name] ?? null) ? $config[$name] : [];
+    return array_values(array_filter(array_map(static function($value): string {
+        return clean_param((string)$value, PARAM_ALPHANUMEXT);
+    }, $values)));
+}
+
+/**
+ * Converts path outline entries into JSON-friendly data for JavaScript.
+ *
+ * @param stdClass[] $outline
+ * @return array
+ */
+function format_selfstudy_prepare_path_outline_for_js(array $outline): array {
+    $items = [];
+    foreach ($outline as $entry) {
+        $items[] = [
+            'id' => (int)$entry->id,
+            'type' => (string)$entry->type,
+            'level' => (int)$entry->level,
+            'title' => (string)$entry->title,
+            'status' => (string)$entry->status,
+            'statusLabel' => format_selfstudy_get_path_status_label($entry),
+            'ariaLabel' => format_selfstudy_get_path_item_aria_label($entry,
+                format_selfstudy_get_path_status_label($entry)),
+            'url' => $entry->url,
+            'actionUrl' => $entry->actionurl,
+            'actionLabel' => $entry->actionlabel,
+            'cmid' => (int)($entry->cmid ?? 0),
+            'iconUrl' => (string)($entry->iconurl ?? ''),
+            'iconAlt' => (string)($entry->iconalt ?? ''),
+            'milestoneComplete' => !empty($entry->milestonecomplete),
+            'milestoneChild' => !empty($entry->milestonechild),
+            'milestoneGroupStart' => !empty($entry->milestonegroupstart),
+            'milestoneGroupEnd' => !empty($entry->milestonegroupend),
+            'alternativeGroup' => (string)($entry->alternativegroup ?? ''),
+            'alternativeChoice' => !empty($entry->alternativechoice),
+            'alternativeChoiceIndex' => (int)($entry->alternativechoiceindex ?? 0),
+            'timeModified' => (int)($entry->timemodified ?? 0),
+            'availableInfo' => (string)($entry->availableinfo ?? ''),
+            'competencies' => array_values((array)($entry->competencies ?? [])),
+        ];
+    }
+
+    return $items;
+}
+
+/**
+ * Filters locked path outline entries for display only.
+ *
+ * @param stdClass[] $outline
+ * @param bool $showlockedactivities
+ * @return stdClass[]
+ */
+function format_selfstudy_filter_locked_outline(array $outline, bool $showlockedactivities): array {
+    if ($showlockedactivities) {
+        return $outline;
+    }
+
+    return array_values(array_filter($outline, static function(stdClass $entry): bool {
+        return $entry->status !== 'locked';
+    }));
+}
+
+/**
+ * Renders the learner's recent and upcoming path movement.
+ *
+ * @param stdClass[] $outline
+ * @return string
+ */
+function format_selfstudy_render_learning_trace(array $outline): string {
+    $renderer = new \format_selfstudy\local\base_renderer();
+    return $renderer->render_learning_trace($outline);
+}
+
+/**
+ * Renders one trace list.
+ *
+ * @param string $title
+ * @param stdClass[] $items
+ * @param string $type
+ * @return string
+ */
+function format_selfstudy_render_learning_trace_list(string $title, array $items, string $type): string {
+    $renderer = new \format_selfstudy\local\base_renderer();
+    return $renderer->render_learning_trace_list($title, $items, $type);
+}
+
+/**
+ * Renders the active path as an explicit accessible alternative to the map.
+ *
+ * @param stdClass $activepath
+ * @param stdClass|null $progress
+ * @param stdClass[] $outline
+ * @param cm_info|null $mainmapcm
+ * @param string $pathpointcolor
+ * @return string
+ */
+function format_selfstudy_render_accessible_path_view(stdClass $activepath, ?stdClass $progress, array $outline,
+        ?cm_info $mainmapcm, string $pathpointcolor = '#6f1ab1', bool $showlockedactivities = true): string {
+    $renderer = new \format_selfstudy\local\base_renderer();
+    return $renderer->render_accessible_path_view($activepath, $progress, $outline, $mainmapcm, $pathpointcolor,
+        $showlockedactivities);
+}
+
+/**
+ * Finds previous and next stations for the accessible path navigation.
+ *
+ * @param stdClass[] $outline
+ * @return array
+ */
+function format_selfstudy_get_path_outline_navigation(array $outline): array {
+    $renderer = new \format_selfstudy\local\base_renderer();
+    return $renderer->get_path_outline_navigation($outline);
+}
+
+/**
+ * Renders a compact learning path outline.
+ *
+ * @param stdClass[] $outline
+ * @param string $class
+ * @param string $pathpointcolor
+ * @return string
+ */
+function format_selfstudy_render_path_outline(array $outline, string $class = 'format-selfstudy-pathoutline',
+        string $pathpointcolor = '#6f1ab1'): string {
+    $renderer = new \format_selfstudy\local\base_renderer();
+    return $renderer->render_path_outline($outline, $class, $pathpointcolor);
+}
+
+/**
+ * Renders a single learning path outline entry.
+ *
+ * @param stdClass $entry
+ * @param bool $uselevelmargin
+ * @return string
+ */
+function format_selfstudy_render_path_outline_entry(stdClass $entry, bool $uselevelmargin = true): string {
+    $renderer = new \format_selfstudy\local\base_renderer();
+    return $renderer->render_path_outline_entry($entry, $uselevelmargin);
+}
+
+/**
+ * Returns a localized path status label.
+ *
+ * @param stdClass $entry
+ * @return string
+ */
+function format_selfstudy_get_path_status_label(stdClass $entry): string {
+    $renderer = new \format_selfstudy\local\base_renderer();
+    return $renderer->get_path_status_label($entry);
+}
+
+/**
+ * Returns a compact screen reader label for one path item.
+ *
+ * @param stdClass $entry
+ * @param string $statuslabel
+ * @return string
+ */
+function format_selfstudy_get_path_item_aria_label(stdClass $entry, string $statuslabel): string {
+    $renderer = new \format_selfstudy\local\base_renderer();
+    return $renderer->get_path_item_aria_label($entry, $statuslabel);
 }
 
 /**
@@ -559,6 +1372,36 @@ function format_selfstudy_find_next_cm(array $summaries): ?cm_info {
         if ($summary->nextcm) {
             return $summary->nextcm;
         }
+    }
+
+    return null;
+}
+
+/**
+ * Returns the primary continue URL for the course dashboard.
+ *
+ * @param stdClass $course
+ * @param cm_info|null $mainmapcm
+ * @param stdClass|null $activepathprogress
+ * @param cm_info|null $fallbackcm
+ * @return moodle_url|null
+ */
+function format_selfstudy_get_continue_url(stdClass $course, ?cm_info $mainmapcm, ?stdClass $activepathprogress,
+        ?cm_info $fallbackcm): ?moodle_url {
+    if (!empty($activepathprogress->nexturl)) {
+        return new moodle_url($activepathprogress->nexturl);
+    }
+
+    if (!empty($activepathprogress->total) && $activepathprogress->complete >= $activepathprogress->total) {
+        return new moodle_url('/course/view.php', ['id' => $course->id]);
+    }
+
+    if ($mainmapcm) {
+        return new moodle_url('/mod/learningmap/view.php', ['id' => $mainmapcm->id]);
+    }
+
+    if ($fallbackcm) {
+        return new moodle_url('/mod/' . $fallbackcm->modname . '/view.php', ['id' => $fallbackcm->id]);
     }
 
     return null;

@@ -42,6 +42,1773 @@
     background: #f7fafc;
 }
 
+.format-selfstudy-pathchoice {
+    --format-selfstudy-path-color: #6f1ab1;
+    display: grid;
+    gap: .75rem;
+    border: 1px solid #d7dfe8;
+    border-radius: .5rem;
+    padding: 1rem;
+    background: #fff;
+}
+
+.format-selfstudy-pathchoice-summary {
+    margin: 0;
+    cursor: pointer;
+    color: #475569;
+    font-weight: 700;
+    letter-spacing: 0;
+}
+
+.format-selfstudy-pathchoice-name {
+    font-weight: 700;
+    color: #1f2937;
+}
+
+.format-selfstudy-pathchoice-progresslabel,
+.format-selfstudy-pathchoice-intro {
+    color: #475569;
+}
+
+.format-selfstudy-pathchoice-meter {
+    overflow: hidden;
+    width: 100%;
+    height: .65rem;
+    border-radius: 999px;
+    background: #e2e8f0;
+}
+
+.format-selfstudy-pathchoice-meterbar {
+    height: 100%;
+    border-radius: inherit;
+    background: var(--format-selfstudy-path-color, #6f1ab1);
+}
+
+.format-selfstudy-pathchoice-actions,
+.format-selfstudy-pathchoice-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    align-items: center;
+}
+
+.format-selfstudy-pathchoice-form {
+    margin: 0;
+}
+
+.format-selfstudy-pathoutline {
+    --format-selfstudy-path-color: #6f1ab1;
+    display: grid;
+    gap: 0;
+    margin: .25rem 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.format-selfstudy-pathoutline-item {
+    position: relative;
+    display: grid;
+    grid-template-columns: 2.25rem minmax(0, 1fr) auto auto;
+    gap: .35rem .5rem;
+    align-items: center;
+    min-height: 2.85rem;
+    color: #475569;
+}
+
+.format-selfstudy-pathoutline-item::before {
+    position: absolute;
+    top: 1.42rem;
+    bottom: -1.42rem;
+    left: .8rem;
+    width: .2rem;
+    border-radius: 999px;
+    background: var(--format-selfstudy-path-color, #6f1ab1);
+    opacity: .28;
+    content: "";
+}
+
+.format-selfstudy-pathoutline-item:last-child::before {
+    display: none;
+}
+
+.format-selfstudy-pathoutline-groupend::before,
+.format-selfstudy-pathoutline-type-milestone::before {
+    display: none;
+}
+
+.format-selfstudy-pathoutline-item:focus {
+    outline: .2rem solid rgba(59, 130, 246, .45);
+    outline-offset: .15rem;
+}
+
+.format-selfstudy-pathoutline-dot {
+    position: relative;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.6rem;
+    height: 1.6rem;
+    border-radius: 50%;
+    background: #eef2f7;
+    color: #94a3b8;
+    font-size: 1rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.format-selfstudy-pathoutline-icon,
+.format-selfstudy-activitypath-icon {
+    display: block;
+    width: 1rem;
+    height: 1rem;
+    object-fit: contain;
+}
+
+.format-selfstudy-pathoutline-title {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.format-selfstudy-pathoutline-type-milestone {
+    margin-top: 1.25rem !important;
+    margin-bottom: .45rem !important;
+    border-bottom: 1px solid #d7dfe8;
+    padding-bottom: .45rem;
+    min-height: 2.25rem;
+    color: #1f2937;
+    font-weight: 800;
+}
+
+.format-selfstudy-pathoutline-type-milestone:first-child {
+    margin-top: 0 !important;
+}
+
+.format-selfstudy-pathoutline-type-milestone .format-selfstudy-pathoutline-title {
+    font-weight: 800;
+}
+
+.format-selfstudy-pathoutline-type-milestone .format-selfstudy-pathoutline-status {
+    display: none;
+}
+
+.format-selfstudy-pathoutline-type-milestone .format-selfstudy-pathoutline-dot {
+    border: 2px solid #cbd5e1;
+    background: #fff;
+}
+
+.format-selfstudy-pathoutline-milestonecomplete .format-selfstudy-pathoutline-dot {
+    border-color: var(--format-selfstudy-path-color, #6f1ab1);
+    background: var(--format-selfstudy-path-color, #6f1ab1);
+    color: #fff;
+}
+
+.format-selfstudy-pathoutline-milestonecomplete .format-selfstudy-pathoutline-dot::before {
+    content: "✓";
+}
+
+.format-selfstudy-pathoutline-status {
+    border-radius: 999px;
+    padding: .12rem .5rem;
+    font-size: .72rem;
+    font-weight: 700;
+    background: #edf2f7;
+    color: #334155;
+}
+
+.format-selfstudy-pathoutline-action {
+    white-space: nowrap;
+}
+
+.format-selfstudy-pathoutline-info {
+    grid-column: 2 / -1;
+    min-width: 0;
+    color: #64748b;
+    font-size: .82rem;
+    overflow-wrap: anywhere;
+}
+
+.format-selfstudy-pathoutline-complete .format-selfstudy-pathoutline-dot {
+    background: var(--format-selfstudy-path-color, #6f1ab1);
+    color: #fff;
+}
+
+.format-selfstudy-pathoutline-complete .format-selfstudy-pathoutline-dot::before {
+    content: "✓";
+}
+
+.format-selfstudy-pathoutline-complete .format-selfstudy-pathoutline-status {
+    background: #dcfce7;
+    color: #14532d;
+}
+
+.format-selfstudy-pathoutline-current .format-selfstudy-pathoutline-dot {
+    background: var(--format-selfstudy-path-color, #6f1ab1);
+    color: #fff;
+    box-shadow: 0 0 0 .35rem color-mix(in srgb, var(--format-selfstudy-path-color, #6f1ab1) 18%, transparent);
+}
+
+.format-selfstudy-pathoutline-current .format-selfstudy-pathoutline-icon,
+.format-selfstudy-activitypath-current .format-selfstudy-activitypath-icon,
+.format-selfstudy-activitypath-recommended .format-selfstudy-activitypath-icon {
+    filter: brightness(0) invert(1);
+}
+
+.format-selfstudy-pathoutline-current .format-selfstudy-pathoutline-status {
+    background: var(--format-selfstudy-path-color, #6f1ab1);
+    color: #fff;
+}
+
+.format-selfstudy-pathoutline-missing .format-selfstudy-pathoutline-dot,
+.format-selfstudy-pathoutline-missing .format-selfstudy-pathoutline-status {
+    background: #fee2e2;
+    color: #7f1d1d;
+}
+
+.format-selfstudy-pathoutline-locked .format-selfstudy-pathoutline-dot,
+.format-selfstudy-pathoutline-locked .format-selfstudy-pathoutline-status {
+    background: #e2e8f0;
+    color: #475569;
+}
+
+.format-selfstudy-pathoutline-started .format-selfstudy-pathoutline-dot,
+.format-selfstudy-pathoutline-started .format-selfstudy-pathoutline-status {
+    background: color-mix(in srgb, var(--format-selfstudy-path-color, #6f1ab1) 18%, #fff);
+    color: #1f2937;
+}
+
+.format-selfstudy-pathoutline-recommended .format-selfstudy-pathoutline-dot,
+.format-selfstudy-pathoutline-recommended .format-selfstudy-pathoutline-status {
+    background: color-mix(in srgb, var(--format-selfstudy-path-color, #6f1ab1) 16%, #fff);
+    color: #78350f;
+}
+
+.format-selfstudy-pathoutline-review .format-selfstudy-pathoutline-dot,
+.format-selfstudy-pathoutline-review .format-selfstudy-pathoutline-status {
+    background: #ffedd5;
+    color: #7c2d12;
+}
+
+.format-selfstudy-pathoutline-type-alternative {
+    font-weight: 700;
+}
+
+.format-selfstudy-pathoutline-alternativegroup {
+    display: grid;
+    gap: .35rem;
+    margin: .35rem 0 .55rem;
+    padding: 0;
+    list-style: none;
+    color: #475569;
+}
+
+.format-selfstudy-pathoutline-alternativeheading {
+    font-size: .78rem;
+    font-weight: 800;
+}
+
+.format-selfstudy-pathoutline-alternatives {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+    gap: .45rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.format-selfstudy-pathoutline-alternativechoice {
+    min-height: 3rem;
+    border: 1px solid #d7dfe8;
+    border-radius: .35rem;
+    padding: .45rem;
+    background: #fff;
+}
+
+.format-selfstudy-pathoutline-alternativechoice::before {
+    display: none;
+}
+
+.format-selfstudy-pathoutline-alternativechoice .format-selfstudy-pathoutline-info {
+    grid-column: 1 / -1;
+}
+
+.format-selfstudy-activitypath {
+    --format-selfstudy-path-color: #6f1ab1;
+    display: grid;
+    gap: .75rem;
+    margin: 0 0 1rem;
+    border: 1px solid #d7dfe8;
+    border-radius: .5rem;
+    padding: 1rem;
+    background: #fff;
+}
+
+.format-selfstudy-activitypath h2 {
+    margin: 0;
+    font-size: 1rem;
+    letter-spacing: 0;
+}
+
+.format-selfstudy-activitypath-list {
+    display: grid;
+    gap: 0;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.format-selfstudy-activitypath-item {
+    position: relative;
+    display: grid;
+    grid-template-columns: 2.25rem minmax(0, 1fr);
+    gap: .25rem .5rem;
+    align-items: center;
+    min-height: 3rem;
+    padding-left: calc(var(--format-selfstudy-path-level, 0) * 1rem);
+    color: #64748b;
+}
+
+.format-selfstudy-activitypath-item::before {
+    position: absolute;
+    top: 1.5rem;
+    bottom: -1.5rem;
+    left: calc((var(--format-selfstudy-path-level, 0) * 1rem) + .8rem);
+    width: .2rem;
+    border-radius: 999px;
+    background: var(--format-selfstudy-path-color, #6f1ab1);
+    opacity: .28;
+    content: "";
+}
+
+.format-selfstudy-activitypath-item:last-child::before {
+    display: none;
+}
+
+.format-selfstudy-activitypath-groupend::before,
+.format-selfstudy-activitypath-type-milestone::before {
+    display: none;
+}
+
+.format-selfstudy-activitypath-dot {
+    position: relative;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.6rem;
+    height: 1.6rem;
+    border-radius: 50%;
+    background: #eef2f7;
+    color: #94a3b8;
+    font-size: 1rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.format-selfstudy-activitypath-title {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    color: inherit;
+}
+
+.format-selfstudy-activitypath-type-milestone {
+    margin-top: 1.25rem;
+    margin-bottom: .45rem;
+    border-bottom: 1px solid #d7dfe8;
+    padding-bottom: .45rem;
+    min-height: 2.25rem;
+    color: #1f2937;
+    font-weight: 800;
+}
+
+.format-selfstudy-activitypath-type-milestone:first-child {
+    margin-top: 0;
+}
+
+.format-selfstudy-activitypath-type-milestone .format-selfstudy-activitypath-title {
+    font-weight: 800;
+}
+
+.format-selfstudy-activitypath-type-milestone .format-selfstudy-activitypath-status {
+    display: none;
+}
+
+.format-selfstudy-activitypath-type-milestone .format-selfstudy-activitypath-dot {
+    border: 2px solid #cbd5e1;
+    background: #fff;
+}
+
+.format-selfstudy-activitypath-milestonecomplete .format-selfstudy-activitypath-dot {
+    border-color: var(--format-selfstudy-path-color, #6f1ab1);
+    background: var(--format-selfstudy-path-color, #6f1ab1);
+    color: #fff;
+}
+
+.format-selfstudy-activitypath-milestonecomplete .format-selfstudy-activitypath-dot::before {
+    content: "✓";
+}
+
+.format-selfstudy-activitypath-action {
+    grid-column: 2;
+    font-size: .78rem;
+}
+
+.format-selfstudy-activitypath-status,
+.format-selfstudy-activitypath-info {
+    grid-column: 2;
+    min-width: 0;
+    overflow-wrap: anywhere;
+    font-size: .76rem;
+}
+
+.format-selfstudy-activitypath-status {
+    width: max-content;
+    max-width: 100%;
+    border-radius: 999px;
+    padding: .1rem .45rem;
+    background: #edf2f7;
+    color: #334155;
+    font-weight: 700;
+}
+
+.format-selfstudy-activitypath-info {
+    color: #64748b;
+}
+
+.format-selfstudy-activitypath-complete {
+    color: #14532d;
+}
+
+.format-selfstudy-activitypath-complete .format-selfstudy-activitypath-dot {
+    background: var(--format-selfstudy-path-color, #6f1ab1);
+    color: #fff;
+}
+
+.format-selfstudy-activitypath-complete .format-selfstudy-activitypath-dot::before {
+    content: "✓";
+}
+
+.format-selfstudy-activitypath-current {
+    color: var(--format-selfstudy-path-color, #6f1ab1);
+    font-weight: 700;
+}
+
+.format-selfstudy-activitypath-current .format-selfstudy-activitypath-dot {
+    background: var(--format-selfstudy-path-color, #6f1ab1);
+    color: #fff;
+    box-shadow: 0 0 0 .35rem color-mix(in srgb, var(--format-selfstudy-path-color, #6f1ab1) 18%, transparent);
+}
+
+.format-selfstudy-activitypath-missing {
+    color: #7f1d1d;
+}
+
+.format-selfstudy-activitypath-missing .format-selfstudy-activitypath-dot {
+    background: #ef4444;
+}
+
+.format-selfstudy-activitypath-locked {
+    color: #64748b;
+}
+
+.format-selfstudy-activitypath-locked .format-selfstudy-activitypath-dot {
+    background: #94a3b8;
+}
+
+.format-selfstudy-activitypath-started {
+    color: #1e40af;
+}
+
+.format-selfstudy-activitypath-started .format-selfstudy-activitypath-dot {
+    background: color-mix(in srgb, var(--format-selfstudy-path-color, #6f1ab1) 28%, #fff);
+    color: #1f2937;
+}
+
+.format-selfstudy-activitypath-recommended {
+    color: #78350f;
+    font-weight: 700;
+}
+
+.format-selfstudy-activitypath-recommended .format-selfstudy-activitypath-dot {
+    background: var(--format-selfstudy-path-color, #6f1ab1);
+    color: #fff;
+    box-shadow: 0 0 0 .35rem color-mix(in srgb, var(--format-selfstudy-path-color, #6f1ab1) 18%, transparent);
+}
+
+.format-selfstudy-activitypath-review {
+    color: #7c2d12;
+}
+
+.format-selfstudy-activitypath-review .format-selfstudy-activitypath-dot {
+    background: #f97316;
+}
+
+.format-selfstudy-pathcontinue {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .75rem;
+    align-items: center;
+    margin: 2rem 0 0;
+    border-top: 1px solid #d7dfe8;
+    padding-top: 1rem;
+}
+
+.format-selfstudy-pathcontinue-button {
+    min-width: 10rem;
+}
+
+.format-selfstudy-pathcontinue-target {
+    min-width: 0;
+    color: #475569;
+    overflow-wrap: anywhere;
+}
+
+.format-selfstudy-accessiblepath {
+    display: grid;
+    gap: .75rem;
+    border: 1px solid #d7dfe8;
+    border-radius: .5rem;
+    padding: 1rem;
+    background: #fff;
+}
+
+.format-selfstudy-accessiblepath h3 {
+    margin: 0;
+}
+
+.format-selfstudy-accessiblepath-progress {
+    font-weight: 700;
+}
+
+.format-selfstudy-accessiblepath-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    align-items: center;
+}
+
+.format-selfstudy-accessiblepath-list {
+    display: grid;
+    gap: .35rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.format-selfstudy-activitypath-type-alternative {
+    font-weight: 700;
+}
+
+.format-selfstudy-activitypath-courseindex {
+    gap: .5rem;
+    margin: .5rem;
+    border-color: transparent;
+    border-bottom-color: #d7dfe8;
+    border-radius: 0;
+    padding: .5rem .25rem .75rem;
+    background: transparent;
+}
+
+.format-selfstudy-activitypath-courseindex h2 {
+    padding: 0 .5rem;
+    color: #475569;
+    font-size: .82rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.format-selfstudy-activitypath-courseindex .format-selfstudy-activitypath-item {
+    min-height: 1.8rem;
+    border-radius: .35rem;
+    padding-right: .35rem;
+}
+
+.format-selfstudy-activitypath-courseindex .format-selfstudy-activitypath-current {
+    background: rgba(111, 26, 177, .08);
+}
+
+body.format-selfstudy-has-courseindexpath #courseindex > .courseindex:not(.format-selfstudy-activitypath),
+body.format-selfstudy-has-courseindexpath #courseindex > #course-index,
+body.format-selfstudy-has-courseindexpath #courseindex > [role="tree"],
+body.format-selfstudy-has-courseindexpath #courseindex-content > .courseindex:not(.format-selfstudy-activitypath),
+body.format-selfstudy-has-courseindexpath #courseindex-content > #course-index,
+body.format-selfstudy-has-courseindexpath #courseindex-content > [role="tree"] {
+    display: none;
+}
+
+body.format-selfstudy-hide-courseindex #theme_boost-drawers-courseindex,
+body.format-selfstudy-hide-courseindex .drawer-left-toggle,
+body.format-selfstudy-hide-courseindex [data-target="theme_boost-drawers-courseindex"],
+body.format-selfstudy-hide-courseindex [data-target="#theme_boost-drawers-courseindex"] {
+    display: none !important;
+}
+
+body.format-selfstudy-hide-courseindex.drawer-open-index {
+    padding-left: 0;
+}
+
+body.format-selfstudy-hide-courseindex #page.drawers,
+body.format-selfstudy-hide-courseindex #page.drawers.show-drawer-left {
+    margin-left: 0;
+}
+
+@media (min-width: 992px) {
+    .format-selfstudy-activitylayout {
+        display: grid;
+        grid-template-columns: minmax(14rem, 18rem) minmax(0, 1fr);
+        gap: 1.25rem;
+        align-items: start;
+        width: 100%;
+        max-width: 100%;
+    }
+
+    .format-selfstudy-activitylayout > [role="main"],
+    .format-selfstudy-activitylayout > .format-selfstudy-activitypath {
+        min-width: 0;
+    }
+
+    .format-selfstudy-activitylayout > .format-selfstudy-activitypath {
+        position: sticky;
+        z-index: 2;
+        top: 5rem;
+        width: auto;
+        max-height: calc(100vh - 6rem);
+        margin: 0;
+        overflow: auto;
+    }
+}
+
+.format-selfstudy-patheditor {
+    display: grid;
+    gap: 1rem;
+    width: 100%;
+    max-width: 100%;
+}
+
+.format-selfstudy-learningtrace {
+    display: grid;
+    gap: .75rem;
+    border: 1px solid #d7dfe8;
+    border-radius: .5rem;
+    padding: 1rem;
+    background: #fff;
+}
+
+.format-selfstudy-learningtrace h3,
+.format-selfstudy-learningtrace h4,
+.format-selfstudy-sections-title {
+    margin: 0;
+}
+
+.format-selfstudy-learningtrace-grid {
+    display: grid;
+    gap: .75rem;
+    grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+}
+
+.format-selfstudy-learningtrace-panel {
+    min-width: 0;
+}
+
+.format-selfstudy-learningtrace-list {
+    display: grid;
+    gap: .35rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.format-selfstudy-learningtrace-list li {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: .5rem;
+    align-items: center;
+}
+
+.format-selfstudy-learningtrace-status {
+    border-radius: 999px;
+    padding: .12rem .5rem;
+    background: #edf2f7;
+    color: #334155;
+    font-size: .72rem;
+    font-weight: 700;
+}
+
+.format-selfstudy-learningtrace-title {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.format-selfstudy-personalpath {
+    display: grid;
+    gap: .75rem;
+    border: 1px solid #d7dfe8;
+    border-radius: .5rem;
+    padding: 1rem;
+    background: #fff;
+}
+
+.format-selfstudy-personalpath h3 {
+    margin: 0;
+}
+
+.format-selfstudy-personalpath-form,
+.format-selfstudy-personalpath-options {
+    display: grid;
+    gap: .75rem;
+}
+
+.format-selfstudy-personalpath-optiongroup {
+    display: grid;
+    gap: .5rem;
+    grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+}
+
+.format-selfstudy-personalpath-optiongroup > .format-selfstudy-personalpath-meta {
+    grid-column: 1 / -1;
+}
+
+.format-selfstudy-personalpath-option {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: .65rem;
+    align-items: start;
+    border: 1px solid #edf2f7;
+    border-radius: .35rem;
+    padding: .75rem;
+    background: #f8fafc;
+}
+
+.format-selfstudy-personalpath-optionbody {
+    display: grid;
+    gap: .25rem;
+    min-width: 0;
+}
+
+.format-selfstudy-personalpath-title {
+    margin: 0;
+    color: #1f2937;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+}
+
+.format-selfstudy-personalpath-meta {
+    color: #64748b;
+    font-size: .82rem;
+}
+
+.format-selfstudy-personalpath-goal {
+    color: #334155;
+    font-size: .9rem;
+}
+
+.format-selfstudy-teacheranalytics {
+    display: grid;
+    gap: .75rem;
+    border: 1px solid #d7dfe8;
+    border-radius: .5rem;
+    padding: 1rem;
+    background: #fff;
+}
+
+.format-selfstudy-teacheranalytics h3,
+.format-selfstudy-teacheranalytics h4 {
+    margin: 0;
+}
+
+.format-selfstudy-teacheranalytics-grid {
+    display: grid;
+    gap: .75rem;
+    grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+}
+
+.format-selfstudy-teacheranalytics-panel {
+    min-width: 0;
+}
+
+.format-selfstudy-teacheranalytics-list {
+    display: grid;
+    gap: .4rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.format-selfstudy-teacheranalytics-list li {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: .5rem;
+    align-items: start;
+}
+
+.format-selfstudy-teacheranalytics-count {
+    min-width: 2.25rem;
+    border-radius: 999px;
+    padding: .12rem .55rem;
+    background: #edf2f7;
+    color: #334155;
+    text-align: center;
+    font-weight: 700;
+}
+
+.format-selfstudy-teacheranalytics-title {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.format-selfstudy-patheditor-toolbar,
+.format-selfstudy-patheditor-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    align-items: center;
+}
+
+.format-selfstudy-patheditor-select {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    align-items: center;
+    margin: 0;
+}
+
+.format-selfstudy-patheditor-publishstatus {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: fit-content;
+    border: 1px solid #cbd5e1;
+    border-radius: 999px;
+    padding: .25rem .65rem;
+    background: #f8fafc;
+    color: #475569;
+    font-size: .82rem;
+    font-weight: 700;
+}
+
+.format-selfstudy-patheditor-form {
+    display: grid;
+    gap: 1rem;
+}
+
+.format-selfstudy-patheditor-details,
+.format-selfstudy-patheditor-activitysettings,
+.format-selfstudy-patheditor-activities,
+.format-selfstudy-patheditor-alternatives,
+.format-selfstudy-patheditor-milestones,
+.format-selfstudy-patheditor-palette,
+.format-selfstudy-patheditor-canvas,
+.format-selfstudy-pathtransfer,
+.format-selfstudy-pathdiagnosis {
+    border: 1px solid #d7dfe8;
+    border-radius: .5rem;
+    padding: 1rem;
+    background: #fff;
+}
+
+.format-selfstudy-patheditor-activitysettings summary {
+    cursor: pointer;
+    font-size: 1.15rem;
+    font-weight: 700;
+}
+
+.format-selfstudy-patheditor-activitysettingsintro {
+    margin: .5rem 0 0;
+    color: #475569;
+}
+
+.format-selfstudy-patheditor-activitysettingsnotice {
+    margin-top: .75rem;
+    border: 1px solid #fde68a;
+    border-radius: .35rem;
+    padding: .5rem .65rem;
+    background: #fffbeb;
+    color: #92400e;
+    font-size: .9rem;
+    font-weight: 700;
+}
+
+.format-selfstudy-patheditor-activitysettingslist {
+    display: grid;
+    gap: .75rem;
+    margin-top: .85rem;
+}
+
+@media (min-width: 1100px) {
+    .format-selfstudy-patheditor-activitysettingslist {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+.format-selfstudy-patheditor-activitysettingsitem {
+    display: grid;
+    grid-template-columns: 1.75rem minmax(0, 1fr) minmax(6rem, .45fr);
+    gap: .45rem .65rem;
+    align-items: start;
+    border: 1px solid #e2e8f0;
+    border-radius: .35rem;
+    padding: .65rem;
+    background: #f8fafc;
+}
+
+.format-selfstudy-patheditor-activitysettingsheading {
+    min-width: 0;
+}
+
+.format-selfstudy-patheditor-activitysettingsname {
+    font-weight: 700;
+    overflow-wrap: anywhere;
+}
+
+.format-selfstudy-patheditor-activitysettingsitem label {
+    grid-column: 2 / -1;
+    margin: .15rem 0 0;
+    color: #475569;
+    font-size: .82rem;
+    font-weight: 700;
+}
+
+.format-selfstudy-patheditor-activitysettingsitem input,
+.format-selfstudy-patheditor-activitysettingsitem select,
+.format-selfstudy-patheditor-activitysettingsitem textarea,
+.format-selfstudy-patheditor-activitysettingsitem > .format-selfstudy-patheditor-cardsettings {
+    grid-column: 2 / -1;
+}
+
+.format-selfstudy-patheditor-completionrules {
+    grid-column: 2 / -1;
+    display: grid;
+    gap: .35rem;
+    border: 1px solid #dbeafe;
+    border-radius: .35rem;
+    padding: .55rem;
+    background: #eff6ff;
+}
+
+.format-selfstudy-patheditor-completionrulesheading {
+    color: #1e3a8a;
+    font-size: .82rem;
+    font-weight: 700;
+}
+
+.format-selfstudy-patheditor-completionrules label {
+    grid-column: auto;
+    margin: 0;
+}
+
+.format-selfstudy-patheditor-checkbox {
+    display: flex;
+    gap: .45rem;
+    align-items: center;
+    min-height: 1.75rem;
+}
+
+.format-selfstudy-patheditor-checkbox input[type="checkbox"] {
+    flex: 0 0 auto;
+    width: 1rem;
+    height: 1rem;
+    margin: 0;
+}
+
+.format-selfstudy-patheditor-checkbox label {
+    color: #334155;
+    font-size: .86rem;
+    font-weight: 600;
+}
+
+.format-selfstudy-patheditor-gridwrap {
+    --format-selfstudy-patheditor-zoom: 1;
+    display: grid;
+    gap: 1rem;
+    align-items: start;
+}
+
+@media (min-width: 960px) {
+    .format-selfstudy-patheditor-gridwrap {
+        grid-template-columns: minmax(15rem, 20rem) minmax(0, 1fr);
+    }
+}
+
+.format-selfstudy-patheditor-palette,
+.format-selfstudy-patheditor-canvas,
+.format-selfstudy-patheditor-milestone,
+.format-selfstudy-patheditor-rows {
+    display: grid;
+    gap: .75rem;
+    position: relative;
+}
+
+.format-selfstudy-patheditor-rows::before {
+    position: absolute;
+    top: .5rem;
+    bottom: .5rem;
+    left: calc(.85rem * var(--format-selfstudy-patheditor-zoom, 1));
+    width: .2rem;
+    border-radius: 999px;
+    background: #cbd5e1;
+    content: "";
+    pointer-events: none;
+}
+
+.format-selfstudy-patheditor-rows:has(.format-selfstudy-patheditor-rowempty:only-child)::before {
+    display: none;
+}
+
+.format-selfstudy-patheditor-palette h3,
+.format-selfstudy-patheditor-canvas h3 {
+    margin: 0;
+}
+
+.format-selfstudy-patheditor-palettefilterwrap {
+    display: grid;
+    gap: .25rem;
+}
+
+@media (min-width: 640px) {
+    .format-selfstudy-patheditor-palettefilterwrap {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .format-selfstudy-patheditor-palettefilterwrap label:first-child,
+    .format-selfstudy-patheditor-palettefilterwrap .format-selfstudy-patheditor-palettefilter {
+        grid-column: 1 / -1;
+    }
+}
+
+.format-selfstudy-patheditor-palettefilterwrap label {
+    margin: 0;
+    color: #475569;
+    font-size: .82rem;
+    font-weight: 700;
+}
+
+.format-selfstudy-patheditor-paletteitems {
+    display: grid;
+    gap: .5rem;
+    max-height: 34rem;
+    overflow: auto;
+}
+
+.format-selfstudy-patheditor-canvasbar,
+.format-selfstudy-patheditor-milestonehead {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.format-selfstudy-patheditor-viewcontrols {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: .25rem;
+    align-items: center;
+}
+
+.format-selfstudy-patheditor-milestonegrid {
+    display: flex;
+    gap: calc(.75rem * var(--format-selfstudy-patheditor-zoom, 1));
+    min-height: 18rem;
+    overflow: auto;
+    padding-bottom: .35rem;
+    scroll-snap-type: x proximity;
+}
+
+.format-selfstudy-patheditor-milestone {
+    flex: 0 0 min(calc(24rem * var(--format-selfstudy-patheditor-zoom, 1)), 86vw);
+    align-content: start;
+    border: 1px solid #cbd5e1;
+    border-radius: .35rem;
+    padding: calc(.75rem * var(--format-selfstudy-patheditor-zoom, 1));
+    background: #f8fafc;
+    scroll-snap-align: start;
+}
+
+.format-selfstudy-patheditor-milestonealternative {
+    border-color: var(--format-selfstudy-patheditor-altcolor, #2563eb);
+    box-shadow: inset 0 .25rem 0 var(--format-selfstudy-patheditor-altcolor, #2563eb);
+}
+
+.format-selfstudy-patheditor-milestonerequired {
+    box-shadow: inset 0 .25rem 0 #64748b;
+}
+
+.format-selfstudy-patheditor-milestonehaswarning {
+    border-color: #c2410c;
+}
+
+.format-selfstudy-patheditor-draghandle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    min-height: 2rem;
+    border: 1px solid #cbd5e1;
+    border-radius: .25rem;
+    background: #fff;
+    color: #475569;
+    cursor: grab;
+    font-weight: 700;
+}
+
+.format-selfstudy-patheditor-milestonetitle {
+    min-width: 12rem;
+    flex: 1 1 12rem;
+    font-weight: 700;
+}
+
+.format-selfstudy-patheditor-milestonestatus {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 999px;
+    padding: 0 .6rem;
+    background: #fff;
+    color: #475569;
+    font-size: .78rem;
+    font-weight: 700;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.format-selfstudy-patheditor-milestonealternative .format-selfstudy-patheditor-milestonestatus {
+    border-color: var(--format-selfstudy-patheditor-altcolor, #2563eb);
+    background: color-mix(in srgb, var(--format-selfstudy-patheditor-altcolor, #2563eb) 12%, #fff);
+    color: var(--format-selfstudy-patheditor-altcolor, #2563eb);
+}
+
+.format-selfstudy-patheditor-milestonealt {
+    display: grid;
+    gap: .25rem;
+}
+
+.format-selfstudy-patheditor-milestonesectionwrap {
+    display: grid;
+    gap: .25rem;
+}
+
+.format-selfstudy-patheditor-milestonealt label,
+.format-selfstudy-patheditor-milestonesectionwrap label {
+    margin: 0;
+    color: #475569;
+    font-size: .82rem;
+    font-weight: 700;
+}
+
+.format-selfstudy-patheditor-milestonealternatives {
+    position: relative;
+}
+
+.format-selfstudy-patheditor-dropdownsummary {
+    min-height: calc(1.5em + .75rem + 2px);
+    border: 1px solid #8f959e;
+    border-radius: .25rem;
+    padding: .375rem .75rem;
+    background: #fff;
+    color: #1f2937;
+    cursor: pointer;
+}
+
+.format-selfstudy-patheditor-dropdownoptions {
+    display: grid;
+    gap: .25rem;
+    margin-top: .25rem;
+    border: 1px solid #d7dfe8;
+    border-radius: .35rem;
+    padding: .35rem;
+    background: #fff;
+}
+
+.format-selfstudy-patheditor-dropdownoption {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: .45rem;
+    align-items: center;
+    margin: 0;
+    border-radius: .25rem;
+    padding: .25rem .35rem;
+    color: #1f2937;
+    font-size: .86rem;
+    font-weight: 400;
+}
+
+.format-selfstudy-patheditor-dropdownoption:hover {
+    background: #f8fafc;
+}
+
+.format-selfstudy-patheditor-milestonewarning {
+    border: 1px solid #fed7aa;
+    border-radius: .35rem;
+    padding: .4rem .55rem;
+    background: #fff7ed;
+    color: #9a3412;
+    font-size: .82rem;
+    font-weight: 700;
+}
+
+.format-selfstudy-patheditor-row {
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    gap: calc(.5rem * var(--format-selfstudy-patheditor-zoom, 1));
+    align-items: stretch;
+    margin-left: calc(1.25rem * var(--format-selfstudy-patheditor-zoom, 1));
+    min-height: calc(5.25rem * var(--format-selfstudy-patheditor-zoom, 1));
+    border: 1px dashed #cbd5e1;
+    border-radius: .35rem;
+    padding: calc(.65rem * var(--format-selfstudy-patheditor-zoom, 1));
+    background: #fff;
+    cursor: grab;
+    transition: background-color .12s ease, border-color .12s ease, box-shadow .12s ease;
+}
+
+.format-selfstudy-patheditor-row::before {
+    position: absolute;
+    top: 50%;
+    left: calc(-1.25rem * var(--format-selfstudy-patheditor-zoom, 1));
+    width: calc(1.25rem * var(--format-selfstudy-patheditor-zoom, 1));
+    height: .2rem;
+    border-radius: 999px;
+    background: #cbd5e1;
+    content: "";
+    pointer-events: none;
+}
+
+.format-selfstudy-patheditor-rowempty::before,
+.format-selfstudy-patheditor-rowfirst::before {
+    background: #94a3b8;
+}
+
+.format-selfstudy-patheditor-rowalternative {
+    border-color: var(--format-selfstudy-patheditor-altcolor, #2563eb);
+    background:
+        linear-gradient(90deg, color-mix(in srgb, var(--format-selfstudy-patheditor-altcolor, #2563eb) 8%, transparent), transparent 42%),
+        #fff;
+}
+
+.format-selfstudy-patheditor-rowalternative::after {
+    position: absolute;
+    top: .35rem;
+    right: .45rem;
+    border: 1px solid var(--format-selfstudy-patheditor-altcolor, #2563eb);
+    border-radius: 999px;
+    width: 1.25rem;
+    height: .45rem;
+    background: #fff;
+    color: var(--format-selfstudy-patheditor-altcolor, #2563eb);
+    box-shadow: inset -.42rem 0 0 currentColor, inset .42rem 0 0 currentColor;
+    content: "";
+    pointer-events: none;
+}
+
+.format-selfstudy-patheditor-rowrequired {
+    border-style: solid;
+}
+
+.format-selfstudy-patheditor-rowdrop {
+    border-color: #2563eb;
+    background: #eff6ff;
+    box-shadow: inset 0 0 0 .12rem rgba(37, 99, 235, .18);
+}
+
+.format-selfstudy-patheditor-card {
+    display: grid;
+    grid-template-columns: 1.5rem minmax(0, 1fr);
+    gap: .15rem .45rem;
+    align-items: center;
+    min-width: 0;
+    border: 1px solid #d7dfe8;
+    border-radius: .35rem;
+    padding: calc(.5rem * var(--format-selfstudy-patheditor-zoom, 1));
+    background: #fff;
+    color: #1f2937;
+    text-align: left;
+}
+
+.format-selfstudy-patheditor-palettecard {
+    width: 100%;
+    cursor: grab;
+}
+
+.format-selfstudy-patheditor-palettecard:hover,
+.format-selfstudy-patheditor-palettecard:focus,
+.format-selfstudy-patheditor-cardselected {
+    border-color: #94a3b8;
+    background: #f8fafc;
+}
+
+.format-selfstudy-patheditor-cardselected {
+    box-shadow: 0 0 0 .18rem rgba(59, 130, 246, .22);
+}
+
+.format-selfstudy-patheditor-gridcard {
+    position: relative;
+    flex: 1 1 calc(12rem * var(--format-selfstudy-patheditor-zoom, 1));
+    max-width: calc(18rem * var(--format-selfstudy-patheditor-zoom, 1));
+    cursor: grab;
+}
+
+.format-selfstudy-patheditor-compact .format-selfstudy-patheditor-milestone {
+    flex-basis: min(calc(18rem * var(--format-selfstudy-patheditor-zoom, 1)), 82vw);
+}
+
+.format-selfstudy-patheditor-compact .format-selfstudy-patheditor-row {
+    min-height: calc(3.3rem * var(--format-selfstudy-patheditor-zoom, 1));
+    padding: calc(.4rem * var(--format-selfstudy-patheditor-zoom, 1));
+}
+
+.format-selfstudy-patheditor-compact .format-selfstudy-patheditor-gridcard {
+    flex-basis: calc(9rem * var(--format-selfstudy-patheditor-zoom, 1));
+    max-width: calc(12rem * var(--format-selfstudy-patheditor-zoom, 1));
+}
+
+.format-selfstudy-patheditor-compact .format-selfstudy-patheditor-card {
+    grid-template-columns: 1.15rem minmax(0, 1fr);
+    gap: .08rem .35rem;
+    padding: calc(.35rem * var(--format-selfstudy-patheditor-zoom, 1));
+}
+
+.format-selfstudy-patheditor-compact .format-selfstudy-patheditor-cardicon {
+    width: 1rem;
+    height: 1rem;
+}
+
+.format-selfstudy-patheditor-compact .format-selfstudy-patheditor-cardtitle {
+    font-size: .82rem;
+    line-height: 1.2;
+}
+
+.format-selfstudy-patheditor-compact .format-selfstudy-patheditor-cardmeta,
+.format-selfstudy-patheditor-compact .format-selfstudy-patheditor-carddetails,
+.format-selfstudy-patheditor-compact .format-selfstudy-patheditor-cardsettings {
+    display: none;
+}
+
+.format-selfstudy-patheditor-compact .format-selfstudy-patheditor-removecard {
+    font-size: .75rem;
+}
+
+.format-selfstudy-patheditor-dragging {
+    opacity: .55;
+}
+
+.format-selfstudy-patheditor-dragghost {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 4000;
+    width: min(18rem, calc(100vw - 2rem));
+    box-shadow: 0 .8rem 2rem rgba(15, 23, 42, .22);
+    opacity: .92;
+    pointer-events: none;
+}
+
+.format-selfstudy-patheditor-cardicon {
+    width: 1.25rem;
+    height: 1.25rem;
+    object-fit: contain;
+}
+
+.format-selfstudy-patheditor-cardtitle,
+.format-selfstudy-patheditor-cardmeta {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.format-selfstudy-patheditor-cardtitle {
+    font-weight: 700;
+}
+
+.format-selfstudy-patheditor-cardmeta {
+    grid-column: 2;
+    color: #64748b;
+    font-size: .78rem;
+}
+
+.format-selfstudy-patheditor-carddetails {
+    grid-column: 2;
+    display: flex;
+    flex-wrap: wrap;
+    gap: .25rem;
+    min-width: 0;
+}
+
+.format-selfstudy-patheditor-cardchip {
+    border: 1px solid #d7dfe8;
+    border-radius: 999px;
+    padding: .08rem .4rem;
+    background: #f8fafc;
+    color: #475569;
+    font-size: .72rem;
+    font-weight: 700;
+    line-height: 1.35;
+}
+
+.format-selfstudy-patheditor-cardchipwarn {
+    border-color: #fed7aa;
+    background: #fff7ed;
+    color: #9a3412;
+}
+
+.format-selfstudy-patheditor-cardsettings {
+    grid-column: 2;
+    justify-self: start;
+    color: #0f766e;
+    font-size: .78rem;
+    font-weight: 700;
+}
+
+.format-selfstudy-patheditor-cardchipwarn + .format-selfstudy-patheditor-cardchipwarn {
+    margin-left: 0;
+}
+
+.format-selfstudy-patheditor-removecard {
+    grid-column: 2;
+    justify-self: start;
+    padding: 0;
+}
+
+.format-selfstudy-patheditor-addcell {
+    align-self: center;
+}
+
+@media (max-width: 640px) {
+    .format-selfstudy-pathchoice-actions,
+    .format-selfstudy-pathchoice-form,
+    .format-selfstudy-accessiblepath-nav,
+    .format-selfstudy-patheditor-toolbar,
+    .format-selfstudy-patheditor-actions,
+    .format-selfstudy-patheditor-select,
+    .format-selfstudy-patheditor-canvasbar,
+    .format-selfstudy-patheditor-milestonehead {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .format-selfstudy-patheditor,
+    .format-selfstudy-patheditor-form,
+    .format-selfstudy-patheditor-gridwrap,
+    .format-selfstudy-patheditor-details,
+    .format-selfstudy-patheditor-activitysettings,
+    .format-selfstudy-patheditor-palette,
+    .format-selfstudy-patheditor-canvas,
+    .format-selfstudy-patheditor-toolbar,
+    .format-selfstudy-patheditor-actions,
+    .format-selfstudy-patheditor-select,
+    .format-selfstudy-patheditor-toolbar > *,
+    .format-selfstudy-patheditor-actions > * {
+        max-width: 100%;
+        min-width: 0;
+        box-sizing: border-box;
+    }
+
+    .format-selfstudy-patheditor {
+        overflow-x: hidden;
+    }
+
+    .format-selfstudy-patheditor-paletteitems,
+    .format-selfstudy-patheditor-milestonegrid {
+        max-width: 100%;
+    }
+
+    .format-selfstudy-patheditor-toolbar > *,
+    .format-selfstudy-patheditor-actions > *,
+    .format-selfstudy-patheditor-select select,
+    .format-selfstudy-patheditor input,
+    .format-selfstudy-patheditor textarea,
+    .format-selfstudy-patheditor select {
+        width: 100%;
+    }
+
+    .format-selfstudy-pathchoice-actions .btn,
+    .format-selfstudy-accessiblepath-nav .btn,
+    .format-selfstudy-patheditor-toolbar .btn,
+    .format-selfstudy-patheditor-actions .btn,
+    .format-selfstudy-patheditor-select .btn,
+    .format-selfstudy-patheditor-canvasbar .btn {
+        display: inline-flex;
+        justify-content: center;
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        white-space: normal;
+        overflow-wrap: anywhere;
+        text-align: center;
+    }
+
+    .format-selfstudy-patheditor-intro,
+    .format-selfstudy-patheditor-activitysettingsitem,
+    .format-selfstudy-patheditor-cardtitle,
+    .format-selfstudy-patheditor-cardmeta,
+    .format-selfstudy-patheditor-carddetails,
+    .format-selfstudy-patheditor-milestonetitle,
+    .format-selfstudy-pathdiagnosis-table,
+    .format-selfstudy-personalpath-title {
+        overflow-wrap: anywhere;
+    }
+
+    .format-selfstudy-patheditor-activitysettingsitem {
+        grid-template-columns: 1.5rem minmax(0, 1fr);
+    }
+
+    .format-selfstudy-pathoutline-item {
+        grid-template-columns: 2rem minmax(0, 1fr);
+        gap: .25rem .45rem;
+        align-items: start;
+        padding: .2rem 0;
+    }
+
+    .format-selfstudy-pathoutline-status,
+    .format-selfstudy-pathoutline-action,
+    .format-selfstudy-pathoutline-info {
+        grid-column: 2;
+        justify-self: start;
+    }
+
+    .format-selfstudy-pathoutline-action {
+        width: 100%;
+        white-space: normal;
+    }
+
+    .format-selfstudy-pathoutline-alternatives {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .format-selfstudy-activitypath {
+        padding: .75rem;
+    }
+
+    .format-selfstudy-activitypath-item {
+        grid-template-columns: 2rem minmax(0, 1fr);
+    }
+
+    .format-selfstudy-patheditor-details,
+    .format-selfstudy-patheditor-activities,
+    .format-selfstudy-patheditor-alternatives,
+    .format-selfstudy-patheditor-milestones,
+    .format-selfstudy-patheditor-palette,
+    .format-selfstudy-patheditor-canvas,
+    .format-selfstudy-pathtransfer,
+    .format-selfstudy-pathdiagnosis {
+        padding: .75rem;
+    }
+
+    .format-selfstudy-patheditor-paletteitems {
+        max-height: 18rem;
+    }
+
+    .format-selfstudy-patheditor-milestonegrid {
+        gap: .6rem;
+        margin-right: -.75rem;
+        padding-right: .75rem;
+        scroll-snap-type: x mandatory;
+    }
+
+    .format-selfstudy-patheditor-milestone,
+    .format-selfstudy-patheditor-compact .format-selfstudy-patheditor-milestone {
+        flex-basis: min(22rem, calc(100vw - 2.5rem));
+        padding: .65rem;
+    }
+
+    .format-selfstudy-patheditor-milestonetitle {
+        min-width: 0;
+        width: 100%;
+        flex-basis: 100%;
+    }
+
+    .format-selfstudy-patheditor-milestonestatus,
+    .format-selfstudy-patheditor-dropdownsummary {
+        width: 100%;
+        white-space: normal;
+    }
+
+    .format-selfstudy-patheditor-row {
+        min-height: 4rem;
+        padding: .45rem;
+    }
+
+    .format-selfstudy-patheditor-gridcard,
+    .format-selfstudy-patheditor-compact .format-selfstudy-patheditor-gridcard {
+        flex-basis: 100%;
+        max-width: none;
+    }
+
+    .format-selfstudy-patheditor-card {
+        grid-template-columns: 1.25rem minmax(0, 1fr);
+    }
+}
+
+.format-selfstudy-pathtransfer {
+    display: grid;
+    gap: .75rem;
+}
+
+.format-selfstudy-pathtransfer h3 {
+    margin: 0;
+}
+
+.format-selfstudy-pathtransfer-form {
+    display: grid;
+    gap: .75rem;
+    max-width: 42rem;
+}
+
+.format-selfstudy-pathdiagnosis {
+    display: grid;
+    gap: .75rem;
+}
+
+.format-selfstudy-pathdiagnosis h3,
+.format-selfstudy-pathdiagnosis h4 {
+    margin: 0;
+}
+
+.format-selfstudy-pathdiagnosis-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.format-selfstudy-pathdiagnosis-summary li {
+    border-radius: .35rem;
+    padding: .3rem .55rem;
+    background: #edf2f7;
+    color: #334155;
+    font-size: .82rem;
+    font-weight: 700;
+}
+
+.format-selfstudy-pathdiagnosis-grid {
+    display: grid;
+    gap: 1rem;
+}
+
+.format-selfstudy-pathdiagnosis-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    align-items: center;
+    margin: 0;
+}
+
+.format-selfstudy-pathdiagnosis-panel {
+    min-width: 0;
+    overflow-x: auto;
+}
+
+.format-selfstudy-pathdiagnosis-table {
+    width: 100%;
+}
+
+.format-selfstudy-pathdiagnosis-table code {
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
+.format-selfstudy-pathdiagnosis-badge {
+    display: inline-block;
+    margin: .1rem .15rem .1rem 0;
+    border-radius: 999px;
+    padding: .14rem .5rem;
+    background: #edf2f7;
+    color: #334155;
+    font-size: .75rem;
+    font-weight: 700;
+    vertical-align: middle;
+}
+
+.format-selfstudy-pathdiagnosis-success {
+    background: #dcfce7;
+    color: #14532d;
+}
+
+.format-selfstudy-pathdiagnosis-warning {
+    background: #fef3c7;
+    color: #78350f;
+}
+
+.format-selfstudy-pathdiagnosis-info {
+    background: #dbeafe;
+    color: #1e3a8a;
+}
+
+.format-selfstudy-pathdiagnosis-danger {
+    background: #fee2e2;
+    color: #7f1d1d;
+}
+
+.format-selfstudy-patheditor-group {
+    display: grid;
+    gap: .5rem;
+    border-top: 1px solid #edf2f7;
+    padding: 1rem 0;
+}
+
+.format-selfstudy-patheditor-group:first-of-type {
+    border-top: 0;
+    padding-top: 0;
+}
+
+.format-selfstudy-patheditor-table {
+    width: 100%;
+}
+
+.format-selfstudy-order-input {
+    max-width: 7rem;
+}
+
+.format-selfstudy-sortable-groups {
+    display: grid;
+    gap: .5rem;
+}
+
+.format-selfstudy-sortable-item {
+    transition: background-color .15s ease, opacity .15s ease;
+}
+
+.format-selfstudy-sortable-dragging {
+    opacity: .55;
+    background: #f8fafc;
+}
+
+.format-selfstudy-sort-cell {
+    width: 8rem;
+    white-space: nowrap;
+}
+
+.format-selfstudy-sort-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .25rem;
+    align-items: center;
+}
+
+.format-selfstudy-sort-handle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    min-height: 1.75rem;
+    border: 1px solid #cbd5e1;
+    border-radius: .35rem;
+    background: #f8fafc;
+    color: #475569;
+    cursor: grab;
+    font-weight: 700;
+}
+
+.format-selfstudy-sort-button {
+    min-width: 3.5rem;
+}
+
+.format-selfstudy-patheditor-delete {
+    margin-top: .5rem;
+}
+
 .format-selfstudy-sections {
     display: grid;
     gap: .75rem;
@@ -184,7 +1951,8 @@
     min-width: 0;
 }
 
-.format-selfstudy-activitygoal {
+.format-selfstudy-activitygoal,
+.format-selfstudy-activitycompetencies {
     margin-top: .18rem;
     color: #475569;
     font-size: .84rem;
