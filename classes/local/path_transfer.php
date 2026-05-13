@@ -13,6 +13,9 @@ class path_transfer {
     /** @var path_repository */
     private $repository;
 
+    /** @var experience_repository */
+    private $experiencerepository;
+
     /** @var array Activity reference resolution cache. */
     private $cmresolutioncache = [];
 
@@ -21,8 +24,9 @@ class path_transfer {
      *
      * @param path_repository|null $repository
      */
-    public function __construct(?path_repository $repository = null) {
+    public function __construct(?path_repository $repository = null, ?experience_repository $experiencerepository = null) {
         $this->repository = $repository ?? new path_repository();
+        $this->experiencerepository = $experiencerepository ?? new experience_repository();
     }
 
     /**
@@ -40,12 +44,13 @@ class path_transfer {
 
         return [
             'schema' => 'format_selfstudy_path',
-            'version' => 2,
+            'version' => 3,
             'sourcecourse' => [
                 'id' => (int)$course->id,
                 'fullname' => format_string($course->fullname, true),
                 'shortname' => format_string($course->shortname, true),
             ],
+            'experiences' => $this->export_experiences((int)$course->id),
             'path' => [
                 'name' => $path->name,
                 'description' => $path->description,
@@ -95,8 +100,65 @@ class path_transfer {
             'userid' => 0,
         ]);
         $this->repository->replace_path_items($pathid, $items);
+        $this->import_experiences((int)$course->id, $payload['experiences'] ?? []);
 
         return $pathid;
+    }
+
+    /**
+     * Exports stored course experience configuration.
+     *
+     * @param int $courseid
+     * @return array
+     */
+    private function export_experiences(int $courseid): array {
+        $experiences = [];
+        foreach ($this->experiencerepository->get_course_experiences($courseid) as $record) {
+            $experiences[] = [
+                'component' => (string)$record->component,
+                'enabled' => (int)$record->enabled,
+                'sortorder' => (int)$record->sortorder,
+                'config' => (object)$this->experiencerepository->decode_config($record),
+                'configschema' => (int)$record->configschema,
+                'missing' => (int)$record->missing,
+            ];
+        }
+
+        return $experiences;
+    }
+
+    /**
+     * Imports optional course experience configuration.
+     *
+     * @param int $courseid
+     * @param mixed $experiences
+     */
+    private function import_experiences(int $courseid, $experiences): void {
+        if (!is_array($experiences)) {
+            return;
+        }
+
+        foreach ($experiences as $index => $experience) {
+            if (!is_array($experience)) {
+                continue;
+            }
+            $component = clean_param((string)($experience['component'] ?? ''), PARAM_COMPONENT);
+            if ($component === '') {
+                continue;
+            }
+            $config = $experience['config'] ?? [];
+            if ($config instanceof \stdClass) {
+                $config = (array)$config;
+            }
+            if (!is_array($config)) {
+                $config = [];
+            }
+
+            $this->experiencerepository->save_course_experience($courseid, $component, $config,
+                !empty($experience['enabled']) && empty($experience['missing']),
+                (int)($experience['sortorder'] ?? $index), max(1, (int)($experience['configschema'] ?? 1)),
+                !empty($experience['missing']));
+        }
     }
 
     /**

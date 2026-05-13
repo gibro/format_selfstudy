@@ -156,5 +156,27 @@
         <INDEX NAME="course_user_ix" UNIQUE="false" FIELDS="courseid, userid"/>
       </INDEXES>
     </TABLE>
+    <TABLE NAME="format_selfstudy_experiences" COMMENT="Optional experience configuration for selfstudy courses">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="courseid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="component" TYPE="char" LENGTH="100" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="enabled" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="sortorder" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="configjson" TYPE="text" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="configschema" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="1" SEQUENCE="false"/>
+        <FIELD NAME="missing" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="course_fk" TYPE="foreign" FIELDS="courseid" REFTABLE="course" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="course_component_uix" UNIQUE="true" FIELDS="courseid, component"/>
+        <INDEX NAME="course_enabled_sort_ix" UNIQUE="false" FIELDS="courseid, enabled, sortorder"/>
+      </INDEXES>
+    </TABLE>
   </TABLES>
 </XMLDB>

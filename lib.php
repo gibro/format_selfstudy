@@ -106,11 +106,25 @@ class format_selfstudy extends core_courseformat\base {
             }
         }
 
+        $experiencehints = $this->get_experience_navigation_hints($currentcmid);
+        if (!empty($experiencehints->mapurl)) {
+            $mapurl = new moodle_url($experiencehints->mapurl);
+        }
+        if (!empty($experiencehints->mapbackgroundurl)) {
+            $mapbackgroundurl = new moodle_url($experiencehints->mapbackgroundurl);
+        }
+
         if (!$shownavigation && !$mapbackgroundurl && !$pathoutline) {
             return;
         }
 
         $activitynav = $this->get_active_path_navigation_urls($pathoutline) ?: $this->get_activity_navigation_urls();
+        if (!empty($experiencehints->previousurl)) {
+            $activitynav['previousurl'] = (string)$experiencehints->previousurl;
+        }
+        if (!empty($experiencehints->nexturl)) {
+            $activitynav['nexturl'] = (string)$experiencehints->nexturl;
+        }
         $page->requires->js_call_amd('format_selfstudy/navigation', 'init', [[
             'showNavigation' => $shownavigation,
             'showPreviousButton' => !empty($options['shownavprevious']),
@@ -467,6 +481,36 @@ class format_selfstudy extends core_courseformat\base {
     }
 
     /**
+     * Returns optional navigation hints from active experiences.
+     *
+     * @param int $currentcmid
+     * @return stdClass|null
+     */
+    protected function get_experience_navigation_hints(int $currentcmid): ?stdClass {
+        global $USER;
+
+        if (!$currentcmid) {
+            return null;
+        }
+
+        try {
+            $course = $this->get_course();
+            $modinfo = get_fast_modinfo($course);
+            $cm = $modinfo->get_cm($currentcmid);
+            if ((int)$cm->course !== (int)$course->id || !$cm->uservisible) {
+                return null;
+            }
+
+            $baseview = \format_selfstudy\local\base_view::create($course, (int)$USER->id);
+            $registry = new \format_selfstudy\local\experience_registry();
+            return $registry->get_activity_navigation($course, $baseview, $cm);
+        } catch (Throwable $exception) {
+            debugging('Selfstudy experience activity navigation failed: ' . $exception->getMessage(), DEBUG_DEVELOPER);
+            return null;
+        }
+    }
+
+    /**
      * Returns ordered learning activity URLs for the fullscreen map popup.
      *
      * @return array
@@ -589,6 +633,16 @@ class format_selfstudy extends core_courseformat\base {
                 null,
                 'format_selfstudy_path_import',
                 new pix_icon('i/import', '')
+            );
+
+            $experienceurl = new moodle_url('/course/format/selfstudy/experience_settings.php', ['id' => $course->id]);
+            $selfstudynode->add(
+                get_string('experiencesettings', 'format_selfstudy'),
+                $experienceurl,
+                navigation_node::TYPE_SETTING,
+                null,
+                'format_selfstudy_experience_settings',
+                new pix_icon('i/settings', '')
             );
 
             $settingsurl = new moodle_url('/course/edit.php', ['id' => $course->id]);

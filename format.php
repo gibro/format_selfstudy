@@ -139,6 +139,8 @@ if ($enabledashboard) {
     }
     echo html_writer::end_div();
 
+    echo format_selfstudy_render_experience_zone($course, $baseview);
+
     echo html_writer::end_div();
 }
 
@@ -262,6 +264,50 @@ function format_selfstudy_render_map_notice(?cm_info $mainmapcm): string {
     }
     $output .= html_writer::end_div();
     return $output;
+}
+
+/**
+ * Renders optional experience entry points for the course dashboard.
+ *
+ * @param stdClass $course
+ * @param stdClass $baseview
+ * @return string
+ */
+function format_selfstudy_render_experience_zone(stdClass $course, stdClass $baseview): string {
+    try {
+        $registry = new \format_selfstudy\local\experience_registry();
+        $entries = $registry->get_renderable_experiences($course, $baseview);
+    } catch (Throwable $exception) {
+        debugging('Selfstudy experience registry failed: ' . $exception->getMessage(), DEBUG_DEVELOPER);
+        return '';
+    }
+
+    if (!$entries) {
+        return '';
+    }
+
+    $items = '';
+    foreach ($entries as $entry) {
+        try {
+            $html = $entry->renderer->render_course_entry($course, $baseview, $entry->config);
+        } catch (Throwable $exception) {
+            debugging('Selfstudy experience render failed for ' . $entry->component . ': ' .
+                $exception->getMessage(), DEBUG_DEVELOPER);
+            continue;
+        }
+        if (trim($html) !== '') {
+            $componentclass = clean_param(str_replace('_', '-', $entry->component), PARAM_ALPHANUMEXT);
+            $items .= html_writer::div($html, 'format-selfstudy-experience format-selfstudy-experience-' .
+                $componentclass);
+        }
+    }
+
+    if ($items === '') {
+        return '';
+    }
+
+    return html_writer::div($items, 'format-selfstudy-experiences',
+        ['aria-label' => get_string('experiencezone', 'format_selfstudy')]);
 }
 
 /**

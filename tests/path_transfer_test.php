@@ -76,7 +76,7 @@ class format_selfstudy_path_transfer_test extends advanced_testcase {
         $payload = $transfer->export_path($course, $pathid);
 
         $this->assertSame('format_selfstudy_path', $payload['schema']);
-        $this->assertSame(2, $payload['version']);
+        $this->assertSame(3, $payload['version']);
         $this->assertCount(2, $payload['path']['grid']['milestones']);
         $this->assertSame('legacy-a', $payload['path']['grid']['milestones'][0]['alternativegroup']);
         $this->assertSame(['ms2'], $payload['path']['grid']['milestones'][0]['alternativepeers']);

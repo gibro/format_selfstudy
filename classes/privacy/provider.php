@@ -48,6 +48,13 @@ class provider implements
             'timemodified' => 'privacy:metadata:personalpaths:timemodified',
         ], 'privacy:metadata:personalpaths');
 
+        $collection->add_database_table('format_selfstudy_experiences', [
+            'courseid' => 'privacy:metadata:experiences:courseid',
+            'component' => 'privacy:metadata:experiences:component',
+            'enabled' => 'privacy:metadata:experiences:enabled',
+            'configjson' => 'privacy:metadata:experiences:configjson',
+        ], 'privacy:metadata:experiences');
+
         return $collection;
     }
 

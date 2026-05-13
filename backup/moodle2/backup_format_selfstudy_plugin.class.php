@@ -56,6 +56,11 @@ class backup_format_selfstudy_plugin extends backup_format_plugin {
         $cmgoal = new backup_nested_element('cmgoal', ['id'], [
             'cmid', 'learninggoal', 'durationminutes', 'timecreated', 'timemodified',
         ]);
+        $experiences = new backup_nested_element('experiences');
+        $experience = new backup_nested_element('experience', ['id'], [
+            'courseid', 'component', 'enabled', 'sortorder', 'configjson', 'configschema', 'missing',
+            'timecreated', 'timemodified',
+        ]);
 
         $plugin->add_child($wrapper);
         $wrapper->add_child($paths);
@@ -72,6 +77,8 @@ class backup_format_selfstudy_plugin extends backup_format_plugin {
         $milestones->add_child($milestone);
         $wrapper->add_child($cmgoals);
         $cmgoals->add_child($cmgoal);
+        $wrapper->add_child($experiences);
+        $experiences->add_child($experience);
 
         $usersql = $this->task->get_setting_value('users') ? '' : ' AND userid = 0';
         $path->set_source_sql(
@@ -109,6 +116,9 @@ class backup_format_selfstudy_plugin extends backup_format_plugin {
            ORDER BY g.cmid ASC',
             ['courseid' => backup::VAR_COURSEID]
         );
+
+        $experience->set_source_table('format_selfstudy_experiences', ['courseid' => backup::VAR_COURSEID],
+            'sortorder ASC, id ASC');
 
         return $plugin;
     }

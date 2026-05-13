@@ -30,6 +30,7 @@ class restore_format_selfstudy_plugin extends restore_format_plugin {
             new restore_path_element('format_selfstudy_choice', $this->get_pathfor('/choices/choice')),
             new restore_path_element('format_selfstudy_milestone', $this->get_pathfor('/milestones/milestone')),
             new restore_path_element('format_selfstudy_cmgoal', $this->get_pathfor('/cmgoals/cmgoal')),
+            new restore_path_element('format_selfstudy_experience', $this->get_pathfor('/experiences/experience')),
         ];
     }
 
@@ -270,6 +271,31 @@ class restore_format_selfstudy_plugin extends restore_format_plugin {
         }
 
         $DB->insert_record('format_selfstudy_cmgoals', $data);
+    }
+
+    /**
+     * Restores one optional experience configuration.
+     *
+     * @param array $data
+     */
+    public function process_format_selfstudy_experience(array $data): void {
+        $repository = new \format_selfstudy\local\experience_repository();
+
+        $data = (object)$data;
+        $config = json_decode((string)($data->configjson ?? '{}'), true);
+        if (!is_array($config) || json_last_error() !== JSON_ERROR_NONE) {
+            $config = [];
+        }
+
+        $repository->save_course_experience(
+            (int)$this->step->get_task()->get_courseid(),
+            (string)($data->component ?? ''),
+            $config,
+            !empty($data->enabled) && empty($data->missing),
+            (int)($data->sortorder ?? 0),
+            max(1, (int)($data->configschema ?? 1)),
+            !empty($data->missing)
+        );
     }
 
     /**
