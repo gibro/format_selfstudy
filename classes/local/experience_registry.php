@@ -183,6 +183,9 @@ class experience_registry {
      */
     private function create_renderer(\stdClass $metadata): ?experience_renderer_interface {
         $class = (string)($metadata->rendererclass ?? '');
+        if ($class !== '' && !class_exists($class)) {
+            $this->require_component_class((string)($metadata->component ?? ''), 'renderer');
+        }
         if ($class === '' || !class_exists($class)) {
             return null;
         }
@@ -213,6 +216,17 @@ class experience_registry {
             }
         }
 
+        foreach ($this->get_packaged_component_names() as $name) {
+            $component = 'selfstudyexperience_' . $name;
+            if (isset($components[$component])) {
+                continue;
+            }
+            $metadata = $this->load_component_metadata($component);
+            if ($metadata) {
+                $components[$component] = $metadata;
+            }
+        }
+
         return $components;
     }
 
@@ -224,6 +238,9 @@ class experience_registry {
      */
     private function load_component_metadata(string $component): ?\stdClass {
         $class = '\\' . $component . '\\experience';
+        if (!class_exists($class)) {
+            $this->require_component_class($component, 'experience');
+        }
         if (!class_exists($class) || !method_exists($class, 'get_metadata')) {
             return null;
         }
@@ -237,6 +254,53 @@ class experience_registry {
         }
 
         return $this->normalise_metadata($component, $metadata);
+    }
+
+    /**
+     * Returns packaged experience plugin names from the format directory.
+     *
+     * @return string[]
+     */
+    private function get_packaged_component_names(): array {
+        $experiencedir = dirname(__DIR__, 2) . '/experience';
+        if (!is_dir($experiencedir)) {
+            return [];
+        }
+
+        $names = [];
+        foreach (glob($experiencedir . '/*', GLOB_ONLYDIR) ?: [] as $dir) {
+            $name = clean_param(basename($dir), PARAM_PLUGIN);
+            if ($name !== '' && is_readable($dir . '/classes/experience.php')) {
+                $names[] = $name;
+            }
+        }
+
+        sort($names);
+        return $names;
+    }
+
+    /**
+     * Requires a packaged experience class file when Moodle has not autoloaded it as a subplugin.
+     *
+     * @param string $component
+     * @param string $classname
+     */
+    private function require_component_class(string $component, string $classname): void {
+        $component = clean_param($component, PARAM_COMPONENT);
+        if (strpos($component, 'selfstudyexperience_') !== 0) {
+            return;
+        }
+
+        $name = substr($component, strlen('selfstudyexperience_'));
+        $name = clean_param($name, PARAM_PLUGIN);
+        if ($name === '' || clean_param($classname, PARAM_ALPHANUMEXT) !== $classname) {
+            return;
+        }
+
+        $path = dirname(__DIR__, 2) . '/experience/' . $name . '/classes/' . $classname . '.php';
+        if (is_readable($path)) {
+            require_once($path);
+        }
     }
 
     /**

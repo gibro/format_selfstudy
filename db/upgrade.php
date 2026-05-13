@@ -241,5 +241,15 @@ function xmldb_format_selfstudy_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026051302, 'format', 'selfstudy');
     }
 
+    if ($oldversion < 2026051303) {
+        $table = new xmldb_table('format_selfstudy_experiences');
+        if ($dbman->table_exists($table)) {
+            $migrator = new \format_selfstudy\local\learningmap_config_migrator();
+            $migrator->mirror_all_courses();
+        }
+
+        upgrade_plugin_savepoint(true, 2026051303, 'format', 'selfstudy');
+    }
+
     return true;
 }

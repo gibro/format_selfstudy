@@ -157,6 +157,73 @@ class format_selfstudy_experience_api_test extends advanced_testcase {
         $this->assertSame('legacy', $experiencerepository->decode_config($record)->mode);
     }
 
+    public function test_learningmap_migrator_preserves_invalid_legacy_references_without_enabling(): void {
+        global $DB;
+
+        $this->resetAfterTest();
+        $course = $this->getDataGenerator()->create_course(['format' => 'selfstudy', 'numsections' => 1]);
+        $section = get_fast_modinfo($course)->get_section_info(1);
+
+        $DB->delete_records('course_format_options', [
+            'courseid' => $course->id,
+            'format' => 'selfstudy',
+            'name' => 'mainlearningmap',
+        ]);
+        $DB->delete_records('course_format_options', [
+            'courseid' => $course->id,
+            'format' => 'selfstudy',
+            'name' => 'sectionmap',
+        ]);
+
+        $DB->insert_record('course_format_options', (object)[
+            'courseid' => $course->id,
+            'format' => 'selfstudy',
+            'sectionid' => 0,
+            'name' => 'mainlearningmap',
+            'value' => 99999,
+        ]);
+        $DB->insert_record('course_format_options', (object)[
+            'courseid' => $course->id,
+            'format' => 'selfstudy',
+            'sectionid' => (int)$section->id,
+            'name' => 'sectionmap',
+            'value' => 88888,
+        ]);
+
+        $migrator = new \format_selfstudy\local\learningmap_config_migrator();
+        $this->assertTrue($migrator->mirror_course((int)$course->id));
+
+        $repository = new \format_selfstudy\local\experience_repository();
+        $record = $repository->get_course_experience((int)$course->id,
+            \format_selfstudy\local\learningmap_config_migrator::COMPONENT);
+        $config = $repository->decode_config($record);
+
+        $this->assertSame(0, (int)$record->enabled);
+        $this->assertSame(0, (int)$record->missing);
+        $this->assertSame(99999, (int)$config->mainmapcmid);
+        $sectionmaps = (array)$config->sectionmaps;
+        $this->assertSame(88888, (int)$sectionmaps[(int)$section->id]);
+    }
+
+    public function test_learningmap_renderer_returns_no_entry_without_usable_map(): void {
+        $this->resetAfterTest();
+        require_once(__DIR__ . '/../experience/learningmap/classes/renderer.php');
+
+        $course = $this->getDataGenerator()->create_course(['format' => 'selfstudy', 'numsections' => 1]);
+        $renderer = new \selfstudyexperience_learningmap\renderer();
+
+        $config = (object)[
+            'mainmapcmid' => 12345,
+            'sectionmaps' => (object)[],
+            'sectionmapsenabled' => true,
+            'avatarenabled' => true,
+        ];
+
+        $this->assertTrue($renderer->supports($course, (object)['path' => null, 'outline' => []], $config));
+        $this->assertSame('', $renderer->render_course_entry($course, (object)['path' => null, 'outline' => []],
+            $config));
+    }
+
     /**
      * Returns metadata for the test renderer.
      *

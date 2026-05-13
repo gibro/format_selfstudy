@@ -43,6 +43,8 @@ class format_selfstudy extends core_courseformat\base {
         }
 
         $options = $this->get_format_options();
+        $learningmapconfig = $this->get_learningmap_experience_config();
+        $avatarenabled = !empty($learningmapconfig->avatarenabled);
         $shownavigation = !empty($options['enableactivitynavigation']);
         $currentcmid = optional_param('id', 0, PARAM_INT);
         $currentmodname = null;
@@ -70,7 +72,7 @@ class format_selfstudy extends core_courseformat\base {
         $showpathui = $this->should_show_learning_path_ui();
         $pathpointcolor = format_selfstudy_normalise_hex_color($options['pathpointcolor'] ?? '#6f1ab1');
 
-        $avatarconfig = !empty($options['enableavatar']) ?
+        $avatarconfig = $avatarenabled ?
             $this->get_avatar_marker_config($page, $OUTPUT, $USER) : ['imageurl' => '', 'label' => ''];
 
         if ($currentmodname === 'learningmap') {
@@ -80,7 +82,7 @@ class format_selfstudy extends core_courseformat\base {
                 'currentActivityId' => $currentactivityid,
                 'currentCmId' => $currentcmid,
                 'courseId' => (int)$this->courseid,
-                'avatarEnabled' => !empty($options['enableavatar']),
+                'avatarEnabled' => $avatarenabled,
                 'avatarImageUrl' => $avatarconfig['imageurl'],
                 'avatarLabel' => $avatarconfig['label'],
                 'currentStatusLabel' => get_string('learningpathstatuscurrent', 'format_selfstudy'),
@@ -91,19 +93,6 @@ class format_selfstudy extends core_courseformat\base {
                 'pathPointColor' => $pathpointcolor,
             ]]);
             return;
-        }
-
-        if (!empty($options['mainlearningmap'])) {
-            try {
-                $cm = $modinfo ? $modinfo->get_cm((int)$options['mainlearningmap']) :
-                    get_fast_modinfo($this->courseid)->get_cm((int)$options['mainlearningmap']);
-                if ($cm && $cm->uservisible && $cm->modname === 'learningmap') {
-                    $mapurl = new moodle_url('/mod/learningmap/view.php', ['id' => $cm->id]);
-                }
-            } catch (Throwable $exception) {
-                $mapurl = new moodle_url('/course/view.php', ['id' => $this->courseid]);
-                $mapbackgroundurl = null;
-            }
         }
 
         $experiencehints = $this->get_experience_navigation_hints($currentcmid);
@@ -149,7 +138,7 @@ class format_selfstudy extends core_courseformat\base {
             'currentActivityId' => $currentactivityid,
             'currentCmId' => $currentcmid,
             'courseId' => (int)$this->courseid,
-            'avatarEnabled' => !empty($options['enableavatar']),
+            'avatarEnabled' => $avatarenabled,
             'avatarImageUrl' => $avatarconfig['imageurl'],
             'avatarLabel' => $avatarconfig['label'],
             'pathTitle' => get_string('learningpathcurrent', 'format_selfstudy'),
@@ -511,6 +500,30 @@ class format_selfstudy extends core_courseformat\base {
     }
 
     /**
+     * Returns enabled Learningmap experience config, mirroring legacy options on demand.
+     *
+     * @return stdClass|null
+     */
+    protected function get_learningmap_experience_config(): ?stdClass {
+        try {
+            $migrator = new \format_selfstudy\local\learningmap_config_migrator();
+            $migrator->mirror_course((int)$this->courseid);
+
+            $repository = new \format_selfstudy\local\experience_repository();
+            $record = $repository->get_course_experience((int)$this->courseid,
+                \format_selfstudy\local\learningmap_config_migrator::COMPONENT);
+            if (!$record || empty($record->enabled) || !empty($record->missing)) {
+                return null;
+            }
+
+            return $repository->decode_config($record);
+        } catch (Throwable $exception) {
+            debugging('Selfstudy Learningmap config failed: ' . $exception->getMessage(), DEBUG_DEVELOPER);
+            return null;
+        }
+    }
+
+    /**
      * Returns ordered learning activity URLs for the fullscreen map popup.
      *
      * @return array
@@ -758,6 +771,9 @@ class format_selfstudy extends core_courseformat\base {
 
         if ($foreditform) {
             unset($options['allowpersonalpaths']);
+            unset($options['mainlearningmap']);
+            unset($options['enablesectionmaps']);
+            unset($options['enableavatar']);
 
             $options['defaultview']['label'] = get_string('defaultview', 'format_selfstudy');
             $options['defaultview']['help'] = 'defaultview';
@@ -769,12 +785,6 @@ class format_selfstudy extends core_courseformat\base {
                 'list' => get_string('defaultviewlist', 'format_selfstudy'),
             ]];
 
-            $options['mainlearningmap']['label'] = get_string('mainlearningmap', 'format_selfstudy');
-            $options['mainlearningmap']['help'] = 'mainlearningmap';
-            $options['mainlearningmap']['help_component'] = 'format_selfstudy';
-            $options['mainlearningmap']['element_type'] = 'select';
-            $options['mainlearningmap']['element_attributes'] = [$this->get_learningmap_options()];
-
             $options['enabledashboard']['label'] = get_string('enabledashboard', 'format_selfstudy');
             $options['enabledashboard']['help'] = 'enabledashboard';
             $options['enabledashboard']['help_component'] = 'format_selfstudy';
@@ -784,16 +794,6 @@ class format_selfstudy extends core_courseformat\base {
             $options['enablelistview']['help'] = 'enablelistview';
             $options['enablelistview']['help_component'] = 'format_selfstudy';
             $options['enablelistview']['element_type'] = 'advcheckbox';
-
-            $options['enablesectionmaps']['label'] = get_string('enablesectionmaps', 'format_selfstudy');
-            $options['enablesectionmaps']['help'] = 'enablesectionmaps';
-            $options['enablesectionmaps']['help_component'] = 'format_selfstudy';
-            $options['enablesectionmaps']['element_type'] = 'advcheckbox';
-
-            $options['enableavatar']['label'] = get_string('enableavatar', 'format_selfstudy');
-            $options['enableavatar']['help'] = 'enableavatar';
-            $options['enableavatar']['help_component'] = 'format_selfstudy';
-            $options['enableavatar']['element_type'] = 'advcheckbox';
 
             $options['enableactivitynavigation']['label'] = get_string('enableactivitynavigation', 'format_selfstudy');
             $options['enableactivitynavigation']['help'] = 'enableactivitynavigation';
@@ -925,14 +925,7 @@ class format_selfstudy extends core_courseformat\base {
                 'optional' => get_string('optional', 'format_selfstudy'),
             ]];
 
-            $courseoptions = $this->get_format_options();
-            if (!empty($courseoptions['enablesectionmaps'])) {
-                $options['sectionmap']['label'] = get_string('sectionmap', 'format_selfstudy');
-                $options['sectionmap']['help'] = 'sectionmap';
-                $options['sectionmap']['help_component'] = 'format_selfstudy';
-                $options['sectionmap']['element_type'] = 'select';
-                $options['sectionmap']['element_attributes'] = [$this->get_learningmap_options()];
-            }
+            unset($options['sectionmap']);
         }
 
         return $options;

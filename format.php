@@ -20,27 +20,14 @@ $showlockedactivities = !array_key_exists('showlockedactivities', $formatoptions
 $modinfo = get_fast_modinfo($course);
 $sections = $modinfo->get_section_info_all();
 $completion = new completion_info($course);
-$learningsummaries = format_selfstudy_get_learning_summaries($course, $format, $modinfo, $sections, $completion);
-if (empty($formatoptions['enablesectionmaps'])) {
-    foreach ($learningsummaries as $summary) {
-        $summary->sectionmapcm = null;
-    }
-}
+$learningmapconfig = format_selfstudy_get_learningmap_experience_config($course);
+$learningsummaries = format_selfstudy_get_learning_summaries($course, $format, $modinfo, $sections, $completion,
+    $learningmapconfig);
 $coursecontext = context_course::instance($course->id);
 $caneditsections = $PAGE->user_is_editing() && has_capability('moodle/course:update', $coursecontext);
 $courserenderer = $PAGE->get_renderer('core', 'course');
 
-$mainmapcm = null;
-if (!empty($formatoptions['mainlearningmap'])) {
-    try {
-        $mainmapcm = $modinfo->get_cm((int)$formatoptions['mainlearningmap']);
-    } catch (Throwable $exception) {
-        $mainmapcm = null;
-    }
-    if ($mainmapcm && !$mainmapcm->uservisible) {
-        $mainmapcm = null;
-    }
-}
+$mainmapcm = format_selfstudy_get_learningmap_main_cm($course, $modinfo, $learningmapconfig);
 
 $nextcm = format_selfstudy_find_next_cm($learningsummaries);
 $requiredopen = format_selfstudy_count_sections($learningsummaries, 'required', false);
@@ -102,13 +89,6 @@ if ($enabledashboard) {
             $continueurl,
             $continuelabel,
             ['class' => 'btn btn-primary']
-        );
-    }
-    if ($mainmapcm) {
-        echo html_writer::link(
-            new moodle_url('/mod/learningmap/view.php', ['id' => $mainmapcm->id]),
-            get_string('learningmap', 'format_selfstudy'),
-            ['class' => 'btn btn-secondary']
         );
     }
     if ($showpathui && !empty($formatoptions['allowpersonalpaths'])) {
@@ -275,6 +255,8 @@ function format_selfstudy_render_map_notice(?cm_info $mainmapcm): string {
  */
 function format_selfstudy_render_experience_zone(stdClass $course, stdClass $baseview): string {
     try {
+        $migrator = new \format_selfstudy\local\learningmap_config_migrator();
+        $migrator->mirror_course((int)$course->id);
         $registry = new \format_selfstudy\local\experience_registry();
         $entries = $registry->get_renderable_experiences($course, $baseview);
     } catch (Throwable $exception) {
@@ -308,6 +290,66 @@ function format_selfstudy_render_experience_zone(stdClass $course, stdClass $bas
 
     return html_writer::div($items, 'format-selfstudy-experiences',
         ['aria-label' => get_string('experiencezone', 'format_selfstudy')]);
+}
+
+/**
+ * Returns enabled Learningmap experience config, mirroring legacy values on demand.
+ *
+ * @param stdClass $course
+ * @return stdClass|null
+ */
+function format_selfstudy_get_learningmap_experience_config(stdClass $course): ?stdClass {
+    try {
+        $migrator = new \format_selfstudy\local\learningmap_config_migrator();
+        $migrator->mirror_course((int)$course->id);
+
+        $repository = new \format_selfstudy\local\experience_repository();
+        $record = $repository->get_course_experience((int)$course->id,
+            \format_selfstudy\local\learningmap_config_migrator::COMPONENT);
+        if (!$record || empty($record->enabled) || !empty($record->missing)) {
+            return null;
+        }
+
+        return $repository->decode_config($record);
+    } catch (Throwable $exception) {
+        debugging('Selfstudy Learningmap config failed: ' . $exception->getMessage(), DEBUG_DEVELOPER);
+        return null;
+    }
+}
+
+/**
+ * Returns the visible configured main Learningmap CM.
+ *
+ * @param stdClass $course
+ * @param course_modinfo $modinfo
+ * @param stdClass|null $config
+ * @return cm_info|null
+ */
+function format_selfstudy_get_learningmap_main_cm(stdClass $course, course_modinfo $modinfo,
+        ?stdClass $config = null): ?cm_info {
+    if ($config === null) {
+        $config = format_selfstudy_get_learningmap_experience_config($course);
+    }
+
+    return \format_selfstudy\local\learningmap_config_migrator::resolve_main_map_cm($modinfo, $config);
+}
+
+/**
+ * Returns the visible configured section Learningmap CM.
+ *
+ * @param stdClass $course
+ * @param course_modinfo $modinfo
+ * @param int $sectionid
+ * @param stdClass|null $config
+ * @return cm_info|null
+ */
+function format_selfstudy_get_learningmap_section_cm(stdClass $course, course_modinfo $modinfo, int $sectionid,
+        ?stdClass $config = null): ?cm_info {
+    if ($config === null) {
+        $config = format_selfstudy_get_learningmap_experience_config($course);
+    }
+
+    return \format_selfstudy\local\learningmap_config_migrator::resolve_section_map_cm($modinfo, $config, $sectionid);
 }
 
 /**
@@ -1280,10 +1322,11 @@ function format_selfstudy_get_next_groupmode(cm_info $cm): int {
  * @param course_modinfo $modinfo
  * @param section_info[] $sections
  * @param completion_info $completion
+ * @param stdClass|null $learningmapconfig
  * @return stdClass[]
  */
 function format_selfstudy_get_learning_summaries(stdClass $course, core_courseformat\base $format, course_modinfo $modinfo,
-        array $sections, completion_info $completion): array {
+        array $sections, completion_info $completion, ?stdClass $learningmapconfig = null): array {
     global $USER;
 
     $summaries = [];
@@ -1298,7 +1341,8 @@ function format_selfstudy_get_learning_summaries(stdClass $course, core_coursefo
         $summary->section = $section;
         $summary->pathkind = ($sectionoptions['pathkind'] ?? 'required') === 'optional' ? 'optional' : 'required';
         $summary->learninggoal = trim($sectionoptions['learninggoal'] ?? '');
-        $summary->sectionmapcm = format_selfstudy_get_learningmap_cm($modinfo, (int)($sectionoptions['sectionmap'] ?? 0));
+        $summary->sectionmapcm = format_selfstudy_get_learningmap_section_cm($course, $modinfo, (int)$section->id,
+            $learningmapconfig);
         $summary->cms = [];
         $summary->completionenabled = 0;
         $summary->completioncomplete = 0;
