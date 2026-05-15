@@ -1007,10 +1007,12 @@ class format_selfstudy extends core_courseformat\base {
                     'input.style.cssText="display:inline-block;width:3.5rem;height:2.35rem;padding:.15rem;cursor:pointer;vertical-align:middle;";' .
                     'var row=input.closest(".fitem");' .
                     'if(!row){return;}' .
-                    'var label=row.querySelector(".col-form-label");' .
+                    'row.classList.add("row","mb-3");' .
+                    'row.classList.remove("fitem_fcolor");' .
+                    'var label=row.querySelector(".col-form-label,.fitemtitle");' .
                     'var element=row.querySelector(".felement");' .
-                    'if(label){label.classList.add("col-md-3");}' .
-                    'if(element){element.classList.add("col-md-9");element.classList.remove("col-md-3");}' .
+                    'if(label){label.classList.add("col-md-3","col-form-label","d-flex","pb-0","pe-md-0");}' .
+                    'if(element){element.classList.add("col-md-9","d-flex","flex-wrap","align-items-start");element.classList.remove("col-md-3");}' .
                     '});' .
                     '});'
                 ) .
