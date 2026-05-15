@@ -4,11 +4,15 @@
 defined('MOODLE_INTERNAL') || die();
 require_once($CFG->dirroot . '/course/format/lib.php');
 require_once($CFG->libdir . '/completionlib.php');
+require_once($CFG->libdir . '/filelib.php');
 
 /**
  * Course format class for self-directed learning courses.
  */
 class format_selfstudy extends core_courseformat\base {
+
+    /** Maximum number of course contacts shown in the hero. */
+    private const MAX_HERO_CONTACTS = 10;
 
     /**
      * Returns true because selfstudy courses are section based.
@@ -17,6 +21,26 @@ class format_selfstudy extends core_courseformat\base {
      */
     public function uses_sections() {
         return true;
+    }
+
+    /**
+     * Returns the display name of a course section.
+     *
+     * Moodle core renderers call this method directly in editing mode. Prefer the
+     * stored section name there as well, so section headings stay consistent with
+     * the selfstudy overview cards.
+     *
+     * @param int|stdClass|section_info $section Section object or section number.
+     * @return string
+     */
+    public function get_section_name($section) {
+        $sectioninfo = $this->get_section($section);
+        if ($sectioninfo && trim((string)$sectioninfo->name) !== '') {
+            return format_string($sectioninfo->name, true,
+                ['context' => context_course::instance($this->courseid)]);
+        }
+
+        return $this->get_default_section_name($section);
     }
 
     /**
@@ -29,6 +53,26 @@ class format_selfstudy extends core_courseformat\base {
     }
 
     /**
+     * Supports Moodle's AJAX course editing features.
+     *
+     * @return stdClass
+     */
+    public function supports_ajax() {
+        $ajaxsupport = new stdClass();
+        $ajaxsupport->capable = true;
+        return $ajaxsupport;
+    }
+
+    /**
+     * Supports Moodle course content components in editing mode.
+     *
+     * @return bool
+     */
+    public function supports_components() {
+        return true;
+    }
+
+    /**
      * Adds activity navigation to course pages.
      *
      * @param moodle_page $page
@@ -37,14 +81,17 @@ class format_selfstudy extends core_courseformat\base {
         global $OUTPUT, $USER;
 
         $this->add_course_more_navigation($page);
+        $path = $page->url ? $page->url->get_path(false) : '';
+        if ($path === '/course/view.php') {
+            $page->add_body_class('format-selfstudy-hide-courseindex');
+        }
         if (!$this->is_learning_navigation_page($page)) {
             $page->add_body_class('format-selfstudy-hide-courseindex');
             return;
         }
 
         $options = $this->get_format_options();
-        $learningmapconfig = $this->get_learningmap_experience_config();
-        $avatarenabled = !empty($learningmapconfig->avatarenabled);
+        $avatarenabled = !empty($options['enableavatar']);
         $shownavigation = !empty($options['enableactivitynavigation']);
         $currentcmid = optional_param('id', 0, PARAM_INT);
         $currentmodname = null;
@@ -71,6 +118,8 @@ class format_selfstudy extends core_courseformat\base {
         $pathoutline = $this->get_active_learning_path_outline();
         $showpathui = $this->should_show_learning_path_ui();
         $pathpointcolor = format_selfstudy_normalise_hex_color($options['pathpointcolor'] ?? '#6f1ab1');
+        $nextbuttoncolor = format_selfstudy_normalise_hex_color($options['nextbuttoncolor'] ?? $pathpointcolor,
+            $pathpointcolor);
 
         $avatarconfig = $avatarenabled ?
             $this->get_avatar_marker_config($page, $OUTPUT, $USER) : ['imageurl' => '', 'label' => ''];
@@ -87,10 +136,17 @@ class format_selfstudy extends core_courseformat\base {
                 'avatarLabel' => $avatarconfig['label'],
                 'currentStatusLabel' => get_string('learningpathstatuscurrent', 'format_selfstudy'),
                 'competenciesLabel' => get_string('activitycompetencies', 'format_selfstudy'),
+                'courseUrl' => (new moodle_url('/course/view.php', ['id' => $this->courseid]))->out(false),
+                'courseLabel' => get_string('viewcourse', 'format_selfstudy'),
                 'pathTitle' => get_string('learningpathcurrent', 'format_selfstudy'),
                 'pathOutline' => $showpathui ? $pathoutline : [],
                 'showPathOutline' => $showpathui,
                 'pathPointColor' => $pathpointcolor,
+                'nextButtonColor' => $nextbuttoncolor,
+                'accessiblePathUrl' => $showpathui ?
+                    (new moodle_url('/course/format/selfstudy/accessible_path.php',
+                        ['id' => $this->courseid]))->out(false) : '',
+                'accessiblePathLabel' => get_string('learningpathaccessibleview', 'format_selfstudy'),
             ]]);
             return;
         }
@@ -103,6 +159,7 @@ class format_selfstudy extends core_courseformat\base {
             $mapbackgroundurl = new moodle_url($experiencehints->mapbackgroundurl);
         }
 
+        $showpathnavigation = $showpathui && !empty($pathoutline);
         if (!$shownavigation && !$mapbackgroundurl && !$pathoutline) {
             return;
         }
@@ -115,13 +172,15 @@ class format_selfstudy extends core_courseformat\base {
             $activitynav['nexturl'] = (string)$experiencehints->nexturl;
         }
         $page->requires->js_call_amd('format_selfstudy/navigation', 'init', [[
-            'showNavigation' => $shownavigation,
-            'showPreviousButton' => !empty($options['shownavprevious']),
+            'showNavigation' => $shownavigation || $showpathnavigation,
+            'showPreviousButton' => !empty($options['shownavprevious']) || $showpathnavigation,
             'showMapButton' => !empty($options['shownavmap']),
-            'showNextButton' => !empty($options['shownavnext']),
+            'showNextButton' => !empty($options['shownavnext']) || $showpathnavigation,
             'previousLabel' => $options['previousbuttonlabel'] ?? get_string('previousbuttonlabel_default', 'format_selfstudy'),
             'mapLabel' => $options['mapbuttonlabel'] ?? get_string('mapbuttonlabel_default', 'format_selfstudy'),
             'nextLabel' => $options['nextbuttonlabel'] ?? get_string('nextbuttonlabel_default', 'format_selfstudy'),
+            'courseUrl' => (new moodle_url('/course/view.php', ['id' => $this->courseid]))->out(false),
+            'courseLabel' => get_string('viewcourse', 'format_selfstudy'),
             'customButtonLabel' => $options['customnavbuttonlabel'] ?? '',
             'customButtonUrl' => $options['customnavbuttonurl'] ?? '',
             'mapUrl' => $mapurl->out(false),
@@ -145,6 +204,7 @@ class format_selfstudy extends core_courseformat\base {
             'pathOutline' => $showpathui ? $pathoutline : [],
             'showPathOutline' => $showpathui,
             'pathPointColor' => $pathpointcolor,
+            'nextButtonColor' => $nextbuttoncolor,
         ]]);
     }
 
@@ -500,30 +560,6 @@ class format_selfstudy extends core_courseformat\base {
     }
 
     /**
-     * Returns enabled Learningmap experience config, mirroring legacy options on demand.
-     *
-     * @return stdClass|null
-     */
-    protected function get_learningmap_experience_config(): ?stdClass {
-        try {
-            $migrator = new \format_selfstudy\local\learningmap_config_migrator();
-            $migrator->mirror_course((int)$this->courseid);
-
-            $repository = new \format_selfstudy\local\experience_repository();
-            $record = $repository->get_course_experience((int)$this->courseid,
-                \format_selfstudy\local\learningmap_config_migrator::COMPONENT);
-            if (!$record || empty($record->enabled) || !empty($record->missing)) {
-                return null;
-            }
-
-            return $repository->decode_config($record);
-        } catch (Throwable $exception) {
-            debugging('Selfstudy Learningmap config failed: ' . $exception->getMessage(), DEBUG_DEVELOPER);
-            return null;
-        }
-    }
-
-    /**
      * Returns ordered learning activity URLs for the fullscreen map popup.
      *
      * @return array
@@ -618,16 +654,26 @@ class format_selfstudy extends core_courseformat\base {
                 return;
             }
 
+            $authoringurl = new moodle_url('/course/format/selfstudy/authoring.php', ['id' => $course->id]);
             $editorurl = new moodle_url('/course/format/selfstudy/path_editor.php', ['id' => $course->id]);
             $selfstudynode = $courseadminnode->add(
                 get_string('selfstudynavigation', 'format_selfstudy'),
-                $editorurl,
+                $authoringurl,
                 navigation_node::TYPE_CONTAINER,
                 null,
                 'format_selfstudy',
                 new pix_icon('i/settings', '')
             );
             $selfstudynode->set_force_into_more_menu(true);
+
+            $selfstudynode->add(
+                get_string('authoringworkflow', 'format_selfstudy'),
+                $authoringurl,
+                navigation_node::TYPE_SETTING,
+                null,
+                'format_selfstudy_authoring',
+                new pix_icon('i/course', '')
+            );
 
             $selfstudynode->add(
                 get_string('learningpatheditor', 'format_selfstudy'),
@@ -695,6 +741,10 @@ class format_selfstudy extends core_courseformat\base {
                 'default' => 'dashboard',
                 'type' => PARAM_ALPHA,
             ],
+            'learnerview' => [
+                'default' => 'base',
+                'type' => PARAM_TEXT,
+            ],
             'mainlearningmap' => [
                 'default' => 0,
                 'type' => PARAM_INT,
@@ -735,6 +785,10 @@ class format_selfstudy extends core_courseformat\base {
                 'default' => 1,
                 'type' => PARAM_BOOL,
             ],
+            'useactivitymetadata' => [
+                'default' => 1,
+                'type' => PARAM_BOOL,
+            ],
             'showlockedactivities' => [
                 'default' => 1,
                 'type' => PARAM_BOOL,
@@ -744,6 +798,10 @@ class format_selfstudy extends core_courseformat\base {
                 'type' => PARAM_BOOL,
             ],
             'pathpointcolor' => [
+                'default' => '#6f1ab1',
+                'type' => PARAM_TEXT,
+            ],
+            'nextbuttoncolor' => [
                 'default' => '#6f1ab1',
                 'type' => PARAM_TEXT,
             ],
@@ -774,26 +832,13 @@ class format_selfstudy extends core_courseformat\base {
             unset($options['mainlearningmap']);
             unset($options['enablesectionmaps']);
             unset($options['enableavatar']);
-
-            $options['defaultview']['label'] = get_string('defaultview', 'format_selfstudy');
-            $options['defaultview']['help'] = 'defaultview';
-            $options['defaultview']['help_component'] = 'format_selfstudy';
-            $options['defaultview']['element_type'] = 'select';
-            $options['defaultview']['element_attributes'] = [[
-                'dashboard' => get_string('defaultviewdashboard', 'format_selfstudy'),
-                'map' => get_string('defaultviewmap', 'format_selfstudy'),
-                'list' => get_string('defaultviewlist', 'format_selfstudy'),
-            ]];
-
-            $options['enabledashboard']['label'] = get_string('enabledashboard', 'format_selfstudy');
-            $options['enabledashboard']['help'] = 'enabledashboard';
-            $options['enabledashboard']['help_component'] = 'format_selfstudy';
-            $options['enabledashboard']['element_type'] = 'advcheckbox';
-
-            $options['enablelistview']['label'] = get_string('enablelistview', 'format_selfstudy');
-            $options['enablelistview']['help'] = 'enablelistview';
-            $options['enablelistview']['help_component'] = 'format_selfstudy';
-            $options['enablelistview']['element_type'] = 'advcheckbox';
+            unset($options['defaultview']);
+            unset($options['enabledashboard']);
+            unset($options['enablelistview']);
+            unset($options['learnerview']);
+            unset($options['shownavmap']);
+            unset($options['shownavnext']);
+            unset($options['mapbuttonlabel']);
 
             $options['enableactivitynavigation']['label'] = get_string('enableactivitynavigation', 'format_selfstudy');
             $options['enableactivitynavigation']['help'] = 'enableactivitynavigation';
@@ -803,16 +848,15 @@ class format_selfstudy extends core_courseformat\base {
             $options['shownavprevious']['label'] = get_string('shownavprevious', 'format_selfstudy');
             $options['shownavprevious']['element_type'] = 'advcheckbox';
 
-            $options['shownavmap']['label'] = get_string('shownavmap', 'format_selfstudy');
-            $options['shownavmap']['element_type'] = 'advcheckbox';
-
-            $options['shownavnext']['label'] = get_string('shownavnext', 'format_selfstudy');
-            $options['shownavnext']['element_type'] = 'advcheckbox';
-
             $options['showactivitystatus']['label'] = get_string('showactivitystatus', 'format_selfstudy');
             $options['showactivitystatus']['help'] = 'showactivitystatus';
             $options['showactivitystatus']['help_component'] = 'format_selfstudy';
             $options['showactivitystatus']['element_type'] = 'advcheckbox';
+
+            $options['useactivitymetadata']['label'] = get_string('useactivitymetadata', 'format_selfstudy');
+            $options['useactivitymetadata']['help'] = 'useactivitymetadata';
+            $options['useactivitymetadata']['help_component'] = 'format_selfstudy';
+            $options['useactivitymetadata']['element_type'] = 'advcheckbox';
 
             $options['showlockedactivities']['label'] = get_string('showlockedactivities', 'format_selfstudy');
             $options['showlockedactivities']['help'] = 'showlockedactivities';
@@ -827,14 +871,24 @@ class format_selfstudy extends core_courseformat\base {
                 'maxlength' => 7,
                 'pattern' => '#[0-9a-fA-F]{6}',
                 'placeholder' => '#6f1ab1',
-                'class' => 'format-selfstudy-colorinput',
+                'class' => 'format-selfstudy-colorpicker',
+                'style' => 'display:inline-block;width:3.5rem;height:2.35rem;padding:.15rem;cursor:pointer;vertical-align:middle;',
+            ]];
+
+            $options['nextbuttoncolor']['label'] = get_string('nextbuttoncolor', 'format_selfstudy');
+            $options['nextbuttoncolor']['help'] = 'nextbuttoncolor';
+            $options['nextbuttoncolor']['help_component'] = 'format_selfstudy';
+            $options['nextbuttoncolor']['element_type'] = 'text';
+            $options['nextbuttoncolor']['element_attributes'] = [[
+                'maxlength' => 7,
+                'pattern' => '#[0-9a-fA-F]{6}',
+                'placeholder' => '#6f1ab1',
+                'class' => 'format-selfstudy-colorpicker',
+                'style' => 'display:inline-block;width:3.5rem;height:2.35rem;padding:.15rem;cursor:pointer;vertical-align:middle;',
             ]];
 
             $options['previousbuttonlabel']['label'] = get_string('previousbuttonlabel', 'format_selfstudy');
             $options['previousbuttonlabel']['element_type'] = 'text';
-
-            $options['mapbuttonlabel']['label'] = get_string('mapbuttonlabel', 'format_selfstudy');
-            $options['mapbuttonlabel']['element_type'] = 'text';
 
             $options['nextbuttonlabel']['label'] = get_string('nextbuttonlabel', 'format_selfstudy');
             $options['nextbuttonlabel']['element_type'] = 'text';
@@ -859,17 +913,594 @@ class format_selfstudy extends core_courseformat\base {
     public function create_edit_form_elements(&$mform, $forsection = false) {
         $elements = parent::create_edit_form_elements($mform, $forsection);
 
+        if ($forsection) {
+            $sectionid = optional_param('id', 0, PARAM_INT);
+            if ($sectionid) {
+                $context = context_course::instance($this->courseid);
+                $draftitemid = file_get_submitted_draft_itemid('selfstudysectionimage_filemanager');
+                $fileoptions = $this->get_section_image_filemanager_options();
+                file_prepare_draft_area($draftitemid, $context->id, 'format_selfstudy', 'sectionimage',
+                    $sectionid, $fileoptions);
+                $mform->addElement('filemanager', 'selfstudysectionimage_filemanager',
+                    get_string('sectionimage', 'format_selfstudy'), null, $fileoptions);
+                $mform->addHelpButton('selfstudysectionimage_filemanager', 'sectionimage', 'format_selfstudy');
+                $mform->setDefault('selfstudysectionimage_filemanager', $draftitemid);
+            }
+        }
+
+        if (!$forsection && !empty($this->courseid)) {
+            $context = context_course::instance($this->courseid);
+            $draftitemid = file_get_submitted_draft_itemid('selfstudyheroimage_filemanager');
+            $fileoptions = $this->get_hero_image_filemanager_options();
+            file_prepare_draft_area($draftitemid, $context->id, 'format_selfstudy', 'heroimage', 0, $fileoptions);
+            $startheader = $mform->addElement('header', 'selfstudycourseformatstart',
+                get_string('courseformatsettingsstart', 'format_selfstudy'));
+            $mform->setExpanded('selfstudycourseformatstart', true);
+            $startintro = $mform->addElement('static', 'selfstudycourseformatstart_intro', '',
+                get_string('courseformatsettingsstart_desc', 'format_selfstudy'));
+            $heroimage = $mform->addElement('filemanager', 'selfstudyheroimage_filemanager',
+                get_string('courseheroimage', 'format_selfstudy'), null, $fileoptions);
+            $mform->addHelpButton('selfstudyheroimage_filemanager', 'courseheroimage', 'format_selfstudy');
+            $mform->setDefault('selfstudyheroimage_filemanager', $draftitemid);
+            $heroimagehint = $mform->addElement('static', 'selfstudyheroimage_hint', '',
+                get_string('courseheroimage_hint', 'format_selfstudy'));
+            $contactheading = $mform->addElement('static', 'selfstudycoursecontacts_heading', '',
+                html_writer::div(
+                    html_writer::tag('h4', get_string('coursecontacts', 'format_selfstudy')),
+                    'format-selfstudy-settings-subsection'
+                ));
+            $contactintro = $mform->addElement('static', 'selfstudycoursecontacts_intro', '',
+                get_string('coursecontactsintro', 'format_selfstudy'));
+
+            $contactelements = [$contactheading, $contactintro];
+            $contactusers = $this->get_course_contact_user_options($context);
+            unset($contactusers[0]);
+            $contacts = format_selfstudy_get_course_contacts((int)$this->courseid);
+            $authorids = [];
+            $supportids = [];
+            foreach ($contacts as $contact) {
+                $userid = (int)$contact->userid;
+                $roles = explode(',', (string)$contact->roles);
+                if (in_array('author', $roles, true)) {
+                    $authorids[] = $userid;
+                }
+                if (in_array('support', $roles, true)) {
+                    $supportids[] = $userid;
+                }
+            }
+
+            $authorfield = $mform->addElement('autocomplete', 'selfstudycontactauthors',
+                get_string('coursecontactroleauthor', 'format_selfstudy'), $contactusers, ['multiple' => true]);
+            $mform->setType('selfstudycontactauthors', PARAM_INT);
+            $mform->setDefault('selfstudycontactauthors', $authorids);
+            $contactelements[] = $authorfield;
+
+            $supportfield = $mform->addElement('autocomplete', 'selfstudycontactsupport',
+                get_string('coursecontactrolesupport', 'format_selfstudy'), $contactusers, ['multiple' => true]);
+            $mform->setType('selfstudycontactsupport', PARAM_INT);
+            $mform->setDefault('selfstudycontactsupport', $supportids);
+            $contactelements[] = $supportfield;
+
+            $generalheader = $mform->addElement('header', 'selfstudycourseformatgeneral',
+                get_string('courseformatsettingsgeneral', 'format_selfstudy'));
+            $mform->setExpanded('selfstudycourseformatgeneral', true);
+            $generalintro = $mform->addElement('static', 'selfstudycourseformatgeneral_intro', '',
+                get_string('courseformatsettingsgeneral_desc', 'format_selfstudy'));
+            $designheader = $mform->addElement('header', 'selfstudycourseformatdesign',
+                get_string('courseformatsettingsdesign', 'format_selfstudy'));
+            $mform->setExpanded('selfstudycourseformatdesign', true);
+            $designintro = $mform->addElement('static', 'selfstudycourseformatdesign_intro', '',
+                get_string('courseformatsettingsdesign_desc', 'format_selfstudy'));
+            $designcolorsintro = $mform->addElement('static', 'selfstudycourseformatdesign_colors', '',
+                html_writer::tag('style',
+                    '.format-selfstudy-colorpicker::-webkit-color-swatch-wrapper{padding:0;}' .
+                    '.format-selfstudy-colorpicker::-webkit-color-swatch{border:0;border-radius:.2rem;}' .
+                    '.format-selfstudy-colorpicker::-moz-color-swatch{border:0;border-radius:.2rem;}'
+                ) .
+                html_writer::tag('script',
+                    'document.addEventListener("DOMContentLoaded",function(){' .
+                    '["pathpointcolor","nextbuttoncolor"].forEach(function(name){' .
+                    'var input=document.querySelector("[name="+JSON.stringify(name)+"]");' .
+                    'if(!input){return;}' .
+                    'input.setAttribute("type","color");' .
+                    'input.className="format-selfstudy-colorpicker";' .
+                    'input.style.cssText="display:inline-block;width:3.5rem;height:2.35rem;padding:.15rem;cursor:pointer;vertical-align:middle;";' .
+                    'var row=input.closest(".fitem");' .
+                    'if(!row){return;}' .
+                    'var label=row.querySelector(".col-form-label");' .
+                    'var element=row.querySelector(".felement");' .
+                    'if(label){label.classList.add("col-md-3");}' .
+                    'if(element){element.classList.add("col-md-9");element.classList.remove("col-md-3");}' .
+                    '});' .
+                    '});'
+                ) .
+                html_writer::div(
+                    html_writer::tag('h4', get_string('courseformatsettingsdesigncolors', 'format_selfstudy')) .
+                    html_writer::div(get_string('courseformatsettingsdesigncolors_desc', 'format_selfstudy'),
+                        'format-selfstudy-settings-help'),
+                    'format-selfstudy-settings-subsection'
+                ));
+            $designnavigationintro = $mform->addElement('static', 'selfstudycourseformatdesign_navigation', '',
+                html_writer::div(
+                    html_writer::tag('h4', get_string('courseformatsettingsdesignnavigation', 'format_selfstudy')) .
+                    html_writer::div(get_string('courseformatsettingsdesignnavigation_desc', 'format_selfstudy'),
+                        'format-selfstudy-settings-help'),
+                    'format-selfstudy-settings-subsection'
+                ));
+            $experienceheader = $mform->addElement('header', 'selfstudycourseformatexperience',
+                get_string('courseformatsettingsexperience', 'format_selfstudy'));
+            $mform->setExpanded('selfstudycourseformatexperience', true);
+            $experienceintro = $mform->addElement('static', 'selfstudycourseformatexperience_intro', '',
+                get_string('courseformatsettingsexperience_desc', 'format_selfstudy'));
+            $experiencecontrols = $mform->addElement('static', 'selfstudycourseformatexperience_controls', '',
+                $this->render_course_experience_settings_fragment());
+
+            $designcolorelements = [];
+            $designnavigationelements = [];
+            $generalelements = [];
+            $designcolornames = [
+                'pathpointcolor',
+                'nextbuttoncolor',
+            ];
+            $designnavigationnames = [
+                'previousbuttonlabel',
+                'nextbuttonlabel',
+                'customnavbuttonlabel',
+                'customnavbuttonurl',
+            ];
+            foreach ($elements as $element) {
+                if (in_array($element->getName(), $designcolornames, true)) {
+                    $designcolorelements[] = $element;
+                } else if (in_array($element->getName(), $designnavigationnames, true)) {
+                    $designnavigationelements[] = $element;
+                } else {
+                    $generalelements[] = $element;
+                }
+            }
+
+            $elements = array_merge(
+                array_merge([$startheader, $startintro, $heroimage, $heroimagehint], $contactelements,
+                    [$generalheader, $generalintro]),
+                $generalelements,
+                [$designheader, $designintro, $designcolorsintro],
+                $designcolorelements,
+                [$designnavigationintro],
+                $designnavigationelements,
+                [$experienceheader, $experienceintro, $experiencecontrols]
+            );
+        }
+
         if (!$forsection && $mform->elementExists('pathpointcolor')) {
             $element = $mform->getElement('pathpointcolor');
-            if (method_exists($element, 'setType')) {
-                $element->setType('color');
-            }
             $element->updateAttributes([
+                'type' => 'color',
+                'class' => 'format-selfstudy-colorpicker',
+                'style' => 'display:inline-block;width:3.5rem;height:2.35rem;padding:.15rem;cursor:pointer;vertical-align:middle;',
                 'title' => get_string('pathpointcolor', 'format_selfstudy'),
+            ]);
+        }
+        if (!$forsection && $mform->elementExists('nextbuttoncolor')) {
+            $element = $mform->getElement('nextbuttoncolor');
+            $element->updateAttributes([
+                'type' => 'color',
+                'class' => 'format-selfstudy-colorpicker',
+                'style' => 'display:inline-block;width:3.5rem;height:2.35rem;padding:.15rem;cursor:pointer;vertical-align:middle;',
+                'title' => get_string('nextbuttoncolor', 'format_selfstudy'),
             ]);
         }
 
         return $elements;
+    }
+
+    /**
+     * Updates section options and persists the section image.
+     *
+     * @param stdClass|array $data
+     * @return bool
+     */
+    public function update_section_format_options($data) {
+        $changed = parent::update_section_format_options($data);
+        $dataobject = (object)$data;
+        if (!empty($dataobject->id) && !empty($dataobject->selfstudysectionimage_filemanager)) {
+            $context = context_course::instance($this->courseid);
+            file_save_draft_area_files($dataobject->selfstudysectionimage_filemanager, $context->id,
+                'format_selfstudy', 'sectionimage', (int)$dataobject->id,
+                $this->get_section_image_filemanager_options());
+        }
+
+        return $changed;
+    }
+
+    /**
+     * Updates format options and persists the course hero image.
+     *
+     * @param stdClass|array $data
+     * @param stdClass|null $oldcourse
+     * @return bool
+     */
+    public function update_course_format_options($data, $oldcourse = null) {
+        $changed = parent::update_course_format_options($data, $oldcourse);
+        $dataobject = (object)$data;
+        if (!empty($this->courseid) && !empty($dataobject->selfstudyheroimage_filemanager)) {
+            $context = context_course::instance($this->courseid);
+            file_save_draft_area_files($dataobject->selfstudyheroimage_filemanager, $context->id,
+                'format_selfstudy', 'heroimage', 0, $this->get_hero_image_filemanager_options());
+        }
+        $this->save_course_contacts_from_form($dataobject);
+        $this->save_course_experiences_from_request();
+
+        return $changed;
+    }
+
+    /**
+     * Renders installed learner experience controls inside the course settings form.
+     *
+     * @return string
+     */
+    protected function render_course_experience_settings_fragment(): string {
+        $course = $this->get_course();
+        $repository = new \format_selfstudy\local\experience_repository();
+        $registry = new \format_selfstudy\local\experience_registry($repository);
+
+        $entries = array_values($registry->get_course_experiences($course));
+
+        $formatoptions = $this->get_format_options();
+        $selectedlearnerview = (string)($formatoptions['learnerview'] ?? 'base');
+        $availableviewvalues = ['base'];
+        foreach ($entries as $entry) {
+            if (!$entry->missing && $entry->status !== \format_selfstudy\local\experience_registry::STATUS_INCOMPATIBLE) {
+                $availableviewvalues[] = 'experience:' . $entry->component;
+            }
+        }
+        if (!in_array($selectedlearnerview, $availableviewvalues, true)) {
+            $selectedlearnerview = 'base';
+        }
+
+        $output = html_writer::start_div('format-selfstudy-course-settings-experiences');
+        $output .= html_writer::start_div('format-selfstudy-settings-card format-selfstudy-settings-card-primary');
+        $output .= html_writer::tag('h4', get_string('learnerviewselection', 'format_selfstudy'));
+        $output .= html_writer::div(get_string('learnerviewselection_help', 'format_selfstudy'),
+            'format-selfstudy-settings-help');
+        $output .= $this->render_course_experience_radio('base', get_string('learnerviewbase', 'format_selfstudy'),
+            $selectedlearnerview === 'base');
+        foreach ($entries as $entry) {
+            if ($entry->missing || $entry->status === \format_selfstudy\local\experience_registry::STATUS_INCOMPATIBLE) {
+                continue;
+            }
+            $viewvalue = 'experience:' . $entry->component;
+            $output .= $this->render_course_experience_radio($viewvalue,
+                get_string('learnerviewexperience', 'format_selfstudy', format_string($entry->name)),
+                $selectedlearnerview === $viewvalue);
+        }
+        $output .= html_writer::end_div();
+
+        if ($entries) {
+            $output .= html_writer::start_div('format-selfstudy-settings-experience-grid');
+            foreach ($entries as $index => $entry) {
+                $output .= $this->render_course_experience_card($entry, $index);
+            }
+            $output .= html_writer::end_div();
+        } else {
+            $output .= html_writer::div(get_string('experiencenoneavailable', 'format_selfstudy'),
+                'alert alert-info');
+        }
+        $output .= html_writer::end_div();
+
+        return $output;
+    }
+
+    /**
+     * Renders a learner view radio option.
+     *
+     * @param string $value
+     * @param string $label
+     * @param bool $checked
+     * @return string
+     */
+    protected function render_course_experience_radio(string $value, string $label, bool $checked): string {
+        return html_writer::div(
+            html_writer::label(
+                html_writer::empty_tag('input', [
+                    'type' => 'radio',
+                    'name' => 'selfstudy_learnerview',
+                    'value' => $value,
+                ] + ($checked ? ['checked' => 'checked'] : [])) .
+                html_writer::span($label),
+                ''
+            ),
+            'format-selfstudy-settings-choice'
+        );
+    }
+
+    /**
+     * Renders one installed or stored experience card for the course settings form.
+     *
+     * @param stdClass $entry
+     * @param int $index
+     * @return string
+     */
+    protected function render_course_experience_card(stdClass $entry, int $index): string {
+        $configjson = json_encode($entry->config, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        if ($configjson === false) {
+            $configjson = '{}';
+        }
+
+        $enabledattrs = [
+            'type' => 'checkbox',
+            'name' => 'selfstudy_experience_enabled[' . $index . ']',
+            'value' => 1,
+            'disabled' => 'disabled',
+        ];
+        if ((string)($this->get_format_options()['learnerview'] ?? 'base') === 'experience:' . $entry->component &&
+                !$entry->missing) {
+            $enabledattrs['checked'] = 'checked';
+        }
+
+        $statusclass = 'format-selfstudy-settings-status-' . clean_param($entry->status, PARAM_ALPHANUMEXT);
+        $output = html_writer::start_div('format-selfstudy-settings-card format-selfstudy-settings-experience');
+        $output .= html_writer::start_div('format-selfstudy-settings-card-head');
+        $output .= html_writer::div(
+            html_writer::tag('h4', format_string($entry->name)) .
+            html_writer::div(s($entry->component), 'format-selfstudy-settings-component') .
+            ($entry->description !== '' ? html_writer::div(format_text($entry->description, FORMAT_PLAIN),
+                'format-selfstudy-settings-help') : ''),
+            'format-selfstudy-settings-card-title'
+        );
+        $output .= html_writer::span(get_string('experiencestatus' . $entry->status, 'format_selfstudy'),
+            'format-selfstudy-settings-status ' . $statusclass);
+        $output .= html_writer::end_div();
+
+        $output .= html_writer::start_div('format-selfstudy-settings-card-controls');
+        $output .= html_writer::div(
+            html_writer::label(
+                html_writer::empty_tag('input', $enabledattrs) .
+                html_writer::span(get_string('experienceenabled', 'format_selfstudy')),
+                ''
+            ),
+            'format-selfstudy-settings-choice'
+        );
+        $output .= html_writer::label(get_string('sortorder', 'format_selfstudy'),
+            'selfstudy-experience-sortorder-' . $index, false, ['class' => 'format-selfstudy-settings-label']);
+        $output .= html_writer::empty_tag('input', [
+            'type' => 'number',
+            'name' => 'selfstudy_experience_sortorder[' . $index . ']',
+            'id' => 'selfstudy-experience-sortorder-' . $index,
+            'value' => $entry->sortorder,
+            'class' => 'form-control format-selfstudy-settings-smallinput',
+            'min' => 0,
+            'step' => 1,
+        ]);
+        $output .= html_writer::empty_tag('input', [
+            'type' => 'hidden',
+            'name' => 'selfstudy_experience_component[' . $index . ']',
+            'value' => $entry->component,
+        ]);
+        $output .= html_writer::empty_tag('input', [
+            'type' => 'hidden',
+            'name' => 'selfstudy_experience_configjson[' . $index . ']',
+            'value' => $configjson,
+        ]);
+        $output .= html_writer::empty_tag('input', [
+            'type' => 'hidden',
+            'name' => 'selfstudy_experience_configschema[' . $index . ']',
+            'value' => $entry->schema,
+        ]);
+        $output .= html_writer::empty_tag('input', [
+            'type' => 'hidden',
+            'name' => 'selfstudy_experience_missing[' . $index . ']',
+            'value' => $entry->missing ? 1 : 0,
+        ]);
+        $output .= html_writer::end_div();
+
+        if (!$entry->missing && $entry->configformclass !== '' && class_exists($entry->configformclass) &&
+                method_exists($entry->configformclass, 'render')) {
+            $output .= $entry->configformclass::render($this->get_course(), $entry->config,
+                'selfstudy_experience_config_' . $index);
+        }
+
+        $output .= html_writer::end_div();
+        return $output;
+    }
+
+    /**
+     * Saves learner experience settings posted from the course settings form.
+     */
+    protected function save_course_experiences_from_request(): void {
+        if (empty($this->courseid)) {
+            return;
+        }
+
+        $components = optional_param_array('selfstudy_experience_component', [], PARAM_COMPONENT);
+        if (!$components) {
+            return;
+        }
+
+        $sortorders = optional_param_array('selfstudy_experience_sortorder', [], PARAM_INT);
+        $configs = optional_param_array('selfstudy_experience_configjson', [], PARAM_RAW);
+        $schemas = optional_param_array('selfstudy_experience_configschema', [], PARAM_INT);
+        $missing = optional_param_array('selfstudy_experience_missing', [], PARAM_BOOL);
+        $learnerview = optional_param('selfstudy_learnerview', 'base', PARAM_TEXT);
+
+        $repository = new \format_selfstudy\local\experience_repository();
+        foreach ($components as $index => $component) {
+            $config = json_decode((string)($configs[$index] ?? '{}'), true);
+            if (!is_array($config) || json_last_error() !== JSON_ERROR_NONE) {
+                $config = [];
+            }
+            $configformclass = $this->get_experience_config_form_class($component);
+            if ($configformclass && method_exists($configformclass, 'get_config_from_request')) {
+                $config = $configformclass::get_config_from_request('selfstudy_experience_config_' . $index, $config);
+            }
+
+            $ismissing = !empty($missing[$index]);
+            $viewvalue = 'experience:' . $component;
+            $repository->save_course_experience((int)$this->courseid, $component, $config,
+                !$ismissing && $learnerview === $viewvalue, (int)($sortorders[$index] ?? $index),
+                max(1, (int)($schemas[$index] ?? 1)), $ismissing);
+        }
+
+        $validviews = array_merge(['base'], array_map(static function(string $component): string {
+            return 'experience:' . $component;
+        }, $components));
+        if (!in_array($learnerview, $validviews, true)) {
+            $learnerview = 'base';
+        }
+        parent::update_course_format_options(['learnerview' => $learnerview]);
+    }
+
+    /**
+     * Returns the config form class for an experience component.
+     *
+     * @param string $component
+     * @return string
+     */
+    private function get_experience_config_form_class(string $component): string {
+        $component = clean_param($component, PARAM_COMPONENT);
+        if (strpos($component, 'selfstudyexperience_') !== 0) {
+            return '';
+        }
+
+        $name = clean_param(substr($component, strlen('selfstudyexperience_')), PARAM_PLUGIN);
+        if ($name === '') {
+            return '';
+        }
+
+        $class = '\\' . $component . '\\config_form';
+        if (!class_exists($class)) {
+            $path = __DIR__ . '/experience/' . $name . '/classes/config_form.php';
+            if (is_readable($path)) {
+                require_once($path);
+            }
+        }
+
+        return class_exists($class) ? $class : '';
+    }
+
+    /**
+     * Returns upload constraints for the course hero image.
+     *
+     * @return array
+     */
+    protected function get_hero_image_filemanager_options(): array {
+        return [
+            'subdirs' => 0,
+            'maxfiles' => 1,
+            'accepted_types' => ['web_image'],
+            'return_types' => FILE_INTERNAL,
+        ];
+    }
+
+    /**
+     * Returns upload constraints for section overview images.
+     *
+     * @return array
+     */
+    protected function get_section_image_filemanager_options(): array {
+        return [
+            'subdirs' => 0,
+            'maxfiles' => 1,
+            'accepted_types' => ['web_image'],
+            'return_types' => FILE_INTERNAL,
+        ];
+    }
+
+    /**
+     * Returns enrolled users for the course contact selector.
+     *
+     * @param context_course $context
+     * @return array
+     */
+    protected function get_course_contact_user_options(context_course $context): array {
+        $options = [0 => get_string('choosedots')];
+        $users = get_enrolled_users($context, '', 0, 'u.*', 'u.lastname ASC, u.firstname ASC', 0, 0, true);
+        foreach ($users as $user) {
+            if (isguestuser($user)) {
+                continue;
+            }
+            $options[(int)$user->id] = fullname($user);
+        }
+
+        return $options;
+    }
+
+    /**
+     * Normalises submitted contact user ids from an autocomplete element.
+     *
+     * @param mixed $value Submitted value.
+     * @param context_course $context Course context.
+     * @return int[]
+     */
+    protected function normalise_course_contact_userids($value, context_course $context): array {
+        if ($value === null || $value === '') {
+            return [];
+        }
+
+        $values = is_array($value) ? $value : [$value];
+        $userids = [];
+        foreach ($values as $rawuserid) {
+            $userid = (int)$rawuserid;
+            if (!$userid || isset($userids[$userid]) || !is_enrolled($context, $userid, '', true)) {
+                continue;
+            }
+            $userids[$userid] = $userid;
+        }
+
+        return array_values($userids);
+    }
+
+    /**
+     * Persists the course hero contact persons from the course edit form.
+     *
+     * @param stdClass $data
+     */
+    protected function save_course_contacts_from_form(stdClass $data): void {
+        global $DB;
+
+        if (empty($this->courseid) || !format_selfstudy_contacts_table_exists()) {
+            return;
+        }
+
+        $context = context_course::instance($this->courseid);
+        $now = time();
+        $records = [];
+        $rolemap = [];
+        $sortorder = [];
+        $submittedroles = [
+            'author' => $data->selfstudycontactauthors ?? [],
+            'support' => $data->selfstudycontactsupport ?? [],
+        ];
+
+        foreach ($submittedroles as $role => $submitteduserids) {
+            foreach ($this->normalise_course_contact_userids($submitteduserids, $context) as $userid) {
+                if (!isset($rolemap[$userid])) {
+                    $rolemap[$userid] = [];
+                    $sortorder[] = $userid;
+                }
+                if (!in_array($role, $rolemap[$userid], true)) {
+                    $rolemap[$userid][] = $role;
+                }
+            }
+        }
+
+        foreach ($sortorder as $userid) {
+            if (count($records) >= self::MAX_HERO_CONTACTS) {
+                break;
+            }
+
+            $records[] = (object)[
+                'courseid' => (int)$this->courseid,
+                'userid' => $userid,
+                'roles' => implode(',', $rolemap[$userid]),
+                'sortorder' => count($records),
+                'timecreated' => $now,
+                'timemodified' => $now,
+            ];
+        }
+
+        $DB->delete_records('format_selfstudy_contacts', ['courseid' => (int)$this->courseid]);
+        foreach ($records as $record) {
+            $DB->insert_record('format_selfstudy_contacts', $record);
+        }
     }
 
     /**
@@ -880,8 +1511,25 @@ class format_selfstudy extends core_courseformat\base {
      */
     public function validate_course_format_options(array $data): array {
         $data = parent::validate_course_format_options($data);
+        if (($data['defaultview'] ?? '') === 'map') {
+            $data['defaultview'] = 'dashboard';
+        }
+        if (($data['defaultview'] ?? '') === 'list') {
+            $data['defaultview'] = 'dashboard';
+        }
+        if (isset($data['learnerview'])) {
+            $data['learnerview'] = clean_param((string)$data['learnerview'], PARAM_TEXT);
+            if ($data['learnerview'] === '') {
+                $data['learnerview'] = 'base';
+            }
+        }
         if (isset($data['pathpointcolor'])) {
             $data['pathpointcolor'] = format_selfstudy_normalise_hex_color((string)$data['pathpointcolor']);
+        }
+        if (isset($data['nextbuttoncolor'])) {
+            $fallback = format_selfstudy_normalise_hex_color((string)($data['pathpointcolor'] ?? '#6f1ab1'));
+            $data['nextbuttoncolor'] = format_selfstudy_normalise_hex_color((string)$data['nextbuttoncolor'],
+                $fallback);
         }
 
         return $data;
@@ -953,6 +1601,133 @@ class format_selfstudy extends core_courseformat\base {
 
         return $maps;
     }
+}
+
+/**
+ * Serves files from the selfstudy course format file areas.
+ *
+ * @param stdClass $course
+ * @param stdClass|null $cm
+ * @param context $context
+ * @param string $filearea
+ * @param array $args
+ * @param bool $forcedownload
+ * @param array $options
+ * @return bool
+ */
+function format_selfstudy_pluginfile($course, $cm, $context, $filearea, $args, $forcedownload,
+        array $options = []): bool {
+    if ($context->contextlevel !== CONTEXT_COURSE || !in_array($filearea, ['heroimage', 'sectionimage'], true)) {
+        return false;
+    }
+    if (!has_capability('moodle/course:view', $context)) {
+        return false;
+    }
+
+    $filename = array_pop($args);
+    $itemid = $filearea === 'sectionimage' ? (int)array_shift($args) : 0;
+    if (!$filename || $filename === '.') {
+        return false;
+    }
+
+    $fs = get_file_storage();
+    $file = $fs->get_file($context->id, 'format_selfstudy', $filearea, $itemid, '/', $filename);
+    if (!$file || $file->is_directory()) {
+        return false;
+    }
+
+    send_stored_file($file, 0, 0, $forcedownload, $options);
+}
+
+/**
+ * Returns the configured course hero image URL.
+ *
+ * @param stdClass $course
+ * @return moodle_url|null
+ */
+function format_selfstudy_get_hero_image_url(stdClass $course): ?moodle_url {
+    $context = context_course::instance($course->id);
+    $fs = get_file_storage();
+    $files = $fs->get_area_files($context->id, 'format_selfstudy', 'heroimage', 0, 'sortorder, id', false);
+    $file = reset($files);
+    if (!$file) {
+        return null;
+    }
+
+    return moodle_url::make_pluginfile_url($context->id, 'format_selfstudy', 'heroimage', 0, '/',
+        $file->get_filename(), false);
+}
+
+/**
+ * Returns the configured section overview image URL.
+ *
+ * @param stdClass $course
+ * @param int $sectionid
+ * @return moodle_url|null
+ */
+function format_selfstudy_get_section_image_url(stdClass $course, int $sectionid): ?moodle_url {
+    if (!$sectionid) {
+        return null;
+    }
+
+    $context = context_course::instance($course->id);
+    $fs = get_file_storage();
+    $files = $fs->get_area_files($context->id, 'format_selfstudy', 'sectionimage', $sectionid,
+        'sortorder, id', false);
+    $file = reset($files);
+    if (!$file) {
+        return null;
+    }
+
+    return moodle_url::make_pluginfile_url($context->id, 'format_selfstudy', 'sectionimage', $sectionid, '/',
+        $file->get_filename(), false);
+}
+
+/**
+ * Returns whether the hero contact table is available.
+ *
+ * @return bool
+ */
+function format_selfstudy_contacts_table_exists(): bool {
+    global $DB;
+
+    return $DB->get_manager()->table_exists('format_selfstudy_contacts');
+}
+
+/**
+ * Returns configured course hero contacts with user records.
+ *
+ * @param int $courseid
+ * @return stdClass[]
+ */
+function format_selfstudy_get_course_contacts(int $courseid): array {
+    global $DB;
+
+    if (!format_selfstudy_contacts_table_exists()) {
+        return [];
+    }
+
+    $sql = "SELECT c.id AS contactid, c.courseid, c.userid, c.roles, c.sortorder,
+                   u.*
+              FROM {format_selfstudy_contacts} c
+              JOIN {user} u ON u.id = c.userid
+             WHERE c.courseid = :courseid
+               AND u.deleted = 0
+          ORDER BY c.sortorder ASC, c.id ASC";
+
+    return array_values($DB->get_records_sql($sql, ['courseid' => $courseid], 0, 10));
+}
+
+/**
+ * Returns available display role labels for hero contacts.
+ *
+ * @return array
+ */
+function format_selfstudy_get_course_contact_role_labels(): array {
+    return [
+        'author' => get_string('coursecontactroleauthor', 'format_selfstudy'),
+        'support' => get_string('coursecontactrolesupport', 'format_selfstudy'),
+    ];
 }
 
 /**
@@ -1201,11 +1976,11 @@ function format_selfstudy_cmgoals_table_exists(): bool {
  * @param string $color
  * @return string
  */
-function format_selfstudy_normalise_hex_color(string $color): string {
+function format_selfstudy_normalise_hex_color(string $color, string $fallback = '#6f1ab1'): string {
     $color = trim($color);
     if (preg_match('/^#[0-9a-fA-F]{6}$/', $color)) {
         return strtolower($color);
     }
 
-    return '#6f1ab1';
+    return preg_match('/^#[0-9a-fA-F]{6}$/', $fallback) ? strtolower($fallback) : '#6f1ab1';
 }

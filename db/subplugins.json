@@ -1,4 +1,7 @@
 {
+    "subplugintypes": {
+        "selfstudyexperience": "course/format/selfstudy/experience"
+    },
     "plugintypes": {
         "selfstudyexperience": "course/format/selfstudy/experience"
     }

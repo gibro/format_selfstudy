@@ -207,6 +207,10 @@ class base_renderer {
             $output .= \html_writer::link($nav['previous']->url,
                 get_string('learningpathaccessibleprevious', 'format_selfstudy'), ['class' => 'btn btn-secondary']);
         }
+        if (!empty($activepath->courseid)) {
+            $output .= \html_writer::link(new \moodle_url('/course/view.php', ['id' => (int)$activepath->courseid]),
+                get_string('viewcourse', 'format_selfstudy'), ['class' => 'btn btn-secondary']);
+        }
         if ($mainmapcm) {
             $output .= \html_writer::link(new \moodle_url('/mod/learningmap/view.php', ['id' => $mainmapcm->id]),
                 get_string('learningpathaccessiblemap', 'format_selfstudy'), ['class' => 'btn btn-secondary']);
@@ -307,10 +311,11 @@ class base_renderer {
      */
     public function render_path_outline_entry(\stdClass $entry, bool $uselevelmargin = true): string {
         $statuslabel = $this->get_path_status_label($entry);
-        $title = $entry->url ? \html_writer::link($entry->url, $entry->title) : s($entry->title);
-        $availableinfo = trim(strip_tags((string)($entry->availableinfo ?? '')));
+        $entrytitle = format_string((string)$entry->title);
+        $title = $entry->url ? \html_writer::link($entry->url, $entrytitle) : s($entrytitle);
+        $availableinfo = self::normalise_plain_text((string)($entry->availableinfo ?? ''));
         $description = $availableinfo !== '' ?
-            \html_writer::div(format_text($availableinfo, FORMAT_PLAIN), 'format-selfstudy-pathoutline-info') : '';
+            \html_writer::div(s($availableinfo), 'format-selfstudy-pathoutline-info') : '';
         $competencies = array_values(array_filter((array)($entry->competencies ?? [])));
         if ($competencies) {
             $description .= \html_writer::div(
@@ -369,6 +374,23 @@ class base_renderer {
     }
 
     /**
+     * Converts Moodle-generated snippets into readable one-line text.
+     *
+     * @param string $text
+     * @return string
+     */
+    private static function normalise_plain_text(string $text): string {
+        $text = trim($text);
+        if ($text === '') {
+            return '';
+        }
+        $text = preg_replace('/<\s*br\s*\/?\s*>/i', ' ', $text);
+        $text = preg_replace('/<\/(p|div|li|ul|ol|section|article|h[1-6])\s*>/i', ' ', $text);
+        $text = html_entity_decode(strip_tags($text), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        return trim(preg_replace('/\s+/', ' ', $text));
+    }
+
+    /**
      * Returns a localized path status label.
      *
      * @param \stdClass $entry
@@ -391,7 +413,7 @@ class base_renderer {
             get_string('learningpathaccessiblestatus', 'format_selfstudy', $statuslabel),
         ];
         if (!empty($entry->availableinfo)) {
-            $parts[] = trim(strip_tags((string)$entry->availableinfo));
+            $parts[] = self::normalise_plain_text((string)$entry->availableinfo);
         }
         if (!empty($entry->competencies)) {
             $parts[] = get_string('activitycompetencies', 'format_selfstudy') . ': ' .

@@ -242,13 +242,42 @@ function xmldb_format_selfstudy_upgrade(int $oldversion): bool {
     }
 
     if ($oldversion < 2026051303) {
-        $table = new xmldb_table('format_selfstudy_experiences');
-        if ($dbman->table_exists($table)) {
-            $migrator = new \format_selfstudy\local\learningmap_config_migrator();
-            $migrator->mirror_all_courses();
+        upgrade_plugin_savepoint(true, 2026051303, 'format', 'selfstudy');
+    }
+
+    if ($oldversion < 2026051304) {
+        $table = new xmldb_table('format_selfstudy_contacts');
+
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('courseid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('userid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('roles', XMLDB_TYPE_CHAR, '100', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('sortorder', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_key('course_fk', XMLDB_KEY_FOREIGN, ['courseid'], 'course', ['id']);
+        $table->add_key('user_fk', XMLDB_KEY_FOREIGN, ['userid'], 'user', ['id']);
+        $table->add_index('course_sort_ix', XMLDB_INDEX_NOTUNIQUE, ['courseid', 'sortorder']);
+        $table->add_index('course_user_uix', XMLDB_INDEX_UNIQUE, ['courseid', 'userid']);
+
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
         }
 
-        upgrade_plugin_savepoint(true, 2026051303, 'format', 'selfstudy');
+        upgrade_plugin_savepoint(true, 2026051304, 'format', 'selfstudy');
+    }
+
+    if ($oldversion < 2026051500) {
+        $table = new xmldb_table('format_selfstudy_experiences');
+        if ($dbman->table_exists($table)) {
+            $DB->delete_records('format_selfstudy_experiences', [
+                'component' => 'selfstudyexperience_learningmap',
+            ]);
+        }
+
+        upgrade_plugin_savepoint(true, 2026051500, 'format', 'selfstudy');
     }
 
     return true;

@@ -349,6 +349,9 @@ class experience_registry {
         $metadata->features = array_values(array_filter((array)($metadata->features ?? []), 'is_string'));
         $metadata->rendererclass = (string)($metadata->rendererclass ?? '');
         $metadata->configformclass = (string)($metadata->configformclass ?? '');
+        if ($metadata->configformclass !== '' && !class_exists($metadata->configformclass)) {
+            $this->require_component_class($metadata->component, 'config_form');
+        }
 
         return $metadata->name === '' ? null : $metadata;
     }

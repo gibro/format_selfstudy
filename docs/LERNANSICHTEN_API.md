@@ -1,10 +1,12 @@
 # Lernansichten-API
 
-Stand: 2026-05-13
+Stand: 2026-05-15
 
 Diese Datei dokumentiert die aktuelle Entwickler-API für optionale Lernansichten im Kursformat `format_selfstudy`.
 
-Die API ist in der ersten tragfähigen Ausbaustufe. Sie ist stabil genug für paketinterne Lernansichten und erste Experimente, aber noch keine endgültig zugesagte öffentliche Moodle-Plugin-API. Neue Lernansichten sollten deshalb nah an den hier beschriebenen Verträgen bleiben und keine Core-Logik duplizieren.
+Die API ist in der ersten tragfähigen Ausbaustufe. `format_selfstudy` registriert dafuer den Moodle-Subplugin-Typ
+`selfstudyexperience`. Neue Lernansichten sollten deshalb nah an den hier beschriebenen Vertraegen bleiben und keine
+Core-Logik duplizieren.
 
 ## Begriff
 
@@ -16,7 +18,8 @@ Technisch heißen Lernansichten:
 selfstudyexperience_{name}
 ```
 
-Die erste produktive Lernansicht ist:
+Das Kursformat ist der Parent-Plugin-Typ. Konkrete Lernansichten sind echte Moodle-Subplugins dieses Parent-Plugins.
+Die erste neu aufgesetzte Lernansicht ist:
 
 ```text
 selfstudyexperience_learningmap
@@ -27,6 +30,9 @@ Sie liegt paketintern unter:
 ```text
 course/format/selfstudy/experience/learningmap
 ```
+
+Die aktuelle Learningmap-Implementierung ist bewusst nur ein installierbares Skeleton. Fachlogik, Konfiguration und
+Rendering werden darauf neu aufgebaut.
 
 ## Architekturregeln
 
@@ -65,7 +71,16 @@ course/format/selfstudy/experience/{name}/
     en/selfstudyexperience_{name}.php
 ```
 
-Für die aktuelle paketinterne Discovery lädt `experience_registry` zusätzlich zu Moodle-Subplugins auch Klassen aus `experience/{name}/classes`. Dadurch kann eine Lernansicht im Kursformat-Paket ausgeliefert werden, selbst wenn Moodle sie lokal noch nicht als eigenständigen Subplugin-Typ auflöst.
+`format_selfstudy` registriert den Subplugin-Typ in:
+
+```text
+course/format/selfstudy/db/subplugins.json
+course/format/selfstudy/db/subplugins.php
+```
+
+`subplugins.json` ist der moderne Metadatenweg. `subplugins.php` bleibt als Kompatibilitaetsweg fuer aeltere Moodle-Versionen
+erhalten. Die Registry nutzt bevorzugt Moodles Plugin-Discovery und hat nur noch eine paketinterne Fallback-Discovery fuer
+Entwicklungs- und Uebergangssituationen.
 
 ## Metadata-Provider
 
@@ -95,7 +110,7 @@ class experience {
 ### Metadata-Felder
 
 `component`
-: Vollständiger Komponentenname, zum Beispiel `selfstudyexperience_learningmap`.
+: Vollständiger Komponentenname, zum Beispiel `selfstudyexperience_example`.
 
 `name`
 : Sichtbarer Name in der Oberfläche. Für Lehrende nutzernahe Begriffe verwenden, zum Beispiel `Lernlandkarte`.
@@ -218,7 +233,7 @@ Wichtige Felder:
 : Kurs-ID.
 
 `component`
-: Komponentenname, zum Beispiel `selfstudyexperience_learningmap`.
+: Komponentenname, zum Beispiel `selfstudyexperience_example`.
 
 `enabled`
 : Ob die Lernansicht im Kurs aktiv ist.
@@ -350,43 +365,19 @@ class renderer implements experience_renderer_interface {
 }
 ```
 
-## Beispiel: Learningmap-Konfiguration
+## Beispiel: Konfiguration
 
-Die paketinterne Learningmap-Lernansicht nutzt aktuell dieses Schema:
+Eine Lernansicht kann ihre eigenen Einstellungen als JSON-Objekt speichern. Ein minimales Beispiel:
 
 ```json
 {
-  "mainmapcmid": 44,
-  "sectionmaps": {
-    "12": 55
-  },
-  "sectionmapsenabled": true,
-  "avatarenabled": true,
-  "fullscreenenabled": true,
-  "legacyformatoptions": {
-    "mainlearningmap": 44,
-    "enablesectionmaps": true,
-    "enableavatar": true
-  }
+  "url": "/course/view.php?id=42",
+  "accent": "#1f7a64"
 }
 ```
 
-`sectionmaps` ordnet Moodle-Section-IDs den Learningmap-CM-IDs zu. Ungültige oder unsichtbare CMs bleiben in der Konfiguration erhalten, erzeugen aber keine Links.
-
-Die Migration historischer Formatoptionen übernimmt:
-
-```text
-course option mainlearningmap -> mainmapcmid
-course option enablesectionmaps -> sectionmapsenabled
-course option enableavatar -> avatarenabled
-section option sectionmap -> sectionmaps[sectionid]
-```
-
-Die Klasse dafür ist:
-
-```text
-course/format/selfstudy/classes/local/learningmap_config_migrator.php
-```
+Die Bedeutung und Validierung dieses Objekts gehoert zur jeweiligen Lernansicht. Die generische Verwaltung
+speichert die Konfiguration nur und reicht sie an Renderer und Navigation weiter.
 
 ## Backup, Restore und Transfer
 

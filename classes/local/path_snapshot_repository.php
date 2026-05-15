@@ -119,6 +119,28 @@ class path_snapshot_repository {
     }
 
     /**
+     * Returns all revisions for a path, newest first.
+     *
+     * @param int $pathid
+     * @return \stdClass[]
+     */
+    public function get_revisions_for_path(int $pathid): array {
+        return $this->get_revisions($pathid);
+    }
+
+    /**
+     * Returns one stored revision.
+     *
+     * @param int $revisionid
+     * @return \stdClass|null
+     */
+    public function get_revision(int $revisionid): ?\stdClass {
+        global $DB;
+
+        return $DB->get_record(self::TABLE_REVISIONS, ['id' => $revisionid], '*', IGNORE_MISSING) ?: null;
+    }
+
+    /**
      * Returns the next revision number for a path.
      *
      * @param int $pathid

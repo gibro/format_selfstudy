@@ -4,17 +4,23 @@
 namespace selfstudyexperience_learningmap;
 
 use format_selfstudy\local\experience_renderer_interface;
-use format_selfstudy\local\learningmap_config_migrator;
 
 defined('MOODLE_INTERNAL') || die();
 
+if (!class_exists(__NAMESPACE__ . '\\map_builder')) {
+    require_once(__DIR__ . '/map_builder.php');
+}
+if (!class_exists(__NAMESPACE__ . '\\learningmap_adapter')) {
+    require_once(__DIR__ . '/learningmap_adapter.php');
+}
+
 /**
- * Learner-facing renderer for configured Learningmap activities.
+ * Learner-facing renderer for the Learningmap selfstudy experience.
  */
 class renderer implements experience_renderer_interface {
 
     /**
-     * Returns whether the renderer can be used for this course.
+     * Returns whether this experience can render for the current course context.
      *
      * @param \stdClass $course
      * @param \stdClass $baseview
@@ -26,7 +32,7 @@ class renderer implements experience_renderer_interface {
     }
 
     /**
-     * Renders the course entry links for the configured maps.
+     * Renders optional learner-facing course entry HTML.
      *
      * @param \stdClass $course
      * @param \stdClass $baseview
@@ -34,46 +40,35 @@ class renderer implements experience_renderer_interface {
      * @return string
      */
     public function render_course_entry(\stdClass $course, \stdClass $baseview, \stdClass $config): string {
-        try {
-            $modinfo = get_fast_modinfo($course);
-        } catch (\Throwable $exception) {
-            return '';
+        $adapter = new learningmap_adapter();
+        $cm = $adapter->get_configured_cm($course, $config);
+        if (!$cm) {
+            return \html_writer::div(get_string('setupmissing', 'selfstudyexperience_learningmap'),
+                'alert alert-warning');
         }
 
-        $mainmapcm = learningmap_config_migrator::resolve_main_map_cm($modinfo, $config);
-        if ($mainmapcm) {
-            return \html_writer::link($mainmapcm->url,
-                get_string('learningmapopenmain', 'format_selfstudy'),
-                ['class' => 'btn btn-secondary format-selfstudy-learningmap-entry']);
-        }
+        $mapmodel = (new map_builder())->build($course, $baseview, $config);
+        $mapurl = $adapter->get_map_url($cm, $mapmodel);
+        $sync = $adapter->describe_sync($cm, $mapmodel);
+        $modeljson = json_encode($mapmodel, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 
-        if (empty($config->sectionmapsenabled) || empty($config->sectionmaps)) {
-            return '';
-        }
-
-        $links = [];
-        foreach ((array)$config->sectionmaps as $sectionid => $cmid) {
-            $cm = learningmap_config_migrator::resolve_section_map_cm($modinfo, $config, (int)$sectionid);
-            if (!$cm) {
-                continue;
-            }
-            $links[] = \html_writer::tag('li',
-                \html_writer::link($cm->url, format_string($cm->name), [
-                    'class' => 'btn btn-secondary btn-sm format-selfstudy-learningmap-sectionentry',
-                ])
-            );
-        }
-
-        if (!$links) {
-            return '';
-        }
-
-        return \html_writer::tag('h3', get_string('learningmapsectionmaps', 'format_selfstudy')) .
-            \html_writer::tag('ul', implode('', $links), ['class' => 'format-selfstudy-learningmap-sectionentries']);
+        return \html_writer::tag('section',
+            \html_writer::tag('h2', get_string('pluginname', 'selfstudyexperience_learningmap')) .
+            \html_writer::div($this->render_status_summary($mapmodel, $sync),
+                'format-selfstudy-learningmap-summary') .
+            \html_writer::link($mapurl, get_string('openlearningmap', 'selfstudyexperience_learningmap'), [
+                'class' => 'btn btn-primary format-selfstudy-learningmap-open',
+            ]),
+            [
+                'class' => 'format-selfstudy-learningmap-experience format-selfstudy-learningmap-theme-' .
+                    clean_param((string)($mapmodel->theme ?? 'adventure'), PARAM_ALPHANUMEXT),
+                'data-selfstudy-learningmap-model' => $modeljson !== false ? $modeljson : '{}',
+            ]
+        );
     }
 
     /**
-     * Returns the best Learningmap URL for an activity page.
+     * Returns optional activity navigation hints.
      *
      * @param \stdClass $course
      * @param \stdClass $baseview
@@ -83,47 +78,41 @@ class renderer implements experience_renderer_interface {
      */
     public function get_activity_navigation(\stdClass $course, \stdClass $baseview, \cm_info $cm,
             \stdClass $config): ?\stdClass {
-        try {
-            $modinfo = get_fast_modinfo($course);
-        } catch (\Throwable $exception) {
-            return null;
-        }
-
-        $mapcm = null;
-        $sectionid = $this->get_cm_section_id($modinfo, $cm);
-        if ($sectionid) {
-            $mapcm = learningmap_config_migrator::resolve_section_map_cm($modinfo, $config, $sectionid);
-        }
+        $adapter = new learningmap_adapter();
+        $mapcm = $adapter->get_configured_cm($course, $config);
         if (!$mapcm) {
-            $mapcm = learningmap_config_migrator::resolve_main_map_cm($modinfo, $config);
-        }
-
-        if (!$mapcm || empty($mapcm->url)) {
             return null;
         }
 
+        $mapmodel = (new map_builder())->build($course, $baseview, $config);
         return (object)[
-            'mapurl' => $mapcm->url->out(false),
+            'mapurl' => $adapter->get_map_url($mapcm, $mapmodel)->out(false),
         ];
     }
 
     /**
-     * Finds the course section id that contains a CM.
+     * Renders a compact model summary for the first version.
      *
-     * @param \course_modinfo $modinfo
-     * @param \cm_info $cm
-     * @return int
+     * @param \stdClass $mapmodel
+     * @param \stdClass $sync
+     * @return string
      */
-    private function get_cm_section_id(\course_modinfo $modinfo, \cm_info $cm): int {
-        foreach ($modinfo->get_section_info_all() as $section) {
-            if (empty($modinfo->sections[$section->section])) {
-                continue;
-            }
-            if (in_array((int)$cm->id, array_map('intval', $modinfo->sections[$section->section]), true)) {
-                return (int)$section->id;
-            }
+    private function render_status_summary(\stdClass $mapmodel, \stdClass $sync): string {
+        $counts = [];
+        foreach ((array)($mapmodel->nodes ?? []) as $node) {
+            $state = (string)($node->gamestate ?? 'available');
+            $counts[$state] = ($counts[$state] ?? 0) + 1;
         }
 
-        return 0;
+        $items = [];
+        foreach ($counts as $state => $count) {
+            $items[] = \html_writer::span(s($state) . ': ' . (int)$count,
+                'format-selfstudy-learningmap-state');
+        }
+
+        $items[] = \html_writer::span(get_string('revision', 'selfstudyexperience_learningmap') . ': ' .
+            (int)$sync->revision, 'format-selfstudy-learningmap-state');
+
+        return implode('', $items);
     }
 }

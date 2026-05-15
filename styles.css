@@ -1,9 +1,382 @@
 .format-selfstudy-dashboard {
     display: grid;
     gap: 1rem;
-    margin: 1rem 0 1.5rem;
+    margin: 0 0 1.5rem;
     width: 100%;
     box-sizing: border-box;
+}
+
+.format-selfstudy-coursehero {
+    display: grid;
+    grid-template-columns: minmax(0, 1.06fr) minmax(19rem, .94fr);
+    grid-template-areas:
+        "main image"
+        "facts facts";
+    gap: 2rem;
+    align-items: center;
+    margin: 0 calc(50% - 50vw);
+    padding: 4rem max(1rem, calc(50vw - 640px));
+    background: #fff;
+    color: #111c2c;
+}
+
+.format-selfstudy-coursehero-main {
+    grid-area: main;
+    display: grid;
+    align-content: start;
+    gap: 1.25rem;
+    z-index: 1;
+}
+
+.format-selfstudy-coursehero-kicker {
+    justify-self: start;
+    border-radius: 999px;
+    padding: .25rem .75rem;
+    background: #68fadd;
+    color: #004c41;
+    font-size: .75rem;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+
+.format-selfstudy-coursehero-title {
+    margin: 0;
+    color: #031635;
+    font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: clamp(2.25rem, 4vw, 3rem);
+    font-weight: 800;
+    line-height: 1.08;
+    letter-spacing: 0;
+}
+
+.format-selfstudy-coursehero-summary {
+    max-width: 38rem;
+    color: #44474e;
+    font-size: 1.125rem;
+    line-height: 1.55;
+}
+
+.format-selfstudy-coursehero-summary > :last-child {
+    margin-bottom: 0;
+}
+
+.format-selfstudy-coursehero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: center;
+    margin-top: .75rem;
+}
+
+.format-selfstudy-coursehero-actions .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 3.25rem;
+    border-radius: .75rem;
+    padding: .75rem 1.5rem;
+    font-weight: 800;
+    white-space: normal;
+    text-align: center;
+}
+
+.format-selfstudy-coursehero-primary,
+.format-selfstudy-coursehero-actions .btn-primary {
+    border-color: var(--format-selfstudy-next-button-color, #006b5c);
+    background: var(--format-selfstudy-next-button-color, #006b5c);
+    color: #fff;
+    box-shadow: 0 12px 24px rgba(0, 107, 92, .16);
+}
+
+.format-selfstudy-coursehero-primary:hover,
+.format-selfstudy-coursehero-actions .btn-primary:hover {
+    border-color: color-mix(in srgb, var(--format-selfstudy-next-button-color, #006b5c) 88%, #000);
+    background: color-mix(in srgb, var(--format-selfstudy-next-button-color, #006b5c) 88%, #000);
+    color: #fff;
+}
+
+.format-selfstudy-coursehero-ghost,
+.format-selfstudy-coursehero-actions .btn-secondary {
+    border: 2px solid #c5c6cf;
+    background: transparent;
+    color: #031635;
+}
+
+.format-selfstudy-coursehero-ghost:hover,
+.format-selfstudy-coursehero-actions .btn-secondary:hover {
+    border-color: #031635;
+    background: #f0f3ff;
+    color: #031635;
+}
+
+.format-selfstudy-coursecontacts {
+    display: grid;
+    gap: .65rem;
+    margin-top: .25rem;
+}
+
+.format-selfstudy-coursecontacts-label {
+    color: #5c6470;
+    font-size: .8rem;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.format-selfstudy-coursecontacts-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .65rem;
+}
+
+.format-selfstudy-coursecontact {
+    display: grid;
+    grid-template-columns: 2.75rem minmax(0, 1fr);
+    column-gap: .65rem;
+    align-items: center;
+    min-width: min(100%, 13rem);
+    max-width: 18rem;
+    padding: .5rem .65rem;
+    border: 1px solid #d9e1ea;
+    border-radius: .75rem;
+    background: #fff;
+    color: #031635;
+    text-decoration: none;
+}
+
+.format-selfstudy-coursecontact:hover {
+    border-color: #006b5c;
+    color: #031635;
+    text-decoration: none;
+}
+
+.format-selfstudy-coursecontact-avatar {
+    grid-row: span 2;
+}
+
+.format-selfstudy-coursecontact-avatar img,
+.format-selfstudy-coursecontact img.userpicture {
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 50%;
+}
+
+.format-selfstudy-coursecontact-name {
+    overflow: hidden;
+    font-weight: 800;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.format-selfstudy-coursecontact-roles {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .25rem;
+}
+
+.format-selfstudy-coursecontact-role {
+    border-radius: 999px;
+    padding: .08rem .45rem;
+    background: #eef6f4;
+    color: #006b5c;
+    font-size: .72rem;
+    font-weight: 800;
+}
+
+.format-selfstudy-coursehero-image {
+    grid-area: image;
+    position: relative;
+    min-height: 17rem;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+    border-radius: 1.5rem;
+    background: #dfe7ef;
+    box-shadow: 0 24px 48px rgba(26, 43, 75, .16);
+    aspect-ratio: 16 / 9;
+}
+
+.format-selfstudy-coursehero-image img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.format-selfstudy-coursehero-image-fallback {
+    display: grid;
+    place-items: end start;
+    padding: 1.5rem;
+    background:
+        linear-gradient(135deg, rgba(22, 78, 99, .18), rgba(47, 125, 79, .22)),
+        linear-gradient(145deg, #e6edf3 0%, #c7d8e8 48%, #e8edf2 100%);
+    color: #253243;
+    font-weight: 700;
+}
+
+.format-selfstudy-coursehero-facts {
+    grid-area: facts;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+    gap: 1rem;
+    margin-top: .5rem;
+}
+
+.format-selfstudy-coursehero-fact {
+    min-width: 0;
+    border: 1px solid #e2e8f0;
+    border-radius: 1rem;
+    padding: 1rem;
+    background: #fff;
+    box-shadow: 0 4px 6px rgba(26, 43, 75, .04);
+}
+
+.format-selfstudy-coursehero-factlabel {
+    color: #44474e;
+    font-size: .8rem;
+    font-weight: 700;
+}
+
+.format-selfstudy-coursehero-factvalue {
+    margin-top: .25rem;
+    color: #031635;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+}
+
+.format-selfstudy-sectionoverview {
+    display: grid;
+    gap: 2rem;
+    padding: 4rem 0;
+    background: #f9f9ff;
+}
+
+.format-selfstudy-sectionoverview-head {
+    display: grid;
+    justify-items: center;
+    gap: .75rem;
+    text-align: center;
+}
+
+.format-selfstudy-sectionoverview-head h2 {
+    margin: 0;
+    color: #031635;
+    font-size: clamp(1.6rem, 2.6vw, 2rem);
+    font-weight: 800;
+    line-height: 1.2;
+}
+
+.format-selfstudy-sectionoverview-accent {
+    width: 5rem;
+    height: .25rem;
+    border-radius: 999px;
+    background: #006b5c;
+}
+
+.format-selfstudy-sectionoverview-intro {
+    max-width: 42rem;
+    color: #44474e;
+    font-size: 1rem;
+    line-height: 1.5;
+}
+
+.format-selfstudy-sectionoverview-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: .85rem;
+}
+
+.format-selfstudy-sectionoverview-card {
+    display: grid;
+    grid-template-columns: minmax(7rem, 10rem) minmax(0, 1fr);
+    align-items: center;
+    gap: 1rem;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+    border-radius: .5rem;
+    padding: .75rem;
+    background: #fff;
+    box-shadow: 0 4px 6px rgba(26, 43, 75, .04);
+}
+
+.format-selfstudy-sectionoverview-media {
+    display: grid;
+    place-items: center;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    border-radius: .35rem;
+    background: #d8e3fa;
+    color: #006b5c;
+}
+
+.format-selfstudy-sectionoverview-media img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.format-selfstudy-sectionoverview-media-fallback {
+    background:
+        linear-gradient(135deg, rgba(104, 250, 221, .24), rgba(3, 22, 53, .08)),
+        #f0f3ff;
+}
+
+.format-selfstudy-sectionoverview-initial {
+    display: grid;
+    place-items: center;
+    width: 4rem;
+    height: 4rem;
+    border-radius: 1rem;
+    background: #fff;
+    color: #031635;
+    font-size: 2rem;
+    font-weight: 800;
+}
+
+.format-selfstudy-sectionoverview-body {
+    display: grid;
+    gap: .5rem;
+    min-width: 0;
+}
+
+.format-selfstudy-sectionoverview-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    align-items: center;
+}
+
+.format-selfstudy-sectionoverview-chip,
+.format-selfstudy-sectionoverview-status {
+    border-radius: 999px;
+    padding: .15rem .55rem;
+    font-size: .75rem;
+    font-weight: 800;
+}
+
+.format-selfstudy-sectionoverview-chip {
+    background: #68fadd;
+    color: #004c41;
+}
+
+.format-selfstudy-sectionoverview-status {
+    background: #eef2f7;
+    color: #364768;
+}
+
+.format-selfstudy-sectionoverview-card h3 {
+    margin: 0;
+    color: #031635;
+    font-size: 1.25rem;
+    font-weight: 800;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+}
+
+.format-selfstudy-sectionoverview-goal,
+.format-selfstudy-sectionoverview-count {
+    color: #44474e;
 }
 
 .format-selfstudy-actions {
@@ -33,6 +406,19 @@
 
 .format-selfstudy-progress-optional {
     border-left: .35rem solid #22c55e;
+}
+
+.format-selfstudy-learnerview-selection {
+    display: grid;
+    gap: .5rem;
+    border: 1px solid #d5dce8;
+    border-radius: .5rem;
+    padding: 1rem;
+    background: #fff;
+}
+
+.format-selfstudy-learnerview-selection h3 {
+    margin: 0;
 }
 
 .format-selfstudy-mapnotice {
@@ -544,23 +930,99 @@
 }
 
 .format-selfstudy-pathcontinue {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
     gap: .75rem;
-    align-items: center;
-    margin: 2rem 0 0;
+    width: min(100%, 64rem);
+    max-width: 64rem;
+    box-sizing: border-box;
+}
+
+.format-selfstudy-pathcontinue-top {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 2fr);
+    margin: 1rem auto;
+}
+
+.format-selfstudy-pathcontinue-bottom {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    margin: 2rem auto 0;
     border-top: 1px solid #d7dfe8;
     padding-top: 1rem;
 }
 
 .format-selfstudy-pathcontinue-button {
-    min-width: 10rem;
+    display: inline-flex;
+    justify-content: center;
+    width: 100%;
+    min-width: 0;
+    text-align: center;
 }
 
-.format-selfstudy-pathcontinue-target {
+.format-selfstudy-pathcontinue-button.disabled {
+    pointer-events: none;
+    opacity: .55;
+}
+
+.format-selfstudy-pathcontinue .btn-primary,
+.format-selfstudy-activitynav .btn-primary {
+    border-color: var(--format-selfstudy-next-button-color, var(--format-selfstudy-path-color, #6f1ab1));
+    background: var(--format-selfstudy-next-button-color, var(--format-selfstudy-path-color, #6f1ab1));
+    color: #fff;
+}
+
+.format-selfstudy-pathcontinue .btn-primary:hover,
+.format-selfstudy-activitynav .btn-primary:hover {
+    border-color: color-mix(in srgb,
+        var(--format-selfstudy-next-button-color, var(--format-selfstudy-path-color, #6f1ab1)) 88%, #000);
+    background: color-mix(in srgb,
+        var(--format-selfstudy-next-button-color, var(--format-selfstudy-path-color, #6f1ab1)) 88%, #000);
+    color: #fff;
+}
+
+.path-mod .activity-header,
+.path-mod .activity-information,
+.path-mod .completion-info,
+.path-mod .automatic-completion-conditions {
+    display: none !important;
+}
+
+.format-selfstudy.path-mod #page-header .page-context-header,
+.format-selfstudy #page-header .page-context-header {
+    display: block !important;
+    overflow: visible;
+    width: 100%;
+}
+
+.format-selfstudy.path-mod #page-header .d-flex.align-items-center,
+.format-selfstudy #page-header .d-flex.align-items-center,
+.format-selfstudy.path-mod #page-header .me-auto.d-flex.flex-column,
+.format-selfstudy #page-header .me-auto.d-flex.flex-column {
+    width: 100%;
     min-width: 0;
-    color: #475569;
-    overflow-wrap: anywhere;
+}
+
+.format-selfstudy.path-mod #page-header .me-auto.d-flex.flex-column,
+.format-selfstudy #page-header .me-auto.d-flex.flex-column {
+    flex: 1 1 auto;
+}
+
+.format-selfstudy.path-mod #page-header .page-context-header::after,
+.format-selfstudy #page-header .page-context-header::after {
+    display: block;
+    clear: both;
+    content: "";
+}
+
+.format-selfstudy.path-mod #page-header .page-header-image,
+.format-selfstudy #page-header .page-header-image {
+    float: left;
+    margin: 0 .75rem .25rem 0;
+}
+
+.format-selfstudy.path-mod #page-header .page-header-headings,
+.format-selfstudy #page-header .page-header-headings {
+    display: block;
+    min-width: 0;
+    width: 100%;
 }
 
 .format-selfstudy-accessiblepath {
@@ -585,6 +1047,13 @@
     flex-wrap: wrap;
     gap: .5rem;
     align-items: center;
+}
+
+.format-selfstudy-map-course-link,
+.format-selfstudy-accessiblepath-link {
+    max-width: min(18rem, calc(100vw - 1.5rem));
+    white-space: normal;
+    text-align: center;
 }
 
 .format-selfstudy-accessiblepath-list {
@@ -748,8 +1217,112 @@ body.format-selfstudy-hide-courseindex #page.drawers.show-drawer-left {
     background: #fff;
 }
 
-.format-selfstudy-personalpath h3 {
+.format-selfstudy-personalpath-page {
+    max-width: 72rem;
+}
+
+.format-selfstudy-personalpath-pagehead {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .75rem;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.format-selfstudy-personalpath-pagehead h2 {
     margin: 0;
+}
+
+.format-selfstudy-personalpath-overview {
+    display: grid;
+    gap: 1rem;
+    margin: 1rem 0;
+    border: 1px solid #d7dfe8;
+    border-radius: .5rem;
+    padding: 1.25rem;
+    background: #fff;
+}
+
+.format-selfstudy-personalpath h3,
+.format-selfstudy-personalpath-overview h3 {
+    margin: 0;
+}
+
+.format-selfstudy-personalpath-outline {
+    gap: .25rem;
+    margin-top: .25rem;
+}
+
+.format-selfstudy-personalpath-outline .format-selfstudy-pathoutline-item {
+    grid-template-columns: 2.5rem minmax(0, 1fr) max-content;
+    gap: .25rem .65rem;
+    align-items: start;
+    border-radius: .45rem;
+    padding: .55rem .75rem .55rem 0;
+}
+
+.format-selfstudy-personalpath-outline .format-selfstudy-pathoutline-item::before {
+    left: .95rem;
+}
+
+.format-selfstudy-personalpath-outline .format-selfstudy-pathoutline-title {
+    overflow-wrap: break-word;
+    line-height: 1.35;
+}
+
+.format-selfstudy-personalpath-outline .format-selfstudy-pathoutline-title a {
+    font-weight: 700;
+}
+
+.format-selfstudy-personalpath-outline .format-selfstudy-pathoutline-status {
+    justify-self: end;
+    white-space: nowrap;
+}
+
+.format-selfstudy-personalpath-outline .format-selfstudy-pathoutline-info,
+.format-selfstudy-personalpath-outline .format-selfstudy-pathoutline-action {
+    grid-column: 2 / -1;
+}
+
+.format-selfstudy-personalpath-outline .format-selfstudy-pathoutline-info {
+    max-width: 54rem;
+    overflow-wrap: break-word;
+}
+
+.format-selfstudy-personalpath-outline .format-selfstudy-pathoutline-type-milestone {
+    margin-top: 1.5rem !important;
+    border-radius: 0;
+    padding-top: .4rem;
+    padding-bottom: .65rem;
+    background: transparent;
+}
+
+.format-selfstudy-personalpath-outline > .format-selfstudy-pathoutline-type-milestone:first-child {
+    margin-top: 0 !important;
+}
+
+.format-selfstudy-personalpath-outline .format-selfstudy-pathoutline-alternativegroup {
+    gap: .5rem;
+    margin: .6rem 0 .8rem;
+    border-left: .2rem solid color-mix(in srgb, var(--format-selfstudy-path-color, #6f1ab1) 25%, #d7dfe8);
+    padding-left: .85rem;
+}
+
+.format-selfstudy-personalpath-outline .format-selfstudy-pathoutline-alternativeheading {
+    color: #475569;
+    letter-spacing: 0;
+}
+
+.format-selfstudy-personalpath-outline .format-selfstudy-pathoutline-alternatives {
+    grid-template-columns: minmax(0, 1fr);
+    gap: .5rem;
+}
+
+.format-selfstudy-personalpath-outline .format-selfstudy-pathoutline-alternativechoice {
+    border-color: #d7dfe8;
+    padding: .65rem .75rem;
+    background: #f8fafc;
 }
 
 .format-selfstudy-personalpath-form,
@@ -760,8 +1333,10 @@ body.format-selfstudy-hide-courseindex #page.drawers.show-drawer-left {
 
 .format-selfstudy-personalpath-optiongroup {
     display: grid;
-    gap: .5rem;
-    grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+    gap: .65rem;
+    grid-template-columns: minmax(0, 1fr);
+    border-left: .2rem solid #d7dfe8;
+    padding-left: .85rem;
 }
 
 .format-selfstudy-personalpath-optiongroup > .format-selfstudy-personalpath-meta {
@@ -789,7 +1364,8 @@ body.format-selfstudy-hide-courseindex #page.drawers.show-drawer-left {
     margin: 0;
     color: #1f2937;
     font-weight: 700;
-    overflow-wrap: anywhere;
+    line-height: 1.35;
+    overflow-wrap: break-word;
 }
 
 .format-selfstudy-personalpath-meta {
@@ -1473,7 +2049,23 @@ body.format-selfstudy-hide-courseindex #page.drawers.show-drawer-left {
     align-self: center;
 }
 
+@media (max-width: 900px) {
+    .format-selfstudy-coursehero {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+            "main"
+            "image"
+            "facts";
+        padding-top: 2.5rem;
+        padding-bottom: 2.5rem;
+    }
+}
+
 @media (max-width: 640px) {
+    .format-selfstudy-coursehero-facts {
+        grid-template-columns: 1fr;
+    }
+
     .format-selfstudy-pathchoice-actions,
     .format-selfstudy-pathchoice-form,
     .format-selfstudy-accessiblepath-nav,
@@ -2538,4 +3130,317 @@ body.format-selfstudy-hide-courseindex #page.drawers.show-drawer-left {
 
 .format-selfstudy-map-popup-next {
     right: -4rem;
+}
+
+.format-selfstudy-authoring {
+    display: grid;
+    gap: 1rem;
+}
+
+.format-selfstudy-authoring-workflow {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+    gap: .75rem;
+    margin: 1rem 0;
+    padding: 0;
+    list-style: none;
+}
+
+.format-selfstudy-authoring-step {
+    display: grid;
+    grid-template-columns: 2rem 1fr;
+    gap: .75rem;
+    align-items: start;
+    min-height: 8.5rem;
+    padding: .875rem;
+    border: 1px solid #d5dce8;
+    border-left-width: .35rem;
+    border-radius: .5rem;
+    background: #fff;
+}
+
+.format-selfstudy-authoring-step-ready,
+.format-selfstudy-authoring-step-published {
+    border-left-color: #2f7d4f;
+}
+
+.format-selfstudy-authoring-step-warning,
+.format-selfstudy-authoring-issues-warning {
+    border-left-color: #a86b00;
+}
+
+.format-selfstudy-authoring-step-blocked,
+.format-selfstudy-authoring-issues-blocked {
+    border-left-color: #b3261e;
+}
+
+.format-selfstudy-authoring-step-needswork,
+.format-selfstudy-authoring-step-notstarted {
+    border-left-color: #607089;
+}
+
+.format-selfstudy-authoring-stepnumber {
+    display: grid;
+    place-items: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    background: #eef2f7;
+    color: #26364d;
+    font-weight: 700;
+}
+
+.format-selfstudy-authoring-stepbody,
+.format-selfstudy-authoring-steptitle,
+.format-selfstudy-authoring-nextpanel {
+    display: grid;
+    gap: .5rem;
+}
+
+.format-selfstudy-authoring-steptitle h3,
+.format-selfstudy-authoring-diagnosis h3,
+.format-selfstudy-authoring-nextpanel h3,
+.format-selfstudy-authoring-revisions h3,
+.format-selfstudy-authoring-issues h3 {
+    margin: 0;
+    font-size: 1rem;
+}
+
+.format-selfstudy-authoring-stepsummary,
+.format-selfstudy-authoring-next {
+    color: #46556d;
+}
+
+.format-selfstudy-authoring-status {
+    width: fit-content;
+    padding: .1rem .45rem;
+    border-radius: 999px;
+    background: #eef2f7;
+    color: #26364d;
+    font-size: .75rem;
+    font-weight: 700;
+}
+
+.format-selfstudy-authoring-status-ready,
+.format-selfstudy-authoring-status-published {
+    background: #e7f4ec;
+    color: #205e3c;
+}
+
+.format-selfstudy-authoring-status-warning {
+    background: #fff3d6;
+    color: #724800;
+}
+
+.format-selfstudy-authoring-status-blocked {
+    background: #fdecea;
+    color: #8c1d18;
+}
+
+.format-selfstudy-authoring-nextpanel,
+.format-selfstudy-authoring-publishstatus,
+.format-selfstudy-authoring-diagnosis,
+.format-selfstudy-authoring-revisions,
+.format-selfstudy-authoring-issues {
+    padding: 1rem;
+    border: 1px solid #d5dce8;
+    border-radius: .5rem;
+    background: #fff;
+}
+
+.format-selfstudy-authoring-publishstatus {
+    font-weight: 700;
+}
+
+.format-selfstudy-authoring-metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+    gap: .75rem;
+    margin: 1rem 0;
+}
+
+.format-selfstudy-authoring-metric {
+    padding: .75rem;
+    border: 1px solid #e2e7ef;
+    border-radius: .5rem;
+    background: #f8fafc;
+}
+
+.format-selfstudy-authoring-metricvalue {
+    color: #26364d;
+    font-size: 1.4rem;
+    font-weight: 700;
+}
+
+.format-selfstudy-authoring-metriclabel {
+    color: #46556d;
+}
+
+.format-selfstudy-pathdiagnosis-details {
+    margin-top: 1rem;
+}
+
+.format-selfstudy-pathdiagnosis-details summary {
+    cursor: pointer;
+    font-weight: 700;
+}
+
+.format-selfstudy-settings-subsection {
+    margin: 1rem 0;
+    padding: .75rem 1rem;
+    border: 1px solid #d5dce8;
+    border-radius: .5rem;
+    background: #fff;
+}
+
+.format-selfstudy-settings-subsection-title {
+    cursor: pointer;
+    color: #1f2d3d;
+    font-weight: 700;
+}
+
+.format-selfstudy-settings-subsection-intro {
+    margin: .5rem 0 1rem;
+    color: #46556d;
+}
+
+.format-selfstudy-colorpicker {
+    display: inline-block;
+    width: 3.5rem;
+    height: 2.35rem;
+    padding: .15rem;
+    cursor: pointer;
+    vertical-align: middle;
+}
+
+.format-selfstudy-colorpicker::-webkit-color-swatch-wrapper {
+    padding: 0;
+}
+
+.format-selfstudy-colorpicker::-webkit-color-swatch {
+    border: 0;
+    border-radius: .2rem;
+}
+
+.format-selfstudy-colorpicker::-moz-color-swatch {
+    border: 0;
+    border-radius: .2rem;
+}
+
+.format-selfstudy-course-settings-experiences {
+    display: grid;
+    gap: 1rem;
+    max-width: 70rem;
+}
+
+.format-selfstudy-settings-card {
+    display: grid;
+    gap: .85rem;
+    min-width: 0;
+    border: 1px solid #d5dce8;
+    border-radius: .5rem;
+    padding: 1rem;
+    background: #fff;
+}
+
+.format-selfstudy-settings-card-primary {
+    background: #f8fafc;
+}
+
+.format-selfstudy-settings-experience-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+    gap: 1rem;
+}
+
+.format-selfstudy-settings-card-head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: .75rem;
+    align-items: start;
+}
+
+.format-selfstudy-settings-card h4,
+.format-selfstudy-settings-subpanel h5 {
+    margin: 0;
+    color: #1f2d3d;
+}
+
+.format-selfstudy-settings-card-title {
+    display: grid;
+    gap: .25rem;
+    min-width: 0;
+}
+
+.format-selfstudy-settings-component,
+.format-selfstudy-settings-help {
+    color: #46556d;
+    font-size: .9rem;
+}
+
+.format-selfstudy-settings-card-controls,
+.format-selfstudy-settings-fieldgrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+    gap: .75rem;
+    align-items: end;
+}
+
+.format-selfstudy-settings-choice label {
+    display: flex;
+    gap: .5rem;
+    align-items: center;
+    margin: 0;
+}
+
+.format-selfstudy-settings-label {
+    margin: 0 0 .25rem;
+    color: #334155;
+    font-weight: 700;
+}
+
+.format-selfstudy-settings-smallinput {
+    max-width: 8rem;
+}
+
+.format-selfstudy-settings-status {
+    border-radius: 999px;
+    padding: .15rem .55rem;
+    background: #eef2f7;
+    color: #26364d;
+    font-size: .75rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.format-selfstudy-settings-status-available {
+    background: #e7f4ec;
+    color: #205e3c;
+}
+
+.format-selfstudy-settings-status-disabled {
+    background: #fff3d6;
+    color: #724800;
+}
+
+.format-selfstudy-settings-status-missing,
+.format-selfstudy-settings-status-incompatible {
+    background: #fdecea;
+    color: #8c1d18;
+}
+
+.format-selfstudy-settings-subpanel {
+    display: grid;
+    gap: .75rem;
+    border-top: 1px solid #e2e8f0;
+    padding-top: .85rem;
+}
+
+.format-selfstudy-settings-field {
+    display: grid;
+    gap: .35rem;
+}
+
+.format-selfstudy-learningmap-sectionsettings {
+    margin: .25rem 0 0;
 }

@@ -55,6 +55,12 @@ class provider implements
             'configjson' => 'privacy:metadata:experiences:configjson',
         ], 'privacy:metadata:experiences');
 
+        $collection->add_database_table('format_selfstudy_contacts', [
+            'courseid' => 'privacy:metadata:contacts:courseid',
+            'userid' => 'privacy:metadata:contacts:userid',
+            'roles' => 'privacy:metadata:contacts:roles',
+        ], 'privacy:metadata:contacts');
+
         return $collection;
     }
 
@@ -92,6 +98,13 @@ class provider implements
                   JOIN {format_selfstudy_milestones} m ON m.itemid = i.id
                  WHERE ctx.contextlevel = :contextlevel
                    AND m.userid = :userid";
+        $contextlist->add_from_sql($sql, $params);
+
+        $sql = "SELECT ctx.id
+                  FROM {context} ctx
+                  JOIN {format_selfstudy_contacts} c ON c.courseid = ctx.instanceid
+                 WHERE ctx.contextlevel = :contextlevel
+                   AND c.userid = :userid";
         $contextlist->add_from_sql($sql, $params);
 
         return $contextlist;
@@ -132,8 +145,12 @@ class provider implements
                 'courseid' => $courseid,
                 'userid' => $userid,
             ], '*', IGNORE_MISSING);
+            $contact = $DB->get_record('format_selfstudy_contacts', [
+                'courseid' => $courseid,
+                'userid' => $userid,
+            ], '*', IGNORE_MISSING);
 
-            if (!$choice && !$milestones && !$personalpath) {
+            if (!$choice && !$milestones && !$personalpath && !$contact) {
                 continue;
             }
 
@@ -144,6 +161,7 @@ class provider implements
                 'activepath' => $choice,
                 'milestones' => $milestones,
                 'personalpath' => $personalpath,
+                'coursecontact' => $contact,
             ]);
         }
     }
@@ -168,6 +186,7 @@ class provider implements
         }
 
         $DB->delete_records('format_selfstudy_choices', ['courseid' => $courseid]);
+        $DB->delete_records('format_selfstudy_contacts', ['courseid' => $courseid]);
         self::delete_personal_paths_select('courseid = :courseid', ['courseid' => $courseid]);
     }
 
@@ -195,6 +214,10 @@ class provider implements
             }
 
             $DB->delete_records('format_selfstudy_choices', [
+                'courseid' => $courseid,
+                'userid' => $userid,
+            ]);
+            $DB->delete_records('format_selfstudy_contacts', [
                 'courseid' => $courseid,
                 'userid' => $userid,
             ]);

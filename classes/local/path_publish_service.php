@@ -56,18 +56,26 @@ class path_publish_service {
             'revision' => 0,
             'publishedby' => 0,
             'timepublished' => 0,
+            'diagnosisstatus' => '',
+            'blockers' => [],
+            'warnings' => [],
+            'nextactions' => [],
         ];
 
         $diagnosis = $this->sync->diagnose($course, $pathid);
+        $this->apply_diagnosis_summary($result, $diagnosis);
         if (!empty($diagnosis->invalidcompletionavailability) || !empty($diagnosis->invalidstructureavailability)) {
             $cleanup = $this->sync->cleanup_invalid_availability($course, $pathid);
             $result->fixed += (int)($cleanup->fixed ?? 0);
             if (!empty($cleanup->errors)) {
                 $result->errors = array_values($cleanup->errors);
+                $result->warnings = array_values(array_unique(array_merge($result->warnings, $result->errors)));
+                $result->nextactions[] = get_string('authoringdiagnosisnextrepair', 'format_selfstudy');
                 return $result;
             }
             if (!empty($cleanup->fixed)) {
                 $diagnosis = $this->sync->diagnose($course, $pathid);
+                $this->apply_diagnosis_summary($result, $diagnosis);
             }
         }
 
@@ -78,6 +86,8 @@ class path_publish_service {
                     get_string('learningpathsyncnottranslatable', 'format_selfstudy');
             }, $diagnosis->untranslatable);
             $result->errors = array_values(array_unique($errors));
+            $result->blockers = $result->errors;
+            $result->nextactions[] = get_string('authoringdiagnosisnexteditor', 'format_selfstudy');
             return $result;
         }
 
@@ -93,6 +103,8 @@ class path_publish_service {
         $result->skipped = (int)($syncresult->skipped ?? 0);
         if (!empty($syncresult->errors)) {
             $result->errors = array_values($syncresult->errors);
+            $result->warnings = array_values(array_unique(array_merge($result->warnings, $result->errors)));
+            $result->nextactions[] = get_string('authoringdiagnosisnextrepair', 'format_selfstudy');
             return $result;
         }
 
@@ -108,5 +120,25 @@ class path_publish_service {
         $result->timepublished = $timepublished;
 
         return $result;
+    }
+
+    /**
+     * Adds optional UI-oriented diagnosis fields to a publish result.
+     *
+     * @param \stdClass $result
+     * @param \stdClass $diagnosis
+     */
+    private function apply_diagnosis_summary(\stdClass $result, \stdClass $diagnosis): void {
+        $summary = authoring_workflow::summarise_diagnosis($diagnosis);
+        $result->diagnosisstatus = $summary->status;
+        $result->blockers = $summary->blockers;
+        $result->warnings = $summary->warnings;
+        if ($summary->status === authoring_workflow::STATUS_BLOCKED) {
+            $result->nextactions = [get_string('authoringdiagnosisnexteditor', 'format_selfstudy')];
+        } else if ($summary->status === authoring_workflow::STATUS_WARNING) {
+            $result->nextactions = [get_string('authoringdiagnosisnextrepair', 'format_selfstudy')];
+        } else {
+            $result->nextactions = [get_string('authoringdiagnosisnextpublish', 'format_selfstudy')];
+        }
     }
 }

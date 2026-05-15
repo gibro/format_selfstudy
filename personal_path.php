@@ -44,20 +44,43 @@ $sections = $modinfo->get_section_info_all();
 $completion = new completion_info($course);
 $summaries = format_selfstudy_get_learning_summaries($course, $format, $modinfo, $sections, $completion);
 $repository = new \format_selfstudy\local\path_repository();
+$learningpaths = $repository->get_paths((int)$course->id, true);
 $activepath = $repository->get_active_path((int)$course->id, (int)$USER->id);
 if ($activepath && empty($activepath->enabled)) {
     $activepath = null;
 }
 
 echo $OUTPUT->header();
-echo html_writer::start_div('format-selfstudy-dashboard');
+echo html_writer::start_div('format-selfstudy-dashboard format-selfstudy-personalpath-page');
+echo html_writer::start_div('format-selfstudy-personalpath-pagehead');
 echo $OUTPUT->heading(get_string('learningpathpersonal', 'format_selfstudy'), 2);
 echo html_writer::link(new moodle_url('/course/view.php', ['id' => $course->id]),
     get_string('backtocourse', 'format_selfstudy'), ['class' => 'btn btn-secondary']);
+echo html_writer::end_div();
+
+$baseview = \format_selfstudy\local\base_view::create($course, (int)$USER->id);
+$showlockedactivities = !array_key_exists('showlockedactivities', $formatoptions) ||
+    !empty($formatoptions['showlockedactivities']);
+$outline = format_selfstudy_filter_locked_outline($baseview->outline ?? [], $showlockedactivities);
+
+if (count($learningpaths) > 1) {
+    echo format_selfstudy_render_path_choice($course, $learningpaths, $activepath, $baseview->progress ?? null,
+        $outline, format_selfstudy_normalise_hex_color($formatoptions['pathpointcolor'] ?? '#6f1ab1'));
+}
+
+if (!empty($baseview->path) && $outline) {
+    echo html_writer::start_tag('section', ['class' => 'format-selfstudy-personalpath-overview']);
+    echo html_writer::tag('h3', get_string('learningpathpersonaloverview', 'format_selfstudy'));
+    echo html_writer::div(get_string('learningpathpersonaloverviewintro', 'format_selfstudy'), 'text-muted');
+    echo format_selfstudy_render_path_outline($outline,
+        'format-selfstudy-pathoutline format-selfstudy-personalpath-outline',
+        format_selfstudy_normalise_hex_color($formatoptions['pathpointcolor'] ?? '#6f1ab1'));
+    echo html_writer::end_tag('section');
+}
 
 if (!empty($formatoptions['allowpersonalpaths'])) {
     echo format_selfstudy_render_personal_path_builder($course, $summaries, $activepath);
-} else {
+} else if (count($learningpaths) <= 1 && empty($baseview->path)) {
     echo $OUTPUT->notification(get_string('learningpathnone', 'format_selfstudy'),
         \core\output\notification::NOTIFY_INFO);
 }

@@ -20,6 +20,8 @@ require_once($CFG->libdir . '/completionlib.php');
 
 use format_selfstudy\local\path_repository;
 use format_selfstudy\local\path_sync;
+use format_selfstudy\local\authoring_renderer;
+use format_selfstudy\local\authoring_workflow;
 
 $courseid = required_param('id', PARAM_INT);
 $pathid = required_param('pathid', PARAM_INT);
@@ -111,12 +113,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $diagnosis = $sync->diagnose($course, $pathid);
+$diagnosissummary = authoring_workflow::summarise_diagnosis($diagnosis);
+$authoringstate = (new authoring_workflow($repository))->get_state($course, $pathid);
+$authoringrenderer = new authoring_renderer();
 
 echo $OUTPUT->header();
 echo html_writer::start_div('format-selfstudy-patheditor format-selfstudy-pathdiagnosis');
 echo $OUTPUT->heading(get_string('learningpathsyncpreview', 'format_selfstudy'), 2);
 echo html_writer::tag('p', get_string('learningpathsyncpreviewintro', 'format_selfstudy'), ['class' => 'text-muted']);
+echo $authoringrenderer->workflow($authoringstate);
 echo html_writer::start_div('format-selfstudy-patheditor-toolbar');
+echo html_writer::link(new moodle_url('/course/format/selfstudy/authoring.php', [
+    'id' => $course->id,
+    'pathid' => $pathid,
+]), get_string('authoringworkflow', 'format_selfstudy'), ['class' => 'btn btn-secondary']);
 echo html_writer::link(new moodle_url('/course/format/selfstudy/path_editor.php', [
     'id' => $course->id,
     'pathid' => $pathid,
@@ -124,6 +134,8 @@ echo html_writer::link(new moodle_url('/course/format/selfstudy/path_editor.php'
 echo html_writer::link(new moodle_url('/course/view.php', ['id' => $course->id]),
     get_string('viewcourse', 'format_selfstudy'), ['class' => 'btn btn-secondary']);
 echo html_writer::end_div();
+
+echo $authoringrenderer->diagnosis_summary($diagnosissummary);
 
 echo html_writer::start_tag('form', [
     'method' => 'post',
@@ -172,10 +184,13 @@ $summaryitems = [
 ];
 echo html_writer::alist($summaryitems, ['class' => 'format-selfstudy-pathdiagnosis-summary']);
 
+echo html_writer::start_tag('details', ['class' => 'format-selfstudy-pathdiagnosis-details']);
+echo html_writer::tag('summary', get_string('authoringdiagnosistechnicaldetails', 'format_selfstudy'));
 echo html_writer::start_div('format-selfstudy-pathdiagnosis-grid');
 echo format_selfstudy_path_diagnosis_render_activities($diagnosis);
 echo format_selfstudy_path_diagnosis_render_rules($diagnosis);
 echo html_writer::end_div();
+echo html_writer::end_tag('details');
 echo html_writer::end_div();
 echo $OUTPUT->footer();
 

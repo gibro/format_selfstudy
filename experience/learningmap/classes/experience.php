@@ -6,7 +6,7 @@ namespace selfstudyexperience_learningmap;
 defined('MOODLE_INTERNAL') || die();
 
 /**
- * Metadata provider for the Learningmap learner view.
+ * Metadata provider for the Learningmap selfstudy experience.
  */
 class experience {
 
@@ -18,13 +18,13 @@ class experience {
     public static function get_metadata(): \stdClass {
         return (object)[
             'component' => 'selfstudyexperience_learningmap',
-            'name' => get_string('learningmap', 'format_selfstudy'),
-            'description' => get_string('learningmapexperience_description', 'format_selfstudy'),
+            'name' => get_string('pluginname', 'selfstudyexperience_learningmap'),
+            'description' => get_string('plugindescription', 'selfstudyexperience_learningmap'),
             'icon' => 'i/navigationitem',
             'schema' => 1,
-            'features' => ['map', 'activitynavigation', 'sectionmaps', 'fullscreen', 'avatar'],
+            'features' => ['map', 'activitynavigation'],
             'rendererclass' => '\\selfstudyexperience_learningmap\\renderer',
-            'configformclass' => '',
+            'configformclass' => '\\selfstudyexperience_learningmap\\config_form',
         ];
     }
 }

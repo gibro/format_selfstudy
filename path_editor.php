@@ -23,6 +23,8 @@ use format_selfstudy\local\path_publish_service;
 use format_selfstudy\local\path_grid_service;
 use format_selfstudy\local\path_snapshot_repository;
 use format_selfstudy\local\activity_filter;
+use format_selfstudy\local\authoring_renderer;
+use format_selfstudy\local\authoring_workflow;
 
 if (empty($FORMAT_SELFSTUDY_PATH_EDITOR_FUNCTIONS_ONLY)) {
 $courseid = required_param('id', PARAM_INT);
@@ -39,6 +41,16 @@ require_capability('moodle/course:update', $coursecontext);
 $format = course_get_format($course);
 if ($format->get_format() !== 'selfstudy') {
     throw new moodle_exception('invalidcourseformat', 'error');
+}
+
+$edit = optional_param('edit', -1, PARAM_BOOL);
+if ($edit === 1 && confirm_sesskey()) {
+    redirect(new moodle_url('/course/view.php', [
+        'id' => $course->id,
+        'section' => 1,
+        'edit' => 1,
+        'sesskey' => sesskey(),
+    ]));
 }
 
 $repository = new path_repository();
@@ -177,6 +189,8 @@ $missingcmids = format_selfstudy_path_editor_get_missing_path_cmids($currentpath
 $grid = format_selfstudy_path_editor_grid_from_path($currentpath, $activities, $editorsections);
 $usedcmids = format_selfstudy_path_editor_get_grid_cmids($grid);
 $activerevision = $currentpath ? (new path_snapshot_repository())->get_active_revision((int)$currentpath->id) : null;
+$authoringstate = (new authoring_workflow($repository))->get_state($course, $currentpath ? (int)$currentpath->id : 0);
+$authoringrenderer = new authoring_renderer();
 
 echo $OUTPUT->header();
 
@@ -184,8 +198,15 @@ echo html_writer::start_div('format-selfstudy-patheditor');
 echo $OUTPUT->heading(get_string('learningpatheditor', 'format_selfstudy'), 2);
 echo html_writer::tag('p', get_string('learningpatheditorintro', 'format_selfstudy'),
     ['class' => 'format-selfstudy-patheditor-intro']);
+echo $authoringrenderer->publish_status($authoringstate);
+echo $authoringrenderer->workflow($authoringstate);
+echo $authoringrenderer->issues($authoringstate);
 
 echo html_writer::start_div('format-selfstudy-patheditor-toolbar');
+echo html_writer::link(new moodle_url('/course/format/selfstudy/authoring.php', [
+    'id' => $course->id,
+] + ($currentpath ? ['pathid' => $currentpath->id] : [])), get_string('authoringworkflow', 'format_selfstudy'),
+    ['class' => 'btn btn-secondary']);
 if ($paths) {
     echo html_writer::start_tag('form', [
         'method' => 'get',
@@ -418,6 +439,12 @@ echo html_writer::tag('button', get_string('learningpathsavedraft', 'format_self
     'class' => 'btn btn-secondary',
     'value' => 'draft',
 ]);
+if ($currentpath) {
+    echo html_writer::link(new moodle_url('/course/format/selfstudy/path_diagnosis.php', [
+        'id' => $course->id,
+        'pathid' => $currentpath->id,
+    ]), get_string('authoringworkflowactioncheck', 'format_selfstudy'), ['class' => 'btn btn-secondary']);
+}
 echo html_writer::tag('button', get_string('learningpathpublish', 'format_selfstudy'), [
     'type' => 'submit',
     'name' => 'saveaction',
@@ -874,6 +901,7 @@ function format_selfstudy_path_editor_save_activity_settings(stdClass $course, a
 
     $activitymap = format_selfstudy_path_editor_activity_map($activities);
     $competencyoptions = format_selfstudy_path_editor_get_course_competency_options($course);
+    $metadataenabled = format_selfstudy_path_editor_activity_metadata_enabled($course);
     $coursemodulecolumns = $DB->get_columns('course_modules');
     $changed = false;
     foreach ($posted as $cmid => $values) {
@@ -882,36 +910,38 @@ function format_selfstudy_path_editor_save_activity_settings(stdClass $course, a
             continue;
         }
 
-        format_selfstudy_save_cm_metadata($cmid, (object)[
-            'learninggoal' => clean_param($values['learninggoal'] ?? '', PARAM_TEXT),
-            'durationminutes' => clean_param($values['durationminutes'] ?? 0, PARAM_INT),
-            'competencies' => '',
-        ]);
-        $changed = true;
+        if ($metadataenabled) {
+            format_selfstudy_save_cm_metadata($cmid, (object)[
+                'learninggoal' => clean_param($values['learninggoal'] ?? '', PARAM_TEXT),
+                'durationminutes' => clean_param($values['durationminutes'] ?? 0, PARAM_INT),
+                'competencies' => '',
+            ]);
+            $changed = true;
 
-        $submittedcompetencyids = [];
-        if (isset($values['competencyids']) && is_array($values['competencyids'])) {
-            $submittedcompetencyids = array_map('intval', $values['competencyids']);
-        }
-        $submittedcompetencyids = array_values(array_unique(array_filter($submittedcompetencyids, static function(int $id) use
-                ($competencyoptions): bool {
-            return $id > 0 && isset($competencyoptions[$id]);
-        })));
-        $existingcompetencyids = format_selfstudy_path_editor_get_cm_competency_ids($cmid);
-        foreach (array_diff($existingcompetencyids, $submittedcompetencyids) as $removedid) {
-            try {
-                \core_competency\api::remove_competency_from_course_module($cmid, $removedid);
-                $changed = true;
-            } catch (Throwable $exception) {
-                // Keep saving the remaining editor data even if one competency link cannot be changed.
+            $submittedcompetencyids = [];
+            if (isset($values['competencyids']) && is_array($values['competencyids'])) {
+                $submittedcompetencyids = array_map('intval', $values['competencyids']);
             }
-        }
-        foreach (array_diff($submittedcompetencyids, $existingcompetencyids) as $addedid) {
-            try {
-                \core_competency\api::add_competency_to_course_module($cmid, $addedid);
-                $changed = true;
-            } catch (Throwable $exception) {
-                // Keep saving the remaining editor data even if one competency link cannot be changed.
+            $submittedcompetencyids = array_values(array_unique(array_filter($submittedcompetencyids, static function(int $id) use
+                    ($competencyoptions): bool {
+                return $id > 0 && isset($competencyoptions[$id]);
+            })));
+            $existingcompetencyids = format_selfstudy_path_editor_get_cm_competency_ids($cmid);
+            foreach (array_diff($existingcompetencyids, $submittedcompetencyids) as $removedid) {
+                try {
+                    \core_competency\api::remove_competency_from_course_module($cmid, $removedid);
+                    $changed = true;
+                } catch (Throwable $exception) {
+                    // Keep saving the remaining editor data even if one competency link cannot be changed.
+                }
+            }
+            foreach (array_diff($submittedcompetencyids, $existingcompetencyids) as $addedid) {
+                try {
+                    \core_competency\api::add_competency_to_course_module($cmid, $addedid);
+                    $changed = true;
+                } catch (Throwable $exception) {
+                    // Keep saving the remaining editor data even if one competency link cannot be changed.
+                }
             }
         }
 
@@ -1287,6 +1317,7 @@ function format_selfstudy_path_editor_render_activity_settings_panel(stdClass $c
         return '';
     }
 
+    $metadataenabled = format_selfstudy_path_editor_activity_metadata_enabled($course);
     $competencyoptions = format_selfstudy_path_editor_get_course_competency_options($course);
     $completionoptions = [
         'none' => get_string('learningpathcompletionnone', 'format_selfstudy'),
@@ -1295,13 +1326,20 @@ function format_selfstudy_path_editor_render_activity_settings_panel(stdClass $c
     ];
 
     $output = html_writer::start_tag('details', [
+        'id' => 'format-selfstudy-activitysettings',
         'class' => 'format-selfstudy-patheditor-activitysettings',
+        'open' => optional_param('showactivitysettings', 0, PARAM_BOOL) ? 'open' : null,
     ]);
     $output .= html_writer::tag('summary', get_string('learningpathactivitysettings', 'format_selfstudy'));
-    $output .= html_writer::tag('p', get_string('learningpathactivitysettingsintro', 'format_selfstudy'),
+    $output .= html_writer::tag('p', get_string($metadataenabled ? 'learningpathactivitysettingsintro' :
+            'learningpathactivitysettingsintrocompletiononly', 'format_selfstudy'),
         ['class' => 'format-selfstudy-patheditor-activitysettingsintro']);
-    if (!$competencyoptions) {
+    if ($metadataenabled && !$competencyoptions) {
         $output .= html_writer::div(get_string('learningpathactivitysettingsnocompetencies', 'format_selfstudy'),
+            'format-selfstudy-patheditor-activitysettingsnotice');
+    }
+    if (!$metadataenabled) {
+        $output .= html_writer::div(get_string('learningpathactivitysettingsmetadatadisabled', 'format_selfstudy'),
             'format-selfstudy-patheditor-activitysettingsnotice');
     }
     $output .= html_writer::start_div('format-selfstudy-patheditor-activitysettingslist');
@@ -1322,15 +1360,18 @@ function format_selfstudy_path_editor_render_activity_settings_panel(stdClass $c
                 'format-selfstudy-patheditor-cardmeta'),
             'format-selfstudy-patheditor-activitysettingsheading'
         );
-        $output .= html_writer::label(get_string('activitydurationminutes', 'format_selfstudy'), 'activity-duration-' . $cmid);
-        $output .= html_writer::empty_tag('input', [
-            'type' => 'number',
-            'id' => 'activity-duration-' . $cmid,
-            'name' => $name . '[durationminutes]',
-            'class' => 'form-control',
-            'min' => 0,
-            'value' => max(0, (int)$activity->durationminutes),
-        ]);
+        if ($metadataenabled) {
+            $output .= html_writer::label(get_string('activitydurationminutes', 'format_selfstudy'),
+                'activity-duration-' . $cmid);
+            $output .= html_writer::empty_tag('input', [
+                'type' => 'number',
+                'id' => 'activity-duration-' . $cmid,
+                'name' => $name . '[durationminutes]',
+                'class' => 'form-control',
+                'min' => 0,
+                'value' => max(0, (int)$activity->durationminutes),
+            ]);
+        }
         $output .= html_writer::label(get_string('learningpathcompletionstatus', 'format_selfstudy'),
             'activity-completion-' . $cmid);
         $output .= html_writer::select($completionoptions, $name . '[completiontracking]',
@@ -1339,14 +1380,16 @@ function format_selfstudy_path_editor_render_activity_settings_panel(stdClass $c
                 'class' => 'form-control',
             ]);
         $output .= format_selfstudy_path_editor_render_completion_rules($cmid, $name, $activity);
-        $output .= html_writer::label(get_string('activitylearninggoal', 'format_selfstudy'), 'activity-goal-' . $cmid);
-        $output .= html_writer::tag('textarea', s($activity->learninggoal), [
-            'id' => 'activity-goal-' . $cmid,
-            'name' => $name . '[learninggoal]',
-            'class' => 'form-control',
-            'rows' => 2,
-        ]);
-        if ($competencyoptions) {
+        if ($metadataenabled) {
+            $output .= html_writer::label(get_string('activitylearninggoal', 'format_selfstudy'), 'activity-goal-' . $cmid);
+            $output .= html_writer::tag('textarea', s($activity->learninggoal), [
+                'id' => 'activity-goal-' . $cmid,
+                'name' => $name . '[learninggoal]',
+                'class' => 'form-control',
+                'rows' => 2,
+            ]);
+        }
+        if ($metadataenabled && $competencyoptions) {
             $output .= html_writer::label(get_string('activitycompetencies', 'format_selfstudy'),
                 'activity-competencies-' . $cmid);
             $output .= html_writer::empty_tag('input', [
@@ -1370,6 +1413,22 @@ function format_selfstudy_path_editor_render_activity_settings_panel(stdClass $c
     $output .= html_writer::end_tag('details');
 
     return $output;
+}
+
+/**
+ * Returns whether optional activity metadata is enabled for this course.
+ *
+ * @param stdClass $course
+ * @return bool
+ */
+function format_selfstudy_path_editor_activity_metadata_enabled(stdClass $course): bool {
+    try {
+        $options = course_get_format($course)->get_format_options();
+    } catch (Throwable $exception) {
+        return true;
+    }
+
+    return !array_key_exists('useactivitymetadata', $options) || !empty($options['useactivitymetadata']);
 }
 
 /**

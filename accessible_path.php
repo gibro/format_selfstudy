@@ -43,7 +43,7 @@ $pathpointcolor = format_selfstudy_normalise_hex_color($formatoptions['pathpoint
 $showlockedactivities = !array_key_exists('showlockedactivities', $formatoptions) ||
     !empty($formatoptions['showlockedactivities']);
 $modinfo = get_fast_modinfo($course);
-$learningmapconfig = format_selfstudy_get_learningmap_experience_config($course);
+$learningmapconfig = format_selfstudy_get_learningmap_legacy_config($course, $format, $modinfo);
 $mainmapcm = format_selfstudy_get_learningmap_main_cm($course, $modinfo, $learningmapconfig);
 
 $baseview = \format_selfstudy\local\base_view::create($course, (int)$USER->id);
