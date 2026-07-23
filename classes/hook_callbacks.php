@@ -37,7 +37,6 @@ class hook_callbacks {
             'selfstudypublish' => 'handle_publish',
             'selfstudypatheditor' => 'handle_path_editor',
             'selfstudyactivitysettings' => 'handle_activity_settings',
-            'selfstudyexperiencesettings' => 'handle_experience_settings',
         ];
         $handler = '';
         foreach ($handlers as $param => $method) {
@@ -132,23 +131,6 @@ class hook_callbacks {
         format_selfstudy_path_editor_handle_activity_settings_post(
             $course,
             new \moodle_url('/course/view.php', ['id' => $course->id, 'selfstudyactivitysettings' => 1])
-        );
-    }
-
-    /**
-     * Saves the inline learning view configuration.
-     *
-     * @param \stdClass $course
-     */
-    private static function handle_experience_settings(\stdClass $course): void {
-        global $CFG, $FORMAT_SELFSTUDY_EXPERIENCE_SETTINGS_FUNCTIONS_ONLY;
-
-        $FORMAT_SELFSTUDY_EXPERIENCE_SETTINGS_FUNCTIONS_ONLY = true;
-        require_once($CFG->dirroot . '/course/format/selfstudy/experience_settings.php');
-
-        format_selfstudy_experience_settings_handle_post(
-            $course,
-            new \moodle_url('/course/view.php', ['id' => $course->id, 'selfstudyexperiencesettings' => 1])
         );
     }
 

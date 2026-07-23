@@ -11,11 +11,6 @@ if (empty($FORMAT_SELFSTUDY_FUNCTIONS_ONLY)) {
 $format = course_get_format($course);
 $formatoptions = $format->get_format_options();
 $course = $format->get_course();
-if (optional_param('selfstudyexperiencesettings', 0, PARAM_BOOL)) {
-    $FORMAT_SELFSTUDY_EXPERIENCE_SETTINGS_INLINE = true;
-    require(__DIR__ . '/experience_settings.php');
-    return;
-}
 if ($PAGE->user_is_editing()) {
     course_create_sections_if_missing($course, 0);
     $renderer = $PAGE->get_renderer('format_selfstudy');
@@ -65,12 +60,6 @@ if ($PAGE->user_is_editing()) {
     if (optional_param('selfstudypatheditor', 0, PARAM_BOOL)) {
         $FORMAT_SELFSTUDY_PATH_EDITOR_INLINE = true;
         require(__DIR__ . '/path_editor.php');
-        return;
-    }
-
-    if (optional_param('selfstudyexperiencesettings', 0, PARAM_BOOL)) {
-        $FORMAT_SELFSTUDY_EXPERIENCE_SETTINGS_INLINE = true;
-        require(__DIR__ . '/experience_settings.php');
         return;
     }
 

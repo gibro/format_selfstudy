@@ -74,10 +74,8 @@ if (!empty($state->paths)) {
 echo html_writer::link(new moodle_url('/course/format/selfstudy/path_editor.php', ['id' => $course->id] +
     ($state->pathid ? ['pathid' => $state->pathid] : [])), get_string('learningpatheditor', 'format_selfstudy'),
     ['class' => 'btn btn-secondary']);
-echo html_writer::link(new moodle_url('/course/view.php', [
-    'id' => $course->id,
-    'selfstudyexperiencesettings' => 1,
-]),
+echo html_writer::link(new moodle_url('/course/edit.php', ['id' => $course->id],
+    'id_selfstudycourseformatexperience'),
     get_string('experiencesettings', 'format_selfstudy'), ['class' => 'btn btn-secondary']);
 echo html_writer::link(new moodle_url('/course/view.php', ['id' => $course->id]),
     get_string('viewcourse', 'format_selfstudy'), ['class' => 'btn btn-secondary']);

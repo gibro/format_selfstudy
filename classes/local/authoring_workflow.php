@@ -472,27 +472,6 @@ class authoring_workflow {
             'actionlabel' => get_string('authoringworkflowactionpublish', 'format_selfstudy'),
         ];
 
-        $viewstatus = self::STATUS_READY;
-        if ($state->experience->enabledmissing > 0) {
-            $viewstatus = self::STATUS_NEEDSWORK;
-        } else if ($state->experience->missing > 0) {
-            $viewstatus = self::STATUS_WARNING;
-        }
-        $steps[] = (object)[
-            'key' => 'views',
-            'status' => $viewstatus,
-            'title' => get_string('authoringworkflowstepviews', 'format_selfstudy'),
-            'summary' => get_string('authoringworkflowstepviewssummary', 'format_selfstudy', (object)[
-                'enabled' => $state->experience->enabled,
-                'missing' => $state->experience->missing,
-            ]),
-            // The learner view and its settings live in the course settings, so the
-            // step points there instead of opening a second editing surface.
-            'actionurl' => new \moodle_url('/course/edit.php', ['id' => $course->id],
-                'id_selfstudycourseformatexperience'),
-            'actionlabel' => get_string('authoringworkflowactionviews', 'format_selfstudy'),
-        ];
-
         return $steps;
     }
 
