@@ -4719,3 +4719,26 @@ body.format-selfstudy-hide-courseindex #page.drawers.show-drawer-left {
     gap: .5rem;
     align-items: center;
 }
+
+.format-selfstudy-authoring-workflowtitle {
+    margin: 0 0 .25rem;
+    font-size: 1.25rem;
+}
+
+.format-selfstudy-authoring-workflowintro {
+    margin: 0 0 1rem;
+    color: #4a5568;
+}
+
+.format-selfstudy-authoring-publishform {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: .5rem;
+}
+
+.format-selfstudy-authoring-publishpick label {
+    display: block;
+    margin-bottom: .15rem;
+    font-size: .85rem;
+}

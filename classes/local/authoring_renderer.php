@@ -18,13 +18,23 @@ class authoring_renderer {
      */
     public function workflow(\stdClass $state): string {
         $items = '';
-        foreach ($state->steps as $index => $step) {
+        $number = 0;
+        foreach ($state->steps as $step) {
+            // Nothing to do here once the active revision matches the draft, so the
+            // step stays out of the way instead of adding a card without a task.
+            if ($step->key === 'publish' && $step->status === authoring_workflow::STATUS_PUBLISHED) {
+                continue;
+            }
+
             $statuslabel = get_string('authoringworkflowstatus' . $step->status, 'format_selfstudy');
             $action = '';
-            if (!empty($step->actionurl)) {
+            if ($step->key === 'publish') {
+                $action = $this->publish_form($state);
+            } else if (!empty($step->actionurl)) {
                 $action = \html_writer::link($step->actionurl, $step->actionlabel,
                     ['class' => 'btn btn-secondary btn-sm']);
             }
+            $index = $number++;
             $items .= \html_writer::tag('li',
                 \html_writer::div((string)($index + 1), 'format-selfstudy-authoring-stepnumber') .
                 \html_writer::div(
@@ -42,10 +52,72 @@ class authoring_renderer {
             );
         }
 
-        return \html_writer::tag('ol', $items, [
-            'class' => 'format-selfstudy-authoring-workflow',
-            'aria-label' => get_string('authoringworkflow', 'format_selfstudy'),
-        ]);
+        return \html_writer::div(
+            \html_writer::tag('h2', get_string('authoringworkflowtitle', 'format_selfstudy'),
+                ['class' => 'format-selfstudy-authoring-workflowtitle']) .
+            \html_writer::tag('p', get_string('authoringworkflowintro', 'format_selfstudy'),
+                ['class' => 'format-selfstudy-authoring-workflowintro']) .
+            \html_writer::tag('ol', $items, [
+                'class' => 'format-selfstudy-authoring-workflow',
+                'aria-label' => get_string('authoringworkflowtitle', 'format_selfstudy'),
+            ]),
+            'format-selfstudy-authoring-workflowwrap'
+        );
+    }
+
+    /**
+     * Renders the publish control inside the publish step.
+     *
+     * Publishing happens right here instead of only in the editor. When the course
+     * has more than one learning path, the teacher picks which one goes live.
+     *
+     * @param \stdClass $state
+     * @return string
+     */
+    private function publish_form(\stdClass $state): string {
+        $paths = array_values(array_filter((array)($state->paths ?? []), static function($path): bool {
+            return (int)($path->userid ?? 0) === 0;
+        }));
+        if (!$paths) {
+            return '';
+        }
+
+        $select = '';
+        if (count($paths) > 1) {
+            $options = [];
+            foreach ($paths as $path) {
+                $options[(int)$path->id] = format_string($path->name);
+            }
+            $select = \html_writer::div(
+                \html_writer::label(get_string('authoringworkflowpublishpath', 'format_selfstudy'),
+                    'format-selfstudy-authoring-publishpath') .
+                \html_writer::select($options, 'pathid', (int)$state->pathid, false,
+                    ['id' => 'format-selfstudy-authoring-publishpath', 'class' => 'custom-select']),
+                'format-selfstudy-authoring-publishpick'
+            );
+        } else {
+            $select = \html_writer::empty_tag('input', [
+                'type' => 'hidden',
+                'name' => 'pathid',
+                'value' => (int)($paths[0]->id ?? 0),
+            ]);
+        }
+
+        return \html_writer::tag('form',
+            \html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'sesskey', 'value' => sesskey()]) .
+            \html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'id', 'value' => (int)$state->courseid]) .
+            \html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'selfstudypublish', 'value' => 1]) .
+            $select .
+            \html_writer::tag('button', get_string('authoringworkflowpublishnow', 'format_selfstudy'), [
+                'type' => 'submit',
+                'class' => 'btn btn-primary btn-sm',
+            ]),
+            [
+                'method' => 'post',
+                'action' => (new \moodle_url('/course/view.php', ['id' => (int)$state->courseid]))->out(false),
+                'class' => 'format-selfstudy-authoring-publishform',
+            ]
+        );
     }
 
     /**

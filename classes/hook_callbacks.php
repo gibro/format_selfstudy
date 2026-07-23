@@ -34,6 +34,7 @@ class hook_callbacks {
         }
 
         $handlers = [
+            'selfstudypublish' => 'handle_publish',
             'selfstudypatheditor' => 'handle_path_editor',
             'selfstudyactivitysettings' => 'handle_activity_settings',
             'selfstudyexperiencesettings' => 'handle_experience_settings',
@@ -67,6 +68,41 @@ class hook_callbacks {
 
         require_once($CFG->dirroot . '/course/format/selfstudy/lib.php');
         self::$handler($course);
+    }
+
+    /**
+     * Publishes a learning path straight from the workflow step.
+     *
+     * @param \stdClass $course
+     */
+    private static function handle_publish(\stdClass $course): void {
+        require_sesskey();
+
+        $courseurl = new \moodle_url('/course/view.php', ['id' => $course->id]);
+        $pathid = optional_param('pathid', 0, PARAM_INT);
+        $repository = new \format_selfstudy\local\path_repository();
+        $path = $pathid ? $repository->get_path($pathid) : null;
+        if (!$path || (int)$path->courseid !== (int)$course->id || (int)($path->userid ?? 0) !== 0) {
+            \format_selfstudy_redirect_after_save($courseurl,
+                get_string('authoringpublishstatusnopath', 'format_selfstudy'),
+                \core\output\notification::NOTIFY_WARNING);
+        }
+
+        $result = (new \format_selfstudy\local\path_publish_service($repository))
+            ->publish_course_path($course, (int)$pathid);
+        if (!empty($result->published)) {
+            \format_selfstudy_redirect_after_save($courseurl,
+                get_string('learningpathpublished', 'format_selfstudy', (object)[
+                    'written' => $result->written,
+                    'skipped' => $result->skipped,
+                    'revision' => $result->revision,
+                ]));
+        }
+
+        \format_selfstudy_redirect_after_save($courseurl,
+            get_string('learningpathpublishblocked', 'format_selfstudy') .
+                \html_writer::alist(array_map('s', $result->errors)),
+            \core\output\notification::NOTIFY_WARNING);
     }
 
     /**
