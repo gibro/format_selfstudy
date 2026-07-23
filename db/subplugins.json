@@ -1,6 +1,6 @@
 {
     "subplugintypes": {
-        "selfstudyexperience": "course/format/selfstudy/experience"
+        "selfstudyexperience": "experience"
     },
     "plugintypes": {
         "selfstudyexperience": "course/format/selfstudy/experience"

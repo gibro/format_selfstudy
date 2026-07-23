@@ -28,7 +28,10 @@ class renderer implements experience_renderer_interface {
      * @return bool
      */
     public function supports(\stdClass $course, \stdClass $baseview, \stdClass $config): bool {
-        return true;
+        // Without a usable Learningmap activity there is nothing to show. Saying so
+        // here lets the core fall back to the base view instead of rendering a
+        // course page that consists of a hint only.
+        return (new learningmap_adapter())->get_configured_cm($course, $config) !== null;
     }
 
     /**

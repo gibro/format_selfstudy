@@ -132,8 +132,16 @@ $continuelabel = !empty($activepathprogress->total) && $activepathprogress->comp
     get_string('startlearning', 'format_selfstudy');
 
 if ($learnerview !== 'base') {
-    echo format_selfstudy_render_selected_experience($course, $baseview, $learnerview, $canmanagecourse);
-    return;
+    $selectedexperience = format_selfstudy_render_selected_experience($course, $baseview, $learnerview,
+        $canmanagecourse);
+    echo $selectedexperience->notice;
+    if ($selectedexperience->html !== '') {
+        echo $selectedexperience->html;
+        return;
+    }
+    // The base view is the guaranteed fallback: if the selected learning view is
+    // missing, unusable or renders nothing, the course stays usable below.
+    $enabledashboard = true;
 }
 
 if ($enabledashboard) {
@@ -655,21 +663,29 @@ function format_selfstudy_render_experience_zone(stdClass $course, stdClass $bas
 /**
  * Renders the single selected learner experience.
  *
+ * Returns the rendered experience separately from any teacher-facing notice, so
+ * the caller can keep the base view as fallback whenever `html` stays empty.
+ *
  * @param stdClass $course
  * @param stdClass $baseview
  * @param string $learnerview
  * @param bool $canedit
- * @return string
+ * @return stdClass object with `html` and `notice`
  */
 function format_selfstudy_render_selected_experience(stdClass $course, stdClass $baseview, string $learnerview,
-        bool $canedit = false): string {
+        bool $canedit = false): stdClass {
+    $result = (object)['html' => '', 'notice' => ''];
+    $notice = function(string $identifier) use ($canedit): string {
+        return $canedit ? html_writer::div(get_string($identifier, 'format_selfstudy'), 'alert alert-warning') : '';
+    };
+
     if (strpos($learnerview, 'experience:') !== 0) {
-        return '';
+        return $result;
     }
 
     $component = clean_param(substr($learnerview, strlen('experience:')), PARAM_COMPONENT);
     if ($component === '') {
-        return '';
+        return $result;
     }
 
     try {
@@ -681,24 +697,25 @@ function format_selfstudy_render_selected_experience(stdClass $course, stdClass 
 
             if ($entry->status !== \format_selfstudy\local\experience_registry::STATUS_AVAILABLE ||
                     !$entry->renderer instanceof \format_selfstudy\local\experience_renderer_interface) {
-                return $canedit ? html_writer::div(get_string('experienceselectedunavailable', 'format_selfstudy'),
-                    'alert alert-warning') : '';
+                $result->notice = $notice('experienceselectedunavailable');
+                return $result;
             }
 
             $html = $entry->renderer->render_course_entry($course, $baseview, $entry->config);
             if (trim($html) === '') {
-                return $canedit ? html_writer::div(get_string('experienceselectedempty', 'format_selfstudy'),
-                    'alert alert-warning') : '';
+                $result->notice = $notice('experienceselectedempty');
+                return $result;
             }
 
-            return html_writer::div($html, 'format-selfstudy-selected-experience');
+            $result->html = html_writer::div($html, 'format-selfstudy-selected-experience');
+            return $result;
         }
     } catch (Throwable $exception) {
         debugging('Selfstudy selected experience failed: ' . $exception->getMessage(), DEBUG_DEVELOPER);
     }
 
-    return $canedit ? html_writer::div(get_string('experienceselectedmissing', 'format_selfstudy'),
-        'alert alert-warning') : '';
+    $result->notice = $notice('experienceselectedmissing');
+    return $result;
 }
 
 /**
