@@ -7,6 +7,10 @@ defined('MOODLE_INTERNAL') || die();
 
 /**
  * Metadata provider for the Learningmap selfstudy experience.
+ *
+ * This is a package-internal learner view, not a Moodle plugin. The component
+ * string below is the key the registry and the stored configuration use; it is
+ * deliberately kept stable because course data references it.
  */
 class experience {
 

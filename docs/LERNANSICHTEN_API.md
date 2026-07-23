@@ -1,38 +1,56 @@
 # Lernansichten-API
 
-Stand: 2026-05-15
+Stand: 2026-07-23
 
 Diese Datei dokumentiert die aktuelle Entwickler-API für optionale Lernansichten im Kursformat `format_selfstudy`.
 
-Die API ist in der ersten tragfähigen Ausbaustufe. `format_selfstudy` registriert dafuer den Moodle-Subplugin-Typ
-`selfstudyexperience`. Neue Lernansichten sollten deshalb nah an den hier beschriebenen Vertraegen bleiben und keine
-Core-Logik duplizieren.
+Die API ist in der ersten tragfähigen Ausbaustufe. Lernansichten sind **paketinterne Module** dieses Kursformats,
+keine eigenständigen Moodle-Plugins. Neue Lernansichten sollten nah an den hier beschriebenen Verträgen bleiben und
+keine Core-Logik duplizieren.
+
+## Warum keine Moodle-Subplugins
+
+Moodle erlaubt Subplugins nur für die Plugin-Typen `mod`, `editor`, `tool` und `local`
+(`core_component::$supportsubplugins`). Kursformate stehen nicht in dieser Liste, ein `db/subplugins.json` in
+`format_selfstudy` würde also nie gelesen. Lernansichten werden deshalb bewusst als paketinterne Module ausgeliefert:
+Die Registry findet sie über das Verzeichnis `experience/` und lädt ihre Klassen direkt per Pfad.
+
+Das hat Konsequenzen, die beim Bauen einer Lernansicht wichtig sind:
+
+- Eine Lernansicht wird **nicht** einzeln installiert, sondern mit dem Kursformat ausgeliefert.
+- Es gibt **keine** eigene `version.php`, kein eigenes Upgrade und keine eigenen Moodle-Capabilities.
+- Es gibt **keine** eigene Sprachdatei. Alle Strings liegen in `lang/{de,en}/format_selfstudy.php` und werden mit der
+  Komponente `format_selfstudy` geholt.
+- Eigene Datenbanktabellen müssten in `db/install.xml` und `db/upgrade.php` des Kursformats gepflegt werden.
+
+Sollen Lernansichten später wirklich getrennt installierbar sein, ist der Weg ein eigenes `local_`-Plugin als Wirt —
+nur dort erlaubt Moodle echte Subplugins. Das ist ausdrücklich **nicht** der aktuelle Stand.
 
 ## Begriff
 
 Eine Lernansicht ist eine optionale Darstellung oder Interaktion für denselben veröffentlichten Lernpfad. Beispiele sind eine Lernlandkarte, eine Story-Ansicht, eine Kompetenzmatrix oder später ein spielerischer Modus.
 
-Technisch heißen Lernansichten:
+Technisch werden Lernansichten über einen Komponentenschlüssel identifiziert:
 
 ```text
 selfstudyexperience_{name}
 ```
 
-Das Kursformat ist der Parent-Plugin-Typ. Konkrete Lernansichten sind echte Moodle-Subplugins dieses Parent-Plugins.
-Die erste neu aufgesetzte Lernansicht ist:
+Dieser Schlüssel ist **kein** Moodle-Komponentenname, sondern der Schlüssel, unter dem die Registry die Lernansicht
+führt und unter dem ihre Konfiguration in `format_selfstudy_experiences` gespeichert ist. Er bleibt stabil, weil
+Kursdaten darauf verweisen.
+
+Die erste Lernansicht ist:
 
 ```text
 selfstudyexperience_learningmap
 ```
 
-Sie liegt paketintern unter:
+Sie liegt unter:
 
 ```text
 course/format/selfstudy/experience/learningmap
 ```
-
-Die aktuelle Learningmap-Implementierung ist bewusst nur ein installierbares Skeleton. Fachlogik, Konfiguration und
-Rendering werden darauf neu aufgebaut.
 
 ## Architekturregeln
 
@@ -58,29 +76,27 @@ Wenn eine Lernansicht fehlt, deaktiviert ist, inkompatibel ist oder beim Rendern
 
 ## Verzeichnisstruktur
 
-Empfohlene Struktur für eine paketinterne Lernansicht:
+Struktur einer Lernansicht:
 
 ```text
 course/format/selfstudy/experience/{name}/
-  version.php
   classes/
     experience.php
     renderer.php
-  lang/
-    de/selfstudyexperience_{name}.php
-    en/selfstudyexperience_{name}.php
+    config_form.php   (optional)
 ```
 
-`format_selfstudy` registriert den Subplugin-Typ in:
+Mehr braucht es nicht: keine `version.php`, kein `db/`, kein `lang/`. Die Registry erkennt ein Verzeichnis als
+Lernansicht, sobald `classes/experience.php` lesbar ist.
+
+Sprachstrings der Lernansicht gehören nach:
 
 ```text
-course/format/selfstudy/db/subplugins.json
-course/format/selfstudy/db/subplugins.php
+course/format/selfstudy/lang/de/format_selfstudy.php
+course/format/selfstudy/lang/en/format_selfstudy.php
 ```
 
-`subplugins.json` ist der moderne Metadatenweg. `subplugins.php` bleibt als Kompatibilitaetsweg fuer aeltere Moodle-Versionen
-erhalten. Die Registry nutzt bevorzugt Moodles Plugin-Discovery und hat nur noch eine paketinterne Fallback-Discovery fuer
-Entwicklungs- und Uebergangssituationen.
+Ein Präfix im Stringnamen hält sie beieinander, zum Beispiel `learningmapexperience_*`.
 
 ## Metadata-Provider
 
@@ -95,8 +111,8 @@ class experience {
     public static function get_metadata(): \stdClass {
         return (object)[
             'component' => 'selfstudyexperience_example',
-            'name' => get_string('pluginname', 'selfstudyexperience_example'),
-            'description' => get_string('plugindescription', 'selfstudyexperience_example'),
+            'name' => get_string('exampleexperience_name', 'format_selfstudy'),
+            'description' => get_string('exampleexperience_description', 'format_selfstudy'),
             'icon' => 'i/navigationitem',
             'schema' => 1,
             'features' => ['activitynavigation'],
@@ -110,7 +126,7 @@ class experience {
 ### Metadata-Felder
 
 `component`
-: Vollständiger Komponentenname, zum Beispiel `selfstudyexperience_example`.
+: Komponentenschlüssel der Lernansicht, zum Beispiel `selfstudyexperience_example`. Muss zum Verzeichnisnamen passen.
 
 `name`
 : Sichtbarer Name in der Oberfläche. Für Lehrende nutzernahe Begriffe verwenden, zum Beispiel `Lernlandkarte`.
@@ -248,7 +264,7 @@ Wichtige Felder:
 : Schema-Version der gespeicherten Konfiguration.
 
 `missing`
-: Gespeicherte Komponente ist nicht installiert oder nicht auffindbar.
+: Die gespeicherte Lernansicht gehört nicht mehr zum Paket, ihre Konfiguration bleibt aber erhalten.
 
 Zugriff erfolgt über:
 
@@ -278,8 +294,8 @@ course/format/selfstudy/classes/local/experience_registry.php
 
 Sie ist zuständig für:
 
-- installierte oder paketinterne Lernansichten finden,
-- gespeicherte fehlende Lernansichten erhalten,
+- paketinterne Lernansichten im Verzeichnis `experience/` finden und ihre Klassen laden,
+- gespeicherte, nicht mehr vorhandene Lernansichten erhalten,
 - Status berechnen,
 - Renderer erzeugen,
 - nur aktive und kompatible Lernansichten an Kursseite und Navigation geben,
@@ -288,16 +304,16 @@ Sie ist zuständig für:
 Statuswerte:
 
 `available`
-: Installiert, aktiviert und nutzbar.
+: Vorhanden, ausgewählt und nutzbar.
 
 `disabled`
-: Installiert, aber im Kurs ausgeschaltet.
+: Vorhanden, aber im Kurs nicht ausgewählt.
 
 `missing`
-: Gespeichert, aber Komponente fehlt.
+: Gespeichert, aber im Paket nicht mehr vorhanden.
 
 `incompatible`
-: Installiert, aber Metadaten, Renderer oder `supports()` passen nicht.
+: Vorhanden, aber Metadaten, Renderer oder `supports()` passen nicht.
 
 ## Kursseiten-Hook
 
@@ -347,7 +363,7 @@ class renderer implements experience_renderer_interface {
 
         return \html_writer::link(
             new \moodle_url($config->url),
-            get_string('openview', 'selfstudyexperience_example'),
+            get_string('exampleexperience_open', 'format_selfstudy'),
             ['class' => 'btn btn-secondary']
         );
     }
@@ -388,7 +404,7 @@ Regel:
 - bekannte Lernansichten können aktiv bleiben,
 - fehlende Lernansichten bleiben gespeichert,
 - fehlende Lernansichten werden als `missing` und inaktiv behandelt,
-- Konfiguration wird nicht gelöscht, nur weil das passende Plugin gerade fehlt.
+- Konfiguration wird nicht gelöscht, nur weil die passende Lernansicht gerade fehlt.
 
 ## Tests
 

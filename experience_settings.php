@@ -255,7 +255,7 @@ function format_selfstudy_experience_settings_handle_post(stdClass $course, mood
 }
 
 /**
- * Renders experience-specific config controls when provided by the subplugin.
+ * Renders experience-specific config controls when the learning view provides them.
  *
  * @param stdClass $course
  * @param stdClass $entry

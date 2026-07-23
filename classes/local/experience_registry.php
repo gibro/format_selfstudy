@@ -7,48 +7,52 @@ defined('MOODLE_INTERNAL') || die();
 
 /**
  * Registry for optional learner experiences.
+ *
+ * Learner views ship inside this plugin under `experience/{name}`. They are not
+ * Moodle plugins: course formats cannot own subplugin types, so the registry
+ * discovers them by scanning that directory and loads their classes directly.
  */
 class experience_registry {
 
-    /** @var string Status for installed and usable entries. */
+    /** @var string Status for packaged and usable entries. */
     public const STATUS_AVAILABLE = 'available';
 
-    /** @var string Status for stored entries whose plugin is not installed. */
+    /** @var string Status for stored entries whose learner view is no longer part of the package. */
     public const STATUS_MISSING = 'missing';
 
     /** @var string Status for stored entries disabled for the course. */
     public const STATUS_DISABLED = 'disabled';
 
-    /** @var string Status for installed entries with invalid metadata or renderer. */
+    /** @var string Status for packaged entries with invalid metadata or an unusable renderer. */
     public const STATUS_INCOMPATIBLE = 'incompatible';
 
     /** @var experience_repository */
     private $repository;
 
     /** @var array|null */
-    private $installedmetadata;
+    private $packagedmetadata;
 
     /**
      * Constructor.
      *
      * @param experience_repository|null $repository
-     * @param array|null $installedmetadata Optional component => metadata map, primarily for tests.
+     * @param array|null $packagedmetadata Optional component => metadata map, primarily for tests.
      */
-    public function __construct(?experience_repository $repository = null, ?array $installedmetadata = null) {
+    public function __construct(?experience_repository $repository = null, ?array $packagedmetadata = null) {
         $this->repository = $repository ?? new experience_repository();
-        $this->installedmetadata = $installedmetadata;
+        $this->packagedmetadata = $packagedmetadata;
     }
 
     /**
-     * Returns registry entries for a course, including stored missing entries.
+     * Returns registry entries for a course, including stored entries whose view is gone.
      *
      * @param \stdClass $course
      * @param \stdClass|null $baseview
      * @return \stdClass[]
      */
     public function get_course_experiences(\stdClass $course, ?\stdClass $baseview = null): array {
-        $installed = $this->get_installed_metadata();
-        $this->repository->mark_missing_experiences((int)$course->id, array_keys($installed));
+        $packaged = $this->get_packaged_metadata();
+        $this->repository->mark_missing_experiences((int)$course->id, array_keys($packaged));
 
         $stored = [];
         foreach ($this->repository->get_course_experiences((int)$course->id) as $record) {
@@ -57,12 +61,12 @@ class experience_registry {
 
         $entries = [];
         foreach ($stored as $component => $record) {
-            $metadata = $installed[$component] ?? null;
+            $metadata = $packaged[$component] ?? null;
             $entries[] = $this->build_entry($course, $record, $metadata, $baseview);
-            unset($installed[$component]);
+            unset($packaged[$component]);
         }
 
-        foreach ($installed as $component => $metadata) {
+        foreach ($packaged as $component => $metadata) {
             $record = (object)[
                 'courseid' => (int)$course->id,
                 'component' => $component,
@@ -195,32 +199,18 @@ class experience_registry {
     }
 
     /**
-     * Returns installed experience metadata keyed by component.
+     * Returns metadata of the packaged learner views keyed by component.
      *
      * @return \stdClass[]
      */
-    private function get_installed_metadata(): array {
-        if ($this->installedmetadata !== null) {
-            return $this->normalise_metadata_map($this->installedmetadata);
+    private function get_packaged_metadata(): array {
+        if ($this->packagedmetadata !== null) {
+            return $this->normalise_metadata_map($this->packagedmetadata);
         }
 
         $components = [];
-        if (class_exists('\core_component') &&
-                array_key_exists('selfstudyexperience', \core_component::get_plugin_types())) {
-            foreach (\core_component::get_plugin_list('selfstudyexperience') as $name => $dir) {
-                $component = 'selfstudyexperience_' . $name;
-                $metadata = $this->load_component_metadata($component);
-                if ($metadata) {
-                    $components[$component] = $metadata;
-                }
-            }
-        }
-
         foreach ($this->get_packaged_component_names() as $name) {
             $component = 'selfstudyexperience_' . $name;
-            if (isset($components[$component])) {
-                continue;
-            }
             $metadata = $this->load_component_metadata($component);
             if ($metadata) {
                 $components[$component] = $metadata;
@@ -280,7 +270,10 @@ class experience_registry {
     }
 
     /**
-     * Requires a packaged experience class file when Moodle has not autoloaded it as a subplugin.
+     * Requires a packaged experience class file.
+     *
+     * Learner views are package-internal modules, so Moodle's autoloader does not
+     * know their classes and they have to be included by path.
      *
      * @param string $component
      * @param string $classname
