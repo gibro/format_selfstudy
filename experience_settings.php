@@ -74,8 +74,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     $format->save_learning_view_option($learnerview);
 
-    redirect($url, get_string('experiencesettingssaved', 'format_selfstudy'), null,
-        \core\output\notification::NOTIFY_SUCCESS);
+    format_selfstudy_redirect_after_save($url, get_string('experiencesettingssaved', 'format_selfstudy'));
 }
 
 if (!$inline) {

@@ -217,6 +217,7 @@ $string['learningpathcreated'] = 'Der Lernpfad wurde angelegt.';
 $string['learningpathchooseintro'] = 'Wähle einen Lernpfad, um deinen Fortschritt in diesem Kurs zu verfolgen.';
 $string['learningpathcontinue'] = 'Im Lernpfad weiterlernen';
 $string['learningpathcurrent'] = 'Mein Lernpfad';
+$string['learningpathdefaultname'] = 'Lernpfad';
 $string['learningpathdeleted'] = 'Der Lernpfad wurde gelöscht.';
 $string['learningpathdescription'] = 'Beschreibung';
 $string['learningpathdisabled'] = 'Deaktiviert';

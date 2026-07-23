@@ -25,6 +25,7 @@ if ($PAGE->user_is_editing()) {
     echo html_writer::start_div('format-selfstudy-editing-workflow');
     echo $authoringrenderer->workflow($authoringstate);
     echo html_writer::end_div();
+    echo format_selfstudy_render_pending_notice();
 
     if (optional_param('selfstudyactivitysettings', 0, PARAM_BOOL)) {
         $FORMAT_SELFSTUDY_PATH_EDITOR_FUNCTIONS_ONLY = true;
@@ -35,10 +36,10 @@ if ($PAGE->user_is_editing()) {
             if (format_selfstudy_path_editor_save_activity_settings($course, $activities)) {
                 rebuild_course_cache((int)$course->id, true);
             }
-            redirect(new moodle_url('/course/view.php', [
+            format_selfstudy_redirect_after_save(new moodle_url('/course/view.php', [
                 'id' => $course->id,
                 'selfstudyactivitysettings' => 1,
-            ]), get_string('changessaved'), null, \core\output\notification::NOTIFY_SUCCESS);
+            ]), get_string('changessaved'));
         }
 
         echo html_writer::start_tag('form', [

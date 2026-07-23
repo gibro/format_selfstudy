@@ -109,11 +109,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($action === 'delete' && $pathid) {
         $repository->delete_path($pathid);
-        redirect($baseurl, get_string('learningpathdeleted', 'format_selfstudy'), null,
-            \core\output\notification::NOTIFY_SUCCESS);
+        format_selfstudy_redirect_after_save($baseurl, get_string('learningpathdeleted', 'format_selfstudy'));
     }
 
-    $name = required_param('selfstudypathname', PARAM_TEXT);
+    // The title lives in a collapsed panel, so an empty submission is a normal case
+    // and must not end in a coding exception. Keep the stored title or fall back.
+    $name = trim(optional_param('selfstudypathname', '', PARAM_TEXT));
+    if ($name === '') {
+        $existingname = $pathid ? trim((string)($repository->get_path($pathid)->name ?? '')) : '';
+        $name = $existingname !== '' ? $existingname :
+            get_string('learningpathdefaultname', 'format_selfstudy');
+    }
     $description = optional_param('description', '', PARAM_RAW);
     $imageurl = optional_param('imageurl', '', PARAM_URL);
     $icon = optional_param('icon', '', PARAM_SAFEPATH);
@@ -165,7 +171,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($publisherrors) {
             $message = get_string('learningpathpublishblocked', 'format_selfstudy') .
                 html_writer::alist(array_map('s', $publisherrors));
-            redirect(new moodle_url($baseurl, ['pathid' => $pathid]), $message, null,
+            format_selfstudy_redirect_after_save(new moodle_url($baseurl, ['pathid' => $pathid]), $message,
                 \core\output\notification::NOTIFY_WARNING);
         }
 
@@ -177,18 +183,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'skipped' => $result->skipped,
                 'revision' => $result->revision,
             ]);
-            redirect(new moodle_url($baseurl, ['pathid' => $pathid]), $message, null,
-                \core\output\notification::NOTIFY_SUCCESS);
+            format_selfstudy_redirect_after_save(new moodle_url($baseurl, ['pathid' => $pathid]), $message);
         }
 
         $message = get_string('learningpathpublishblocked', 'format_selfstudy') .
             html_writer::alist(array_map('s', $result->errors));
-        redirect(new moodle_url($baseurl, ['pathid' => $pathid]), $message, null,
+        format_selfstudy_redirect_after_save(new moodle_url($baseurl, ['pathid' => $pathid]), $message,
             \core\output\notification::NOTIFY_WARNING);
     }
 
-    redirect(new moodle_url($baseurl, ['pathid' => $pathid]), $message, null,
-        \core\output\notification::NOTIFY_SUCCESS);
+    format_selfstudy_redirect_after_save(new moodle_url($baseurl, ['pathid' => $pathid]), $message);
 }
 
 $paths = $repository->get_paths($course->id);
@@ -287,8 +291,9 @@ echo html_writer::tag('summary',
     html_writer::span($status, 'format-selfstudy-patheditor-detailsstatus')
 );
 echo html_writer::start_div('format-selfstudy-patheditor-detailsbody');
+$pathname = trim((string)($currentpath->name ?? ''));
 echo format_selfstudy_path_editor_text_input('selfstudypathname', get_string('learningpathname', 'format_selfstudy'),
-    $currentpath->name ?? '');
+    $pathname !== '' ? $pathname : get_string('learningpathdefaultname', 'format_selfstudy'));
 echo format_selfstudy_path_editor_textarea('description', get_string('learningpathdescription', 'format_selfstudy'),
     $currentpath->description ?? '');
 echo format_selfstudy_path_editor_image_picker($course, $currentpath ? (int)$currentpath->id : 0);

@@ -217,6 +217,7 @@ $string['learningpathcreated'] = 'The learning path has been created.';
 $string['learningpathchooseintro'] = 'Choose a learning path to track your progress in this course.';
 $string['learningpathcontinue'] = 'Continue in learning path';
 $string['learningpathcurrent'] = 'My learning path';
+$string['learningpathdefaultname'] = 'Learning path';
 $string['learningpathdeleted'] = 'The learning path has been deleted.';
 $string['learningpathdescription'] = 'Description';
 $string['learningpathdisabled'] = 'Disabled';

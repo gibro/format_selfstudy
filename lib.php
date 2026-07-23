@@ -1990,3 +1990,53 @@ function format_selfstudy_normalise_hex_color(string $color, string $fallback = 
 
     return preg_match('/^#[0-9a-fA-F]{6}$/', $fallback) ? strtolower($fallback) : '#6f1ab1';
 }
+
+/**
+ * Redirects after saving an editor form.
+ *
+ * The inline editors run inside course/view.php, which has already sent the page
+ * header. Moodle then cannot send a Location header and falls back to a delayed
+ * interstitial page, and core notifications would be printed on that throwaway
+ * page. In that case the message is parked in the session and the redirect
+ * happens without an extra delay; the target page prints it through
+ * format_selfstudy_render_pending_notice().
+ *
+ * @param moodle_url $url
+ * @param string $message
+ * @param string $messagetype
+ */
+function format_selfstudy_redirect_after_save(moodle_url $url, string $message,
+        string $messagetype = \core\output\notification::NOTIFY_SUCCESS): void {
+    global $SESSION;
+
+    if (headers_sent()) {
+        if ($message !== '') {
+            $SESSION->format_selfstudy_notice = (object)[
+                'message' => $message,
+                'type' => $messagetype,
+            ];
+        }
+        redirect($url, '', 0);
+    }
+
+    redirect($url, $message, null, $messagetype);
+}
+
+/**
+ * Returns and clears a notice parked by format_selfstudy_redirect_after_save().
+ *
+ * @return string
+ */
+function format_selfstudy_render_pending_notice(): string {
+    global $OUTPUT, $SESSION;
+
+    if (empty($SESSION->format_selfstudy_notice)) {
+        return '';
+    }
+
+    $notice = $SESSION->format_selfstudy_notice;
+    unset($SESSION->format_selfstudy_notice);
+
+    return $OUTPUT->notification($notice->message ?? '',
+        $notice->type ?? \core\output\notification::NOTIFY_SUCCESS);
+}
