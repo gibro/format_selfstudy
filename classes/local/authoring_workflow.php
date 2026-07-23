@@ -486,10 +486,10 @@ class authoring_workflow {
                 'enabled' => $state->experience->enabled,
                 'missing' => $state->experience->missing,
             ]),
-            'actionurl' => new \moodle_url('/course/view.php', [
-                'id' => $course->id,
-                'selfstudyexperiencesettings' => 1,
-            ]),
+            // The learner view and its settings live in the course settings, so the
+            // step points there instead of opening a second editing surface.
+            'actionurl' => new \moodle_url('/course/edit.php', ['id' => $course->id],
+                'id_selfstudycourseformatexperience'),
             'actionlabel' => get_string('authoringworkflowactionviews', 'format_selfstudy'),
         ];
 

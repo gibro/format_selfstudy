@@ -11,6 +11,73 @@ defined('MOODLE_INTERNAL') || die();
 class config_form {
 
     /**
+     * Describes the configuration fields for the course settings form.
+     *
+     * The core builds real form elements from this and hides them unless this
+     * learning view is the selected one, so teachers only see the settings that
+     * belong to their choice.
+     *
+     * @param \stdClass $course
+     * @return array field name => definition
+     */
+    public static function get_field_definitions(\stdClass $course): array {
+        return [
+            'learningmapcmid' => [
+                'type' => 'select',
+                'label' => get_string('learningmapexperience_learningmapactivity', 'format_selfstudy'),
+                'options' => self::get_learningmap_options($course),
+                'param' => PARAM_INT,
+                'default' => 0,
+            ],
+            'theme' => [
+                'type' => 'select',
+                'label' => get_string('learningmapexperience_theme', 'format_selfstudy'),
+                'options' => [
+                    'adventure' => get_string('learningmapexperience_themeadventure', 'format_selfstudy'),
+                    'quiet' => get_string('learningmapexperience_themequiet', 'format_selfstudy'),
+                ],
+                'param' => PARAM_ALPHA,
+                'default' => 'adventure',
+            ],
+            'avatarenabled' => [
+                'type' => 'advcheckbox',
+                'label' => get_string('learningmapexperience_avatarenabled', 'format_selfstudy'),
+                'param' => PARAM_BOOL,
+                'default' => 1,
+            ],
+            'routeenabled' => [
+                'type' => 'advcheckbox',
+                'label' => get_string('learningmapexperience_routeenabled', 'format_selfstudy'),
+                'param' => PARAM_BOOL,
+                'default' => 1,
+            ],
+            'milestonebadgesenabled' => [
+                'type' => 'advcheckbox',
+                'label' => get_string('learningmapexperience_milestonebadgesenabled', 'format_selfstudy'),
+                'param' => PARAM_BOOL,
+                'default' => 1,
+            ],
+        ];
+    }
+
+    /**
+     * Returns teacher-facing notes shown below the fields in the course settings.
+     *
+     * @param \stdClass $course
+     * @param \stdClass $config
+     * @return string
+     */
+    public static function get_form_notes(\stdClass $course, \stdClass $config): string {
+        $notes = '';
+        if (count(self::get_learningmap_options($course)) <= 1) {
+            $notes .= \html_writer::div(get_string('learningmapexperience_nolearningmapactivity', 'format_selfstudy'),
+                'format-selfstudy-patheditor-activitysettingsnotice');
+        }
+
+        return $notes . self::render_mapping_panel($course, $config);
+    }
+
+    /**
      * Renders the experience-specific course settings controls.
      *
      * @param \stdClass $course

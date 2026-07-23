@@ -982,8 +982,7 @@ class format_selfstudy extends core_courseformat\base {
             $mform->setExpanded('selfstudycourseformatexperience', true);
             $experienceintro = $mform->addElement('static', 'selfstudycourseformatexperience_intro', '',
                 get_string('courseformatsettingsexperience_desc', 'format_selfstudy'));
-            $experiencecontrols = $mform->addElement('static', 'selfstudycourseformatexperience_controls', '',
-                $this->render_course_experience_settings_fragment());
+            $experiencecontrols = $this->add_experience_form_elements($mform);
 
             $designcolorelements = [];
             $designnavigationelements = [];
@@ -1016,7 +1015,7 @@ class format_selfstudy extends core_courseformat\base {
                 $designcolorelements,
                 [$designnavigationintro],
                 $designnavigationelements,
-                [$experienceheader, $experienceintro, $experiencecontrols]
+                array_merge([$experienceheader, $experienceintro], $experiencecontrols)
             );
         }
 
@@ -1081,7 +1080,11 @@ class format_selfstudy extends core_courseformat\base {
                 'format_selfstudy', 'heroimage', 0, $this->get_hero_image_filemanager_options());
         }
         $this->save_course_contacts_from_form($dataobject);
-        $this->save_course_experiences_from_request();
+        if (property_exists($dataobject, 'learnerview')) {
+            $this->save_experience_form_elements($dataobject);
+        } else {
+            $this->save_course_experiences_from_request();
+        }
 
         return $changed;
     }
@@ -1142,6 +1145,143 @@ class format_selfstudy extends core_courseformat\base {
      *
      * @return string
      */
+    /**
+     * Adds the learning view selection and the per-view settings to the course form.
+     *
+     * The settings of a learning view are only shown once that view is selected,
+     * using Moodle's own hideIf mechanism. That only works for real form elements,
+     * which is why these are no longer rendered as an HTML fragment.
+     *
+     * @param MoodleQuickForm $mform
+     * @return array added elements
+     */
+    protected function add_experience_form_elements(&$mform): array {
+        $course = $this->get_course();
+        $repository = new \format_selfstudy\local\experience_repository();
+        $registry = new \format_selfstudy\local\experience_registry($repository);
+        $entries = array_values($registry->get_course_experiences($course));
+
+        $viewoptions = ['base' => get_string('learnerviewbase', 'format_selfstudy')];
+        $usable = [];
+        foreach ($entries as $entry) {
+            if ($entry->missing || $entry->status === \format_selfstudy\local\experience_registry::STATUS_INCOMPATIBLE) {
+                continue;
+            }
+            $viewoptions['experience:' . $entry->component] =
+                get_string('learnerviewexperience', 'format_selfstudy', format_string($entry->name));
+            $usable[] = $entry;
+        }
+
+        $selected = (string)($this->get_format_options()['learnerview'] ?? 'base');
+        if (!array_key_exists($selected, $viewoptions)) {
+            $selected = 'base';
+        }
+
+        $elements = [];
+        $elements[] = $mform->addElement('select', 'learnerview',
+            get_string('learnerviewselection', 'format_selfstudy'), $viewoptions);
+        $mform->setType('learnerview', PARAM_TEXT);
+        $mform->setDefault('learnerview', $selected);
+        $mform->addHelpButton('learnerview', 'learnerviewselection', 'format_selfstudy');
+
+        foreach ($usable as $entry) {
+            $viewvalue = 'experience:' . $entry->component;
+            $prefix = $this->get_experience_field_prefix($entry->component);
+            $formclass = $entry->configformclass;
+            if ($formclass === '' || !class_exists($formclass) ||
+                    !method_exists($formclass, 'get_field_definitions')) {
+                continue;
+            }
+
+            foreach ($formclass::get_field_definitions($course) as $name => $definition) {
+                $elementname = $prefix . $name;
+                $type = (string)($definition['type'] ?? 'text');
+                if ($type === 'select') {
+                    $element = $mform->addElement('select', $elementname, $definition['label'],
+                        (array)($definition['options'] ?? []));
+                } else if ($type === 'advcheckbox') {
+                    $element = $mform->addElement('advcheckbox', $elementname, $definition['label']);
+                } else {
+                    $element = $mform->addElement('text', $elementname, $definition['label']);
+                }
+                $mform->setType($elementname, $definition['param'] ?? PARAM_RAW);
+                $value = $entry->config->{$name} ?? ($definition['default'] ?? null);
+                if ($value !== null) {
+                    $mform->setDefault($elementname, $value);
+                }
+                $mform->hideIf($elementname, 'learnerview', 'neq', $viewvalue);
+                $elements[] = $element;
+            }
+
+            if (method_exists($formclass, 'get_form_notes')) {
+                $notes = $formclass::get_form_notes($course, $entry->config);
+                if (trim($notes) !== '') {
+                    $notename = $prefix . 'notes';
+                    $elements[] = $mform->addElement('static', $notename, '', $notes);
+                    $mform->hideIf($notename, 'learnerview', 'neq', $viewvalue);
+                }
+            }
+        }
+
+        return $elements;
+    }
+
+    /**
+     * Returns the form field prefix for one learning view.
+     *
+     * @param string $component
+     * @return string
+     */
+    protected function get_experience_field_prefix(string $component): string {
+        return 'selfstudyexp_' . preg_replace('/[^a-z0-9]/', '', str_replace('selfstudyexperience_', '', $component)) . '_';
+    }
+
+    /**
+     * Saves the learning view settings submitted through the course settings form.
+     *
+     * @param stdClass $data
+     */
+    protected function save_experience_form_elements(stdClass $data): void {
+        if (empty($this->courseid)) {
+            return;
+        }
+
+        $course = $this->get_course();
+        $repository = new \format_selfstudy\local\experience_repository();
+        $registry = new \format_selfstudy\local\experience_registry($repository);
+        $learnerview = (string)($data->learnerview ?? 'base');
+
+        foreach (array_values($registry->get_course_experiences($course)) as $index => $entry) {
+            if ($entry->missing) {
+                continue;
+            }
+            $formclass = $entry->configformclass;
+            if ($formclass === '' || !class_exists($formclass) ||
+                    !method_exists($formclass, 'get_field_definitions')) {
+                continue;
+            }
+
+            $prefix = $this->get_experience_field_prefix($entry->component);
+            $config = (array)$entry->config;
+            $submitted = false;
+            foreach ($formclass::get_field_definitions($course) as $name => $definition) {
+                $elementname = $prefix . $name;
+                if (!property_exists($data, $elementname)) {
+                    continue;
+                }
+                $submitted = true;
+                $config[$name] = clean_param($data->{$elementname}, $definition['param'] ?? PARAM_RAW);
+            }
+            if (!$submitted) {
+                continue;
+            }
+
+            $repository->save_course_experience((int)$this->courseid, $entry->component, $config,
+                $learnerview === 'experience:' . $entry->component, (int)($entry->sortorder ?? $index),
+                (int)($entry->schema ?? 1), false);
+        }
+    }
+
     protected function render_course_experience_settings_fragment(): string {
         $course = $this->get_course();
         $repository = new \format_selfstudy\local\experience_repository();
