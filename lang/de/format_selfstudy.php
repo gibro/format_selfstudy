@@ -55,6 +55,7 @@ $string['courseheroprogress'] = 'Fortschritt';
 $string['courseherorequired'] = 'Pflichtbereiche';
 $string['courseherorequiredvalue'] = '{$a->complete} erledigt, {$a->open} offen';
 $string['courseheroremainingduration'] = 'Bis Kursende';
+$string['courseherostart'] = 'Kurs starten';
 $string['courseherostations'] = 'Stationen';
 $string['courseformatsettingsappearance'] = 'Lernpfad-Darstellung';
 $string['courseformatsettingsappearance_desc'] = 'Hier steuerst du die visuelle Farbe des Lernpfads und die Beschriftungen der Navigationsbuttons.';

@@ -129,7 +129,7 @@ $coursecontacts = format_selfstudy_get_course_contacts((int)$course->id);
 $continueurl = format_selfstudy_get_continue_url($course, $mainmapcm, $activepathprogress, $nextcm);
 $continuelabel = !empty($activepathprogress->total) && $activepathprogress->complete >= $activepathprogress->total ?
     get_string('learningpathcompleteoverview', 'format_selfstudy') :
-    get_string('startlearning', 'format_selfstudy');
+    get_string($pathstarted ? 'startlearning' : 'courseherostart', 'format_selfstudy');
 
 if ($learnerview !== 'base') {
     $selectedexperience = format_selfstudy_render_selected_experience($course, $baseview, $learnerview,
@@ -161,7 +161,9 @@ if ($enabledashboard) {
     }
 
     echo html_writer::start_div('format-selfstudy-actions format-selfstudy-coursehero-actions');
-    if ($pathstarted && $continueurl) {
+    // Also show this before the first activity: that is exactly when learners need
+    // a way in. The label already distinguishes start, continue and completed.
+    if ($continueurl) {
         echo html_writer::link(
             $continueurl,
             $continuelabel,

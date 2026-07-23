@@ -55,6 +55,7 @@ $string['courseheroprogress'] = 'Progress';
 $string['courseherorequired'] = 'Required sections';
 $string['courseherorequiredvalue'] = '{$a->complete} done, {$a->open} open';
 $string['courseheroremainingduration'] = 'Until course end';
+$string['courseherostart'] = 'Start the course';
 $string['courseherostations'] = 'Stations';
 $string['courseformatsettingsappearance'] = 'Learning path appearance';
 $string['courseformatsettingsappearance_desc'] = 'Control the visual learning path colour and the labels used for navigation buttons.';
