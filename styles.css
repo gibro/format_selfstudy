@@ -3571,6 +3571,12 @@ body.format-selfstudy-hide-courseindex #page.drawers.show-drawer-left {
     margin: 1rem 0;
 }
 
+.format-selfstudy-activitynav-bottom {
+    margin-top: 2rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid rgba(15, 23, 42, .12);
+}
+
 .format-selfstudy-gamemap-mode {
     overflow: hidden;
     background: #f7fafc;

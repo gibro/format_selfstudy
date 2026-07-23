@@ -86,6 +86,18 @@ export const init = (config) => {
         }
     }
 
+    // The same navigation is repeated below the content, so learners do not have to
+    // scroll back up after reading or working through an activity.
+    const bottomNav = () => {
+        if (!main || !nav.children.length) {
+            return null;
+        }
+        const copy = nav.cloneNode(true);
+        copy.classList.add('format-selfstudy-activitynav-bottom');
+        copy.setAttribute('aria-label', 'Lernnavigation am Seitenende');
+        return copy;
+    };
+
     if (mapBackgroundUrl && main && !document.querySelector('.format-selfstudy-gamemap-stage')) {
         const stage = document.createElement('div');
         stage.className = 'format-selfstudy-gamemap-stage';
@@ -123,12 +135,23 @@ export const init = (config) => {
             }
         }
 
+        if (showNavigation) {
+            const copy = bottomNav();
+            if (copy) {
+                main.appendChild(copy);
+            }
+        }
+
         return;
     }
 
     const anchor = document.querySelector('#page-header') || main;
     if (anchor && !hasPathContinueNavigation) {
         anchor.insertAdjacentElement('afterend', nav);
+        const copy = bottomNav();
+        if (copy) {
+            main.appendChild(copy);
+        }
     }
 };
 
