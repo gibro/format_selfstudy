@@ -31,15 +31,12 @@ if ($PAGE->user_is_editing()) {
         $FORMAT_SELFSTUDY_PATH_EDITOR_FUNCTIONS_ONLY = true;
         require_once(__DIR__ . '/path_editor.php');
         $activities = format_selfstudy_path_editor_get_activities($course);
+        // Normally already handled before the page header, see format_selfstudy\hook_callbacks.
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            require_sesskey();
-            if (format_selfstudy_path_editor_save_activity_settings($course, $activities)) {
-                rebuild_course_cache((int)$course->id, true);
-            }
-            format_selfstudy_redirect_after_save(new moodle_url('/course/view.php', [
+            format_selfstudy_path_editor_handle_activity_settings_post($course, new moodle_url('/course/view.php', [
                 'id' => $course->id,
                 'selfstudyactivitysettings' => 1,
-            ]), get_string('changessaved'));
+            ]));
         }
 
         echo html_writer::start_tag('form', [

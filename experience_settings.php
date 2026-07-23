@@ -17,6 +17,7 @@ if (empty($CFG)) {
     throw new RuntimeException('Unable to locate Moodle config.php.');
 }
 
+if (empty($FORMAT_SELFSTUDY_EXPERIENCE_SETTINGS_FUNCTIONS_ONLY)) {
 $courseid = required_param('id', PARAM_INT);
 $inline = !empty($FORMAT_SELFSTUDY_EXPERIENCE_SETTINGS_INLINE);
 $course = get_course($courseid);
@@ -39,42 +40,9 @@ $repository = new \format_selfstudy\local\experience_repository();
 $registry = new \format_selfstudy\local\experience_registry($repository);
 $entries = $registry->get_course_experiences($course);
 
+// Normally already handled before the page header, see format_selfstudy\hook_callbacks.
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    require_sesskey();
-
-    $components = optional_param_array('components', [], PARAM_COMPONENT);
-    $sortorders = optional_param_array('sortorder', [], PARAM_INT);
-    $configs = optional_param_array('configjson', [], PARAM_RAW);
-    $schemas = optional_param_array('configschema', [], PARAM_INT);
-    $missing = optional_param_array('missing', [], PARAM_BOOL);
-    $learnerview = optional_param('learnerview', 'base', PARAM_TEXT);
-
-    foreach ($components as $index => $component) {
-        $config = json_decode((string)($configs[$index] ?? '{}'), true);
-        if (!is_array($config) || json_last_error() !== JSON_ERROR_NONE) {
-            $config = [];
-        }
-        $configformclass = format_selfstudy_experience_settings_get_config_form_class($component);
-        if ($configformclass && method_exists($configformclass, 'get_config_from_request')) {
-            $config = $configformclass::get_config_from_request('experience_config_' . $index, $config);
-        }
-
-        $ismissing = !empty($missing[$index]);
-        $viewvalue = 'experience:' . $component;
-        $repository->save_course_experience((int)$course->id, $component, $config,
-            !$ismissing && $learnerview === $viewvalue, (int)($sortorders[$index] ?? $index),
-            max(1, (int)($schemas[$index] ?? 1)), $ismissing);
-    }
-
-    $validviews = array_merge(['base'], array_map(static function(string $component): string {
-        return 'experience:' . $component;
-    }, $components));
-    if (!in_array($learnerview, $validviews, true)) {
-        $learnerview = 'base';
-    }
-    $format->save_learning_view_option($learnerview);
-
-    format_selfstudy_redirect_after_save($url, get_string('experiencesettingssaved', 'format_selfstudy'));
+    format_selfstudy_experience_settings_handle_post($course, $url);
 }
 
 if (!$inline) {
@@ -236,6 +204,54 @@ if (!$entries) {
 echo html_writer::end_div();
 if (!$inline) {
     echo $OUTPUT->footer();
+}
+}
+
+/**
+ * Saves the learning view configuration and redirects.
+ *
+ * This never returns: it always ends in a redirect.
+ *
+ * @param stdClass $course
+ * @param moodle_url $url page to return to
+ */
+function format_selfstudy_experience_settings_handle_post(stdClass $course, moodle_url $url): void {
+    require_sesskey();
+
+    $repository = new \format_selfstudy\local\experience_repository();
+    $components = optional_param_array('components', [], PARAM_COMPONENT);
+    $sortorders = optional_param_array('sortorder', [], PARAM_INT);
+    $configs = optional_param_array('configjson', [], PARAM_RAW);
+    $schemas = optional_param_array('configschema', [], PARAM_INT);
+    $missing = optional_param_array('missing', [], PARAM_BOOL);
+    $learnerview = optional_param('learnerview', 'base', PARAM_TEXT);
+
+    foreach ($components as $index => $component) {
+        $config = json_decode((string)($configs[$index] ?? '{}'), true);
+        if (!is_array($config) || json_last_error() !== JSON_ERROR_NONE) {
+            $config = [];
+        }
+        $configformclass = format_selfstudy_experience_settings_get_config_form_class($component);
+        if ($configformclass && method_exists($configformclass, 'get_config_from_request')) {
+            $config = $configformclass::get_config_from_request('experience_config_' . $index, $config);
+        }
+
+        $ismissing = !empty($missing[$index]);
+        $viewvalue = 'experience:' . $component;
+        $repository->save_course_experience((int)$course->id, $component, $config,
+            !$ismissing && $learnerview === $viewvalue, (int)($sortorders[$index] ?? $index),
+            max(1, (int)($schemas[$index] ?? 1)), $ismissing);
+    }
+
+    $validviews = array_merge(['base'], array_map(static function(string $component): string {
+        return 'experience:' . $component;
+    }, $components));
+    if (!in_array($learnerview, $validviews, true)) {
+        $learnerview = 'base';
+    }
+    course_get_format($course)->save_learning_view_option($learnerview);
+
+    format_selfstudy_redirect_after_save($url, get_string('experiencesettingssaved', 'format_selfstudy'));
 }
 
 /**

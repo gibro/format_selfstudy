@@ -104,95 +104,11 @@ if ($pathid) {
     }
 }
 
+// In inline mode this POST is normally already handled before the page header,
+// see format_selfstudy\hook_callbacks. The call here stays as the fallback for
+// the standalone page and for setups where the hook does not run.
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    require_sesskey();
-
-    if ($action === 'delete' && $pathid) {
-        $repository->delete_path($pathid);
-        format_selfstudy_redirect_after_save($baseurl, get_string('learningpathdeleted', 'format_selfstudy'));
-    }
-
-    // The title lives in a collapsed panel, so an empty submission is a normal case
-    // and must not end in a coding exception. Keep the stored title or fall back.
-    $name = trim(optional_param('selfstudypathname', '', PARAM_TEXT));
-    if ($name === '') {
-        $existingname = $pathid ? trim((string)($repository->get_path($pathid)->name ?? '')) : '';
-        $name = $existingname !== '' ? $existingname :
-            get_string('learningpathdefaultname', 'format_selfstudy');
-    }
-    $description = optional_param('description', '', PARAM_RAW);
-    $imageurl = optional_param('imageurl', '', PARAM_URL);
-    $icon = optional_param('icon', '', PARAM_SAFEPATH);
-    $gridjson = optional_param('gridjson', '', PARAM_RAW);
-    $saveaction = optional_param('saveaction', 'draft', PARAM_ALPHA);
-    $publishing = $saveaction === 'publish';
-
-    $activities = format_selfstudy_path_editor_get_activities($course);
-    if (format_selfstudy_path_editor_save_activity_settings($course, $activities)) {
-        rebuild_course_cache((int)$course->id, true);
-        $activities = format_selfstudy_path_editor_get_activities($course);
-    }
-    $publisherrors = [];
-    if ($publishing) {
-        $gridservice = new path_grid_service();
-        $publisherrors = $gridservice->validate_grid_for_publish($gridjson, $activities, $editorsections);
-        $publisherrors = array_merge($publisherrors,
-            format_selfstudy_path_editor_validate_completion_rules_for_publish($activities));
-    }
-
-    $pathdata = [
-        'name' => $name,
-        'description' => $description,
-        'descriptionformat' => FORMAT_HTML,
-        'imageurl' => $imageurl,
-        'icon' => $icon,
-        'enabled' => 0,
-    ];
-
-    if ($pathid) {
-        $repository->update_path($pathid, $pathdata);
-        $message = get_string('learningpathsaved', 'format_selfstudy');
-    } else {
-        $pathid = $repository->create_path($course->id, $pathdata);
-        $message = get_string('learningpathcreated', 'format_selfstudy');
-    }
-
-    $savedimageurl = format_selfstudy_path_editor_save_path_image_filemanager($course, (int)$pathid);
-    if ($savedimageurl !== null) {
-        $pathdata['imageurl'] = $savedimageurl;
-        $repository->update_path($pathid, ['imageurl' => $savedimageurl]);
-    }
-
-    $gridservice = $gridservice ?? new path_grid_service();
-    $items = $gridservice->build_items_from_grid($gridjson, $activities, $editorsections);
-    $repository->replace_path_items($pathid, $items);
-
-    if ($publishing) {
-        if ($publisherrors) {
-            $message = get_string('learningpathpublishblocked', 'format_selfstudy') .
-                html_writer::alist(array_map('s', $publisherrors));
-            format_selfstudy_redirect_after_save(new moodle_url($baseurl, ['pathid' => $pathid]), $message,
-                \core\output\notification::NOTIFY_WARNING);
-        }
-
-        $publisher = new path_publish_service($repository);
-        $result = $publisher->publish_course_path($course, (int)$pathid);
-        if (!empty($result->published)) {
-            $message = get_string('learningpathpublished', 'format_selfstudy', (object)[
-                'written' => $result->written,
-                'skipped' => $result->skipped,
-                'revision' => $result->revision,
-            ]);
-            format_selfstudy_redirect_after_save(new moodle_url($baseurl, ['pathid' => $pathid]), $message);
-        }
-
-        $message = get_string('learningpathpublishblocked', 'format_selfstudy') .
-            html_writer::alist(array_map('s', $result->errors));
-        format_selfstudy_redirect_after_save(new moodle_url($baseurl, ['pathid' => $pathid]), $message,
-            \core\output\notification::NOTIFY_WARNING);
-    }
-
-    format_selfstudy_redirect_after_save(new moodle_url($baseurl, ['pathid' => $pathid]), $message);
+    format_selfstudy_path_editor_handle_post($course, $baseurl, $pathid, $action);
 }
 
 $paths = $repository->get_paths($course->id);
@@ -487,6 +403,127 @@ echo html_writer::end_div();
 if (!$inline) {
     echo $OUTPUT->footer();
 }
+}
+
+/**
+ * Saves a submitted learning path and redirects.
+ *
+ * This never returns: every branch ends in a redirect.
+ *
+ * @param stdClass $course
+ * @param moodle_url $baseurl editor entry point, inline or standalone
+ * @param int $pathid path being edited, 0 for a new one
+ * @param string $action 'delete' removes the path
+ */
+function format_selfstudy_path_editor_handle_post(stdClass $course, moodle_url $baseurl, int $pathid,
+        string $action = ''): void {
+    require_sesskey();
+
+    $repository = new path_repository();
+    if ($action === 'delete' && $pathid) {
+        $repository->delete_path($pathid);
+        format_selfstudy_redirect_after_save($baseurl, get_string('learningpathdeleted', 'format_selfstudy'));
+    }
+
+    // The title lives in a collapsed panel, so an empty submission is a normal case
+    // and must not end in a coding exception. Keep the stored title or fall back.
+    $name = trim(optional_param('selfstudypathname', '', PARAM_TEXT));
+    if ($name === '') {
+        $existingname = $pathid ? trim((string)($repository->get_path($pathid)->name ?? '')) : '';
+        $name = $existingname !== '' ? $existingname :
+            get_string('learningpathdefaultname', 'format_selfstudy');
+    }
+    $description = optional_param('description', '', PARAM_RAW);
+    $imageurl = optional_param('imageurl', '', PARAM_URL);
+    $icon = optional_param('icon', '', PARAM_SAFEPATH);
+    $gridjson = optional_param('gridjson', '', PARAM_RAW);
+    $saveaction = optional_param('saveaction', 'draft', PARAM_ALPHA);
+    $publishing = $saveaction === 'publish';
+
+    $editorsections = format_selfstudy_path_editor_get_sections($course);
+    $activities = format_selfstudy_path_editor_get_activities($course);
+    if (format_selfstudy_path_editor_save_activity_settings($course, $activities)) {
+        rebuild_course_cache((int)$course->id, true);
+        $activities = format_selfstudy_path_editor_get_activities($course);
+    }
+    $gridservice = new path_grid_service();
+    $publisherrors = [];
+    if ($publishing) {
+        $publisherrors = $gridservice->validate_grid_for_publish($gridjson, $activities, $editorsections);
+        $publisherrors = array_merge($publisherrors,
+            format_selfstudy_path_editor_validate_completion_rules_for_publish($activities));
+    }
+
+    $pathdata = [
+        'name' => $name,
+        'description' => $description,
+        'descriptionformat' => FORMAT_HTML,
+        'imageurl' => $imageurl,
+        'icon' => $icon,
+        'enabled' => 0,
+    ];
+
+    if ($pathid) {
+        $repository->update_path($pathid, $pathdata);
+        $message = get_string('learningpathsaved', 'format_selfstudy');
+    } else {
+        $pathid = $repository->create_path($course->id, $pathdata);
+        $message = get_string('learningpathcreated', 'format_selfstudy');
+    }
+
+    $savedimageurl = format_selfstudy_path_editor_save_path_image_filemanager($course, (int)$pathid);
+    if ($savedimageurl !== null) {
+        $repository->update_path($pathid, ['imageurl' => $savedimageurl]);
+    }
+
+    $items = $gridservice->build_items_from_grid($gridjson, $activities, $editorsections);
+    $repository->replace_path_items($pathid, $items);
+
+    if ($publishing) {
+        if ($publisherrors) {
+            $message = get_string('learningpathpublishblocked', 'format_selfstudy') .
+                html_writer::alist(array_map('s', $publisherrors));
+            format_selfstudy_redirect_after_save(new moodle_url($baseurl, ['pathid' => $pathid]), $message,
+                \core\output\notification::NOTIFY_WARNING);
+        }
+
+        $publisher = new path_publish_service($repository);
+        $result = $publisher->publish_course_path($course, (int)$pathid);
+        if (!empty($result->published)) {
+            $message = get_string('learningpathpublished', 'format_selfstudy', (object)[
+                'written' => $result->written,
+                'skipped' => $result->skipped,
+                'revision' => $result->revision,
+            ]);
+            format_selfstudy_redirect_after_save(new moodle_url($baseurl, ['pathid' => $pathid]), $message);
+        }
+
+        $message = get_string('learningpathpublishblocked', 'format_selfstudy') .
+            html_writer::alist(array_map('s', $result->errors));
+        format_selfstudy_redirect_after_save(new moodle_url($baseurl, ['pathid' => $pathid]), $message,
+            \core\output\notification::NOTIFY_WARNING);
+    }
+
+    format_selfstudy_redirect_after_save(new moodle_url($baseurl, ['pathid' => $pathid]), $message);
+}
+
+/**
+ * Saves the embedded activity settings panel and redirects.
+ *
+ * This never returns: it always ends in a redirect.
+ *
+ * @param stdClass $course
+ * @param moodle_url $url page to return to
+ */
+function format_selfstudy_path_editor_handle_activity_settings_post(stdClass $course, moodle_url $url): void {
+    require_sesskey();
+
+    $activities = format_selfstudy_path_editor_get_activities($course);
+    if (format_selfstudy_path_editor_save_activity_settings($course, $activities)) {
+        rebuild_course_cache((int)$course->id, true);
+    }
+
+    format_selfstudy_redirect_after_save($url, get_string('changessaved'));
 }
 
 /**
