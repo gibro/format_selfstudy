@@ -449,6 +449,29 @@ class authoring_workflow {
             'actionlabel' => get_string('authoringworkflowactionpath', 'format_selfstudy'),
         ];
 
+        // Publishing is the step that turns the draft into the learner-facing
+        // version, so it belongs in the step bar even though the button itself
+        // lives in the editor.
+        $publishstatus = self::STATUS_NOTSTARTED;
+        if ($state->activepublishedrevision) {
+            $publishstatus = $state->draftchanged ? self::STATUS_WARNING : self::STATUS_PUBLISHED;
+        } else if ($pathid) {
+            $publishstatus = !empty($state->publishable) ? self::STATUS_READY : self::STATUS_BLOCKED;
+        }
+        $steps[] = (object)[
+            'key' => 'publish',
+            'status' => $publishstatus,
+            'title' => get_string('authoringworkflowsteppublish', 'format_selfstudy'),
+            'summary' => $state->activepublishedrevision ?
+                get_string('authoringworkflowsteppublishsummaryrevision', 'format_selfstudy', (object)[
+                    'revision' => (int)$state->activepublishedrevision,
+                    'timepublished' => userdate((int)($state->activerevision->timepublished ?? 0)),
+                ]) :
+                get_string('authoringworkflowsteppublishsummarynone', 'format_selfstudy'),
+            'actionurl' => $editorurl,
+            'actionlabel' => get_string('authoringworkflowactionpublish', 'format_selfstudy'),
+        ];
+
         $viewstatus = self::STATUS_READY;
         if ($state->experience->enabledmissing > 0) {
             $viewstatus = self::STATUS_NEEDSWORK;
