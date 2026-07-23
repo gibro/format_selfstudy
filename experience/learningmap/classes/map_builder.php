@@ -23,6 +23,7 @@ class map_builder {
         $connections = [];
         $previouskey = '';
         $currentkey = '';
+        $fallbackkey = '';
 
         foreach (array_values((array)($baseview->outline ?? [])) as $index => $entry) {
             $node = $this->outline_entry_to_node($entry, $index, $config);
@@ -37,9 +38,22 @@ class map_builder {
             }
             $previouskey = $node->key;
 
-            if ($currentkey === '' && in_array($node->status, ['recommended', 'current', 'started', 'open'], true)) {
+            // The avatar marks where the learner stands, which is an activity, not a
+            // milestone marker. The recommended/current/started station wins; a plain
+            // open station is only the fallback if nothing more specific is found.
+            if ($node->type === 'milestone') {
+                continue;
+            }
+            if ($currentkey === '' && in_array($node->status, ['recommended', 'current', 'started'], true)) {
                 $currentkey = $node->key;
             }
+            if ($fallbackkey === '' && $node->status === 'open') {
+                $fallbackkey = $node->key;
+            }
+        }
+
+        if ($currentkey === '') {
+            $currentkey = $fallbackkey;
         }
 
         return (object)[

@@ -82,10 +82,17 @@ class path_transfer {
                 $this->format_import_issues($issues));
         }
 
+        // The grid only represents milestone-based paths. A flat path (stations
+        // without a milestone) exports an empty grid, so fall back to the complete
+        // item list rather than treating the path as empty.
         $pathdata = $payload['path'];
-        $items = !empty($pathdata['grid']) && is_array($pathdata['grid']) ?
-            $this->import_grid($course, $pathdata['grid']) :
-            $this->import_items($course, $pathdata['items'] ?? []);
+        $items = [];
+        if (!empty($pathdata['grid']['milestones']) && is_array($pathdata['grid']['milestones'])) {
+            $items = $this->import_grid($course, $pathdata['grid']);
+        }
+        if (!$items) {
+            $items = $this->import_items($course, $pathdata['items'] ?? []);
+        }
         if (!$items) {
             throw new \moodle_exception('learningpathimportempty', 'format_selfstudy');
         }
