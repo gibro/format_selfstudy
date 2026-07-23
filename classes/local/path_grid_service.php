@@ -125,21 +125,28 @@ class path_grid_service {
 
         $activitymap = $this->activity_map($activities);
         $errors = [];
+        $seencmids = [];
         $validactivitycount = 0;
         $milestones = is_array($decoded['milestones'] ?? null) ? $decoded['milestones'] : [];
         if (!$milestones) {
             return [get_string('learningpathvalidationemptypath', 'format_selfstudy')];
         }
 
-        foreach ($milestones as $milestone) {
+        // Rows are the sequence of the path: everything in one row is an alternative,
+        // the next row is only unlocked by the previous one. Flattening them first
+        // makes it possible to tell which stations actually gate something.
+        $sequence = [];
+        foreach ($milestones as $milestoneindex => $milestone) {
             if (!is_array($milestone)) {
                 continue;
             }
             $rows = is_array($milestone['rows'] ?? null) ? $milestone['rows'] : [];
+            $milestonevalid = 0;
             foreach ($rows as $row) {
                 if (!is_array($row)) {
                     continue;
                 }
+                $rowcmids = [];
                 foreach ($row as $cell) {
                     $cmid = is_array($cell) ? (int)($cell['cmid'] ?? 0) : 0;
                     if (!$cmid) {
@@ -149,7 +156,37 @@ class path_grid_service {
                         $errors[] = get_string('learningpathvalidationmissingactivity', 'format_selfstudy', $cmid);
                         continue;
                     }
+                    if (isset($seencmids[$cmid])) {
+                        $errors[] = get_string('learningpathvalidationduplicateactivity', 'format_selfstudy',
+                            (string)($activitymap[$cmid]->name ?? $cmid));
+                        continue;
+                    }
+                    $seencmids[$cmid] = true;
+                    $rowcmids[] = $cmid;
                     $validactivitycount++;
+                    $milestonevalid++;
+                }
+                if ($rowcmids) {
+                    $sequence[] = $rowcmids;
+                }
+            }
+
+            if ($milestonevalid === 0) {
+                $errors[] = get_string('learningpathvalidationemptymilestone', 'format_selfstudy',
+                    $this->get_validation_milestone_label($milestone, (int)$milestoneindex, $sections));
+            }
+        }
+
+        // Every station except those in the last row unlocks a following one, so it
+        // needs a Moodle completion condition the availability compiler can read.
+        foreach ($sequence as $index => $rowcmids) {
+            if ($index === count($sequence) - 1) {
+                break;
+            }
+            foreach ($rowcmids as $cmid) {
+                if (empty($activitymap[$cmid]->hascompletion)) {
+                    $errors[] = get_string('learningpathvalidationcompletionmissing', 'format_selfstudy',
+                        (string)($activitymap[$cmid]->name ?? $cmid));
                 }
             }
         }
@@ -159,6 +196,24 @@ class path_grid_service {
         }
 
         return array_values(array_unique($errors));
+    }
+
+    /**
+     * Returns a readable milestone label for validation messages.
+     *
+     * @param array $milestone
+     * @param int $milestoneindex
+     * @param \stdClass[] $sections
+     * @return string
+     */
+    private function get_validation_milestone_label(array $milestone, int $milestoneindex, array $sections): string {
+        $title = $this->get_section_title_by_num((int)($milestone['sectionnum'] ?? 0), $sections);
+        if ($title === '') {
+            $title = trim((string)($milestone['title'] ?? ''));
+        }
+
+        return $title !== '' ? $title :
+            get_string('learningpathmilestone', 'format_selfstudy') . ' ' . ($milestoneindex + 1);
     }
 
     /**

@@ -1,15 +1,24 @@
 <?php
 // This file is part of Moodle - http://moodle.org/
 
-$configpaths = [__DIR__ . '/../../../config.php'];
-if (!empty($_SERVER['DOCUMENT_ROOT'])) {
-    $configpaths[] = rtrim($_SERVER['DOCUMENT_ROOT'], DIRECTORY_SEPARATOR) . '/config.php';
-}
+// This file is also included from format.php, from the hook callbacks and from
+// tests, sometimes inside a function scope where $CFG would not be visible.
+global $CFG;
 
-foreach ($configpaths as $configpath) {
-    if (is_readable($configpath)) {
-        require_once($configpath);
-        break;
+// Moodle is already bootstrapped in those cases. Only a direct page call has to
+// find config.php itself, and __DIR__ does not help when the plugin directory is
+// a symlink.
+if (!defined('MOODLE_INTERNAL')) {
+    $configpaths = [__DIR__ . '/../../../config.php'];
+    if (!empty($_SERVER['DOCUMENT_ROOT'])) {
+        $configpaths[] = rtrim($_SERVER['DOCUMENT_ROOT'], DIRECTORY_SEPARATOR) . '/config.php';
+    }
+
+    foreach ($configpaths as $configpath) {
+        if (is_readable($configpath)) {
+            require_once($configpath);
+            break;
+        }
     }
 }
 
