@@ -18,7 +18,7 @@ export const init = (config) => {
         initLearningmapFullscreen(config);
         return;
     }
-    if (body.classList.contains('path-mod-learningmap') ||
+    if (hasClass(body, 'path-mod-learningmap') ||
             window.location.pathname.indexOf('/mod/learningmap/') !== -1) {
         return;
     }
@@ -103,7 +103,7 @@ export const init = (config) => {
 
         stage.appendChild(iframe);
         document.body.prepend(stage);
-        document.body.classList.add('format-selfstudy-gamemap-mode');
+        addClass(document.body, 'format-selfstudy-gamemap-mode');
 
         const pageHeader = document.querySelector('#page-header');
         const secondaryNavigation = document.querySelector('.secondary-navigation') ||
@@ -129,6 +129,54 @@ export const init = (config) => {
     const anchor = document.querySelector('#page-header') || main;
     if (anchor && !hasPathContinueNavigation) {
         anchor.insertAdjacentElement('afterend', nav);
+    }
+};
+
+const getClassName = (element) => {
+    if (!element) {
+        return '';
+    }
+    if (typeof element.className === 'string') {
+        return element.className;
+    }
+    if (element.getAttribute) {
+        return element.getAttribute('class') || '';
+    }
+    return '';
+};
+
+const setClassName = (element, className) => {
+    if (!element) {
+        return;
+    }
+    if (element.setAttribute) {
+        element.setAttribute('class', className);
+        return;
+    }
+    element.className = className;
+};
+
+const hasClass = (element, className) => getClassName(element).split(/\s+/).filter(Boolean).indexOf(className) !== -1;
+
+const addClass = (element, className) => {
+    if (hasClass(element, className)) {
+        return;
+    }
+    const classes = getClassName(element).split(/\s+/).filter(Boolean);
+    classes.push(className);
+    setClassName(element, classes.join(' '));
+};
+
+const removeClass = (element, className) => {
+    const classes = getClassName(element).split(/\s+/).filter((item) => item && item !== className);
+    setClassName(element, classes.join(' '));
+};
+
+const toggleClass = (element, className, enabled) => {
+    if (enabled) {
+        addClass(element, className);
+    } else {
+        removeClass(element, className);
     }
 };
 
@@ -273,9 +321,9 @@ const renderActivityPath = (main, config, pathOutline) => {
     if (document.querySelector('.format-selfstudy-activitypath')) {
         return;
     }
-    if (document.body.classList.contains('format-selfstudy-gamemap-mode') ||
-            document.body.classList.contains('format-selfstudy-learningmap-fullscreen') ||
-            document.body.classList.contains('path-mod-learningmap') ||
+    if (hasClass(document.body, 'format-selfstudy-gamemap-mode') ||
+            hasClass(document.body, 'format-selfstudy-learningmap-fullscreen') ||
+            hasClass(document.body, 'path-mod-learningmap') ||
             window.location.pathname.indexOf('/mod/learningmap/') !== -1) {
         return;
     }
@@ -382,7 +430,7 @@ const renderActivityPath = (main, config, pathOutline) => {
     const courseIndex = findCourseIndex();
     if (courseIndex) {
         mountPathInCourseIndex(courseIndex, aside);
-        document.body.classList.add('format-selfstudy-has-courseindexpath');
+        addClass(document.body, 'format-selfstudy-has-courseindexpath');
         forceCourseIndexOpen();
         relabelCourseIndexControls(config.pathTitle || 'Mein Lernpfad');
         return;
@@ -393,7 +441,7 @@ const renderActivityPath = (main, config, pathOutline) => {
     main.insertAdjacentElement('beforebegin', wrapper);
     wrapper.appendChild(aside);
     wrapper.appendChild(main);
-    document.body.classList.add('format-selfstudy-has-activitypath');
+    addClass(document.body, 'format-selfstudy-has-activitypath');
 };
 
 const buildPathItemAriaLabel = (entry, status) => {
@@ -809,45 +857,24 @@ const initLearningmapFullscreen = (config) => {
         initMapAvatarMarker(map, activities, config, window);
     }
 
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'btn btn-primary format-selfstudy-fullscreen-toggle';
-    button.textContent = 'Vollbild';
-    Object.assign(button.style, {
-        position: 'fixed',
-        top: '5rem',
-        right: '.75rem',
-        zIndex: '1050',
-    });
-    document.body.appendChild(button);
+    const toolbar = document.createElement('div');
+    toolbar.className = 'format-selfstudy-learningmap-actions';
 
     if (config.courseUrl) {
         const courseLink = document.createElement('a');
         courseLink.className = 'btn btn-secondary format-selfstudy-map-course-link';
         courseLink.href = config.courseUrl;
         courseLink.textContent = config.courseLabel || 'Zum Kurs';
-        Object.assign(courseLink.style, {
-            position: 'fixed',
-            top: '8rem',
-            right: '.75rem',
-            zIndex: '1050',
-        });
-        document.body.appendChild(courseLink);
+        toolbar.appendChild(courseLink);
     }
 
-    if (config.accessiblePathUrl) {
-        const accessibleLink = document.createElement('a');
-        accessibleLink.className = 'btn btn-secondary format-selfstudy-accessiblepath-link';
-        accessibleLink.href = config.accessiblePathUrl;
-        accessibleLink.textContent = config.accessiblePathLabel || 'Barrierearme Lernpfadansicht';
-        Object.assign(accessibleLink.style, {
-            position: 'fixed',
-            top: '11rem',
-            right: '.75rem',
-            zIndex: '1050',
-        });
-        document.body.appendChild(accessibleLink);
-    }
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'btn btn-primary format-selfstudy-fullscreen-toggle';
+    button.textContent = 'Vollbild';
+    toolbar.appendChild(button);
+
+    map.parentNode.insertBefore(toolbar, map);
 
     const overlay = document.createElement('div');
     overlay.className = 'format-selfstudy-map-popup-overlay';
@@ -924,8 +951,8 @@ const initLearningmapFullscreen = (config) => {
     };
 
     const toggleFullscreen = () => {
-        const enabled = !document.body.classList.contains('format-selfstudy-learningmap-fullscreen');
-        document.body.classList.toggle('format-selfstudy-learningmap-fullscreen', enabled);
+        const enabled = !hasClass(document.body, 'format-selfstudy-learningmap-fullscreen');
+        toggleClass(document.body, 'format-selfstudy-learningmap-fullscreen', enabled);
         applyLearningmapFullscreenLayout(enabled, main, map, button);
         button.textContent = enabled ?
             'Vollbild schliessen' : 'Vollbild';
@@ -944,13 +971,10 @@ const initLearningmapFullscreen = (config) => {
         }
     });
     document.addEventListener('keydown', (event) => {
-        if (!document.body.classList.contains('format-selfstudy-learningmap-fullscreen')) {
-            return;
-        }
         if (event.key === 'Escape') {
             if (overlay.classList.contains('format-selfstudy-map-popup-open')) {
                 closePopup();
-            } else {
+            } else if (hasClass(document.body, 'format-selfstudy-learningmap-fullscreen')) {
                 toggleFullscreen();
             }
         }
@@ -963,10 +987,6 @@ const initLearningmapFullscreen = (config) => {
     });
 
     map.addEventListener('click', (event) => {
-        if (!document.body.classList.contains('format-selfstudy-learningmap-fullscreen')) {
-            return;
-        }
-
         const index = findActivityIndex(event.target, activities);
         if (index === -1) {
             return;
@@ -984,6 +1004,15 @@ const getActivityDisplayTitle = (activity) => {
 };
 
 const findActivityIndex = (target, activities) => {
+    const dataLink = target.closest ? target.closest('a[data-cmid], [data-cmid]') : null;
+    if (dataLink) {
+        const cmid = parseInt(dataLink.getAttribute('data-cmid') || 0, 10);
+        const dataIndex = activities.findIndex((activity) => parseInt(activity.id || 0, 10) === cmid);
+        if (dataIndex !== -1) {
+            return dataIndex;
+        }
+    }
+
     const link = target.closest ? target.closest('a[href]') : null;
     if (link) {
         const id = getCmIdFromUrl(link.href);
@@ -1014,7 +1043,8 @@ const findActivityIndex = (target, activities) => {
 };
 
 const initMapAvatarMarker = (map, activities, config, targetWindow) => {
-    const currentActivityId = getLastCompletedActivityId(activities) || parseInt(config.currentActivityId || 0, 10);
+    const currentActivityId = getCurrentMapPositionActivityId(map, activities, config) ||
+        parseInt(config.currentActivityId || 0, 10);
     const markerHost = getAvatarMarkerHost(map, targetWindow);
     if (!currentActivityId || !markerHost || markerHost.querySelector('.format-selfstudy-avatar-marker')) {
         return;
@@ -1022,15 +1052,8 @@ const initMapAvatarMarker = (map, activities, config, targetWindow) => {
     applyActivityCompletionStatuses(map, activities);
 
     const marker = createAvatarMarker(config, map.ownerDocument);
-    const connector = map.ownerDocument.createElement('div');
-    connector.className = 'format-selfstudy-avatar-connector';
-    const ring = map.ownerDocument.createElement('div');
-    ring.className = 'format-selfstudy-avatar-target-ring';
     const usesBodyHost = markerHost === map.ownerDocument.body;
     marker.hidden = true;
-    connector.hidden = true;
-    ring.hidden = true;
-    markerHost.append(connector, ring);
     markerHost.appendChild(marker);
 
     if (targetWindow.getComputedStyle(markerHost).position === 'static') {
@@ -1042,14 +1065,12 @@ const initMapAvatarMarker = (map, activities, config, targetWindow) => {
         const target = findActivityElement(map, currentActivityId, activities);
         if (!target) {
             marker.hidden = true;
-            connector.hidden = true;
-            ring.hidden = true;
             return;
         }
 
         const targetRect = target.getBoundingClientRect();
         const usesViewportCoordinates = usesBodyHost &&
-            map.ownerDocument.body.classList.contains('format-selfstudy-learningmap-fullscreen');
+            hasClass(map.ownerDocument.body, 'format-selfstudy-learningmap-fullscreen');
         const mapRect = usesViewportCoordinates ? {
             left: 0,
             top: 0,
@@ -1058,38 +1079,21 @@ const initMapAvatarMarker = (map, activities, config, targetWindow) => {
         } : markerHost.getBoundingClientRect();
         if (!mapRect.width || !mapRect.height || !targetRect.width || !targetRect.height) {
             marker.hidden = true;
-            connector.hidden = true;
-            ring.hidden = true;
             return;
         }
 
         marker.classList.toggle('format-selfstudy-avatar-viewport-overlay', usesViewportCoordinates);
-        connector.classList.toggle('format-selfstudy-avatar-viewport-overlay', usesViewportCoordinates);
-        ring.classList.toggle('format-selfstudy-avatar-viewport-overlay', usesViewportCoordinates);
 
         const x = targetRect.left - mapRect.left + (targetRect.width / 2);
         const y = targetRect.top - mapRect.top + (targetRect.height / 2);
         const markerSize = Math.min(marker.offsetWidth || 34, 42);
         const markerHalf = markerSize / 2;
-        const offset = 28;
-        const markerX = Math.max(markerHalf, Math.min(mapRect.width - markerHalf, x + offset));
-        const markerY = Math.max(markerHalf, Math.min(mapRect.height - markerHalf, y - offset));
-        const connectorX = x;
-        const connectorY = y;
-        const connectorLength = Math.hypot(markerX - connectorX, markerY - connectorY);
-        const connectorAngle = Math.atan2(markerY - connectorY, markerX - connectorX) * 180 / Math.PI;
+        const markerX = Math.max(markerHalf, Math.min(mapRect.width - markerHalf, x));
+        const markerY = Math.max(markerHalf, Math.min(mapRect.height - markerHalf, y));
 
         marker.hidden = false;
-        connector.hidden = false;
-        ring.hidden = false;
         marker.style.left = `${markerX}px`;
         marker.style.top = `${markerY}px`;
-        connector.style.left = `${connectorX}px`;
-        connector.style.top = `${connectorY}px`;
-        connector.style.width = `${connectorLength}px`;
-        connector.style.transform = `rotate(${connectorAngle}deg)`;
-        ring.style.left = `${connectorX}px`;
-        ring.style.top = `${connectorY}px`;
     };
 
     targetWindow.requestAnimationFrame(placeMarker);
@@ -1106,6 +1110,23 @@ const initMapAvatarMarker = (map, activities, config, targetWindow) => {
         observer.observe(map);
         marker.selfstudyResizeObserver = observer;
     }
+};
+
+const getCurrentMapPositionActivityId = (map, activities, config) => {
+    const mappedIds = new Set(Array.from(map.querySelectorAll('[data-cmid]'))
+        .map((candidate) => parseInt(candidate.getAttribute('data-cmid') || 0, 10))
+        .filter((id) => id > 0));
+    const pathOutline = Array.isArray(config.pathOutline) ? config.pathOutline : [];
+    const orderedCompleted = pathOutline
+        .filter((item) => item && item.type === 'station' && item.status === 'complete')
+        .map((item) => parseInt(item.cmid || 0, 10))
+        .filter((id) => id > 0 && mappedIds.has(id));
+
+    if (orderedCompleted.length) {
+        return orderedCompleted[orderedCompleted.length - 1];
+    }
+
+    return getLastCompletedActivityId(activities, mappedIds);
 };
 
 const applyActivityCompletionStatuses = (map, activities) => {
@@ -1140,9 +1161,14 @@ const applyActivityCompletionStatuses = (map, activities) => {
     });
 };
 
-const getLastCompletedActivityId = (activities) => {
+const getLastCompletedActivityId = (activities, mappedIds = null) => {
     const completed = activities
-        .filter((activity) => activity.completionStatus === 'complete' && parseInt(activity.completionTime || 0, 10) > 0)
+        .filter((activity) => {
+            const id = parseInt(activity.id || 0, 10);
+            return activity.completionStatus === 'complete' &&
+                parseInt(activity.completionTime || 0, 10) > 0 &&
+                (!mappedIds || mappedIds.has(id));
+        })
         .sort((left, right) => parseInt(right.completionTime || 0, 10) - parseInt(left.completionTime || 0, 10));
 
     return completed.length ? parseInt(completed[0].id || 0, 10) : 0;
@@ -1154,7 +1180,7 @@ const getAvatarMarkerHost = (map, targetWindow) => {
         return map;
     }
 
-    return map.ownerDocument.body || map.parentElement || null;
+    return map.parentElement || map.ownerDocument.body || null;
 };
 
 const createAvatarMarker = (config, ownerDocument) => {

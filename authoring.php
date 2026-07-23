@@ -74,20 +74,13 @@ if (!empty($state->paths)) {
 echo html_writer::link(new moodle_url('/course/format/selfstudy/path_editor.php', ['id' => $course->id] +
     ($state->pathid ? ['pathid' => $state->pathid] : [])), get_string('learningpatheditor', 'format_selfstudy'),
     ['class' => 'btn btn-secondary']);
-if ($state->pathid) {
-    echo html_writer::link(new moodle_url('/course/format/selfstudy/path_diagnosis.php', [
-        'id' => $course->id,
-        'pathid' => $state->pathid,
-    ]), get_string('learningpathsyncpreview', 'format_selfstudy'), ['class' => 'btn btn-secondary']);
-}
-echo html_writer::link(new moodle_url('/course/format/selfstudy/experience_settings.php', ['id' => $course->id]),
+echo html_writer::link(new moodle_url('/course/view.php', [
+    'id' => $course->id,
+    'selfstudyexperiencesettings' => 1,
+]),
     get_string('experiencesettings', 'format_selfstudy'), ['class' => 'btn btn-secondary']);
 echo html_writer::link(new moodle_url('/course/view.php', ['id' => $course->id]),
     get_string('viewcourse', 'format_selfstudy'), ['class' => 'btn btn-secondary']);
-if (!empty($state->activerevision)) {
-    echo html_writer::link(new moodle_url('/course/format/selfstudy/accessible_path.php', ['id' => $course->id]),
-        get_string('authoringworkflowactionlearnerpreview', 'format_selfstudy'), ['class' => 'btn btn-secondary']);
-}
 echo html_writer::end_div();
 
 echo html_writer::div(
@@ -101,7 +94,6 @@ echo html_writer::div(
 
 echo $renderer->publish_status($state);
 echo $renderer->workflow($state);
-echo $renderer->issues($state);
 echo $renderer->revisions($state);
 
 echo html_writer::end_div();

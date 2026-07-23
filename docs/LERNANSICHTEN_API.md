@@ -54,7 +54,7 @@ Eine Lernansicht darf nicht:
 - Aktivitäten freigeben, die Moodle selbst sperrt,
 - die Basisansicht voraussetzen oder blockieren.
 
-Wenn eine Lernansicht fehlt, deaktiviert ist, inkompatibel ist oder beim Rendern eine Exception wirft, muss der Kurs weiterhin über Dashboard, Listenansicht, barrierearme Lernpfadansicht und Basisnavigation nutzbar bleiben.
+Wenn eine Lernansicht fehlt, deaktiviert ist, inkompatibel ist oder beim Rendern eine Exception wirft, muss der Kurs weiterhin über Dashboard, Listenansicht und Basisnavigation nutzbar bleiben.
 
 ## Verzeichnisstruktur
 
@@ -429,4 +429,4 @@ Technische Begriffe wie `Experience` oder `selfstudyexperience_*` bleiben techni
 7. Keine harte Freischaltlogik in der Lernansicht implementieren.
 8. Leere Ausgabe oder `null` zurückgeben, wenn Daten fehlen.
 9. Tests für Registry, Rendering-Fallback und Navigation ergänzen.
-10. Browser-Smoke: Kursseite, Lernansichten-Seite, barrierearme Ansicht und Aktivitätsseite prüfen.
+10. Browser-Smoke: Kursseite, Lernansichten-Seite und Aktivitätsseite prüfen.

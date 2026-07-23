@@ -297,7 +297,7 @@ class path_progress {
 
         if ($completion->is_enabled($cm)) {
             $data = $completion->get_data($cm, false, $userid);
-            if (self::is_completion_done((int)$data->completionstate)) {
+            if (self::is_completion_done_for_cm($data, $cm)) {
                 $result->complete = 1;
                 return $result;
             }
@@ -497,7 +497,7 @@ class path_progress {
                     $entry->timemodified = (int)($data->timemodified ?? 0);
                     if ((int)$data->completionstate === COMPLETION_COMPLETE_FAIL) {
                         $entry->status = 'review';
-                    } else if (self::is_completion_done((int)$data->completionstate)) {
+                    } else if (self::is_completion_done_for_cm($data, $cm)) {
                         $entry->status = 'complete';
                     } else if ($entry->status !== 'locked' && $entry->timemodified > 0) {
                         $entry->status = 'started';
@@ -997,5 +997,46 @@ class path_progress {
      */
     private static function is_completion_done(int $completionstate): bool {
         return $completionstate === COMPLETION_COMPLETE || $completionstate === COMPLETION_COMPLETE_PASS;
+    }
+
+    /**
+     * Checks whether a course module is complete, including Moodle's view-only completion state.
+     *
+     * @param \stdClass $data
+     * @param \cm_info $cm
+     * @return bool
+     */
+    private static function is_completion_done_for_cm(\stdClass $data, \cm_info $cm): bool {
+        if (self::is_completion_done((int)$data->completionstate)) {
+            return true;
+        }
+
+        return self::is_view_only_completion($cm) && !empty($data->viewed);
+    }
+
+    /**
+     * Checks whether the only enabled automatic completion rule is "view activity".
+     *
+     * @param \cm_info $cm
+     * @return bool
+     */
+    private static function is_view_only_completion(\cm_info $cm): bool {
+        if ((int)$cm->completion !== COMPLETION_TRACKING_AUTOMATIC ||
+                (int)$cm->completionview !== COMPLETION_VIEW_REQUIRED) {
+            return false;
+        }
+
+        if (!empty($cm->completiongradeitemnumber) || !empty($cm->completionpassgrade)) {
+            return false;
+        }
+
+        $customdata = (array)$cm->get_custom_data();
+        foreach ((array)($customdata['customcompletionrules'] ?? []) as $enabled) {
+            if (!empty($enabled)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

@@ -17,6 +17,8 @@ if (empty($CFG)) {
     throw new RuntimeException('Unable to locate Moodle config.php.');
 }
 require_once($CFG->libdir . '/completionlib.php');
+require_once($CFG->libdir . '/filelib.php');
+require_once($CFG->libdir . '/form/filemanager.php');
 
 use format_selfstudy\local\path_repository;
 use format_selfstudy\local\path_publish_service;
@@ -31,9 +33,12 @@ $courseid = required_param('id', PARAM_INT);
 $pathid = optional_param('pathid', 0, PARAM_INT);
 $action = optional_param('action', '', PARAM_ALPHA);
 $newpath = optional_param('new', 0, PARAM_BOOL);
+$inline = !empty($FORMAT_SELFSTUDY_PATH_EDITOR_INLINE);
 
 $course = get_course($courseid);
-require_login($course);
+if (!$inline) {
+    require_login($course);
+}
 
 $coursecontext = context_course::instance($course->id);
 require_capability('moodle/course:update', $coursecontext);
@@ -54,16 +59,25 @@ if ($edit === 1 && confirm_sesskey()) {
 }
 
 $repository = new path_repository();
-$baseurl = new moodle_url('/course/format/selfstudy/path_editor.php', ['id' => $course->id]);
+$baseurl = $inline ?
+    new moodle_url('/course/view.php', ['id' => $course->id, 'selfstudypatheditor' => 1]) :
+    new moodle_url('/course/format/selfstudy/path_editor.php', ['id' => $course->id]);
+$visualcssurl = new moodle_url('/course/format/selfstudy/styles.css', [
+    'visualrev' => filemtime(__DIR__ . '/styles.css') ?: time(),
+]);
 $editorsections = format_selfstudy_path_editor_get_sections($course);
 
-$PAGE->set_url($baseurl, $pathid ? ['pathid' => $pathid] : []);
-$PAGE->set_context($coursecontext);
-$PAGE->set_course($course);
-$PAGE->set_pagelayout('course');
-$PAGE->set_title(get_string('learningpatheditor', 'format_selfstudy'));
-$PAGE->set_heading(format_string($course->fullname));
-$PAGE->set_secondary_active_tab('coursereuse');
+$embedded = $inline || optional_param('embedded', 0, PARAM_BOOL);
+if (!$inline) {
+    $PAGE->set_url($baseurl, $pathid ? ['pathid' => $pathid] : []);
+    $PAGE->set_context($coursecontext);
+    $PAGE->set_course($course);
+    $PAGE->set_pagelayout($embedded ? 'embedded' : 'course');
+    $PAGE->set_title(get_string('learningpatheditor', 'format_selfstudy'));
+    $PAGE->set_heading(format_string($course->fullname));
+    $PAGE->set_secondary_active_tab('coursereuse');
+    $PAGE->requires->css($visualcssurl);
+}
 $PAGE->requires->js_call_amd('format_selfstudy/patheditor', 'init', [[
     'syncConfirm' => get_string('learningpathsyncconfirm', 'format_selfstudy'),
     'milestoneTitle' => get_string('learningpathmilestonetitle', 'format_selfstudy'),
@@ -99,10 +113,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             \core\output\notification::NOTIFY_SUCCESS);
     }
 
-    $name = required_param('name', PARAM_TEXT);
+    $name = required_param('selfstudypathname', PARAM_TEXT);
     $description = optional_param('description', '', PARAM_RAW);
     $imageurl = optional_param('imageurl', '', PARAM_URL);
-    $icon = optional_param('icon', '', PARAM_ALPHANUMEXT);
+    $icon = optional_param('icon', '', PARAM_SAFEPATH);
     $gridjson = optional_param('gridjson', '', PARAM_RAW);
     $saveaction = optional_param('saveaction', 'draft', PARAM_ALPHA);
     $publishing = $saveaction === 'publish';
@@ -135,6 +149,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         $pathid = $repository->create_path($course->id, $pathdata);
         $message = get_string('learningpathcreated', 'format_selfstudy');
+    }
+
+    $savedimageurl = format_selfstudy_path_editor_save_path_image_filemanager($course, (int)$pathid);
+    if ($savedimageurl !== null) {
+        $pathdata['imageurl'] = $savedimageurl;
+        $repository->update_path($pathid, ['imageurl' => $savedimageurl]);
     }
 
     $gridservice = $gridservice ?? new path_grid_service();
@@ -192,15 +212,24 @@ $activerevision = $currentpath ? (new path_snapshot_repository())->get_active_re
 $authoringstate = (new authoring_workflow($repository))->get_state($course, $currentpath ? (int)$currentpath->id : 0);
 $authoringrenderer = new authoring_renderer();
 
-echo $OUTPUT->header();
+if (!$inline) {
+    echo $OUTPUT->header();
+} else {
+    echo html_writer::empty_tag('link', [
+        'rel' => 'stylesheet',
+        'href' => $visualcssurl->out(false),
+    ]);
+}
 
-echo html_writer::start_div('format-selfstudy-patheditor');
-echo $OUTPUT->heading(get_string('learningpatheditor', 'format_selfstudy'), 2);
+echo html_writer::start_div('format-selfstudy-patheditor format-selfstudy-patheditor-visual' .
+    ($inline ? ' format-selfstudy-patheditor-inline' : ''));
+echo $OUTPUT->heading('Lernpfad Editor', 2);
 echo html_writer::tag('p', get_string('learningpatheditorintro', 'format_selfstudy'),
     ['class' => 'format-selfstudy-patheditor-intro']);
-echo $authoringrenderer->publish_status($authoringstate);
-echo $authoringrenderer->workflow($authoringstate);
-echo $authoringrenderer->issues($authoringstate);
+if (!$embedded) {
+    echo $authoringrenderer->publish_status($authoringstate);
+    echo $authoringrenderer->workflow($authoringstate);
+}
 
 echo html_writer::start_div('format-selfstudy-patheditor-toolbar');
 echo html_writer::link(new moodle_url('/course/format/selfstudy/authoring.php', [
@@ -214,6 +243,9 @@ if ($paths) {
         'class' => 'format-selfstudy-patheditor-select',
     ]);
     echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'id', 'value' => $course->id]);
+    if ($inline) {
+        echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'selfstudypatheditor', 'value' => 1]);
+    }
     echo html_writer::label(get_string('learningpathselect', 'format_selfstudy'), 'format-selfstudy-path-select');
     $options = [];
     foreach ($paths as $path) {
@@ -228,27 +260,13 @@ if ($paths) {
 
 echo html_writer::link(new moodle_url($baseurl, ['new' => 1]),
     get_string('learningpathnew', 'format_selfstudy'), ['class' => 'btn btn-secondary']);
-echo html_writer::link(new moodle_url('/course/format/selfstudy/path_import.php', ['id' => $course->id]),
-    get_string('learningpathimport', 'format_selfstudy'), ['class' => 'btn btn-secondary']);
-if ($currentpath && (int)($currentpath->userid ?? 0) === 0) {
-    echo html_writer::link(new moodle_url('/course/format/selfstudy/path_export.php', [
-        'id' => $course->id,
-        'pathid' => $currentpath->id,
-        'sesskey' => sesskey(),
-    ]), get_string('learningpathexport', 'format_selfstudy'), ['class' => 'btn btn-secondary']);
-    echo html_writer::link(new moodle_url('/course/format/selfstudy/path_diagnosis.php', [
-        'id' => $course->id,
-        'pathid' => $currentpath->id,
-    ]), get_string('learningpathsyncpreview', 'format_selfstudy'), ['class' => 'btn btn-secondary']);
-}
-echo html_writer::link(new moodle_url('/course/view.php', ['id' => $course->id]),
-    get_string('viewcourse', 'format_selfstudy'), ['class' => 'btn btn-secondary']);
 echo html_writer::end_div();
 
 echo html_writer::start_tag('form', [
     'method' => 'post',
     'action' => (new moodle_url($baseurl, $pathid ? ['pathid' => $pathid] : []))->out(false),
     'class' => 'format-selfstudy-patheditor-form',
+    'enctype' => 'multipart/form-data',
 ]);
 echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'sesskey', 'value' => sesskey()]);
 if ($missingcmids) {
@@ -256,16 +274,6 @@ if ($missingcmids) {
         implode(', ', $missingcmids)), \core\output\notification::NOTIFY_WARNING);
 }
 
-echo html_writer::start_div('format-selfstudy-patheditor-details');
-echo html_writer::tag('h3', get_string('learningpath', 'format_selfstudy'));
-echo format_selfstudy_path_editor_text_input('name', get_string('learningpathname', 'format_selfstudy'),
-    $currentpath->name ?? '');
-echo format_selfstudy_path_editor_textarea('description', get_string('learningpathdescription', 'format_selfstudy'),
-    $currentpath->description ?? '');
-echo format_selfstudy_path_editor_text_input('imageurl', get_string('learningpathimageurl', 'format_selfstudy'),
-    $currentpath->imageurl ?? '');
-echo format_selfstudy_path_editor_text_input('icon', get_string('learningpathicon', 'format_selfstudy'),
-    $currentpath->icon ?? '');
 $status = !empty($currentpath->enabled) && $activerevision ?
     get_string('learningpathstatuspublishedrevision', 'format_selfstudy', (object)[
         'revision' => (int)$activerevision->revision,
@@ -273,8 +281,20 @@ $status = !empty($currentpath->enabled) && $activerevision ?
     ]) :
     get_string(!empty($currentpath->enabled) ? 'learningpathstatuspublished' : 'learningpathstatusdraft',
         'format_selfstudy');
-echo html_writer::div($status, 'format-selfstudy-patheditor-publishstatus');
+echo html_writer::start_tag('details', ['class' => 'format-selfstudy-patheditor-details']);
+echo html_writer::tag('summary',
+    html_writer::span(get_string('learningpath', 'format_selfstudy'), 'format-selfstudy-patheditor-detailstitle') .
+    html_writer::span($status, 'format-selfstudy-patheditor-detailsstatus')
+);
+echo html_writer::start_div('format-selfstudy-patheditor-detailsbody');
+echo format_selfstudy_path_editor_text_input('selfstudypathname', get_string('learningpathname', 'format_selfstudy'),
+    $currentpath->name ?? '');
+echo format_selfstudy_path_editor_textarea('description', get_string('learningpathdescription', 'format_selfstudy'),
+    $currentpath->description ?? '');
+echo format_selfstudy_path_editor_image_picker($course, $currentpath ? (int)$currentpath->id : 0);
+echo format_selfstudy_path_editor_icon_select($currentpath->icon ?? '');
 echo html_writer::end_div();
+echo html_writer::end_tag('details');
 
 echo html_writer::empty_tag('input', [
     'type' => 'hidden',
@@ -282,8 +302,6 @@ echo html_writer::empty_tag('input', [
     'value' => json_encode($grid),
     'data-format-selfstudy-grid-json' => '1',
 ]);
-
-echo format_selfstudy_path_editor_render_activity_settings_panel($course, $activities);
 
 echo html_writer::start_div('format-selfstudy-patheditor-gridwrap', [
     'data-format-selfstudy-grid-editor' => '1',
@@ -387,6 +405,9 @@ if (!$activities) {
 }
 echo html_writer::end_div();
 
+echo html_writer::start_div('format-selfstudy-patheditor-workspace');
+echo format_selfstudy_path_editor_render_actions($course, $currentpath, $baseurl);
+
 echo html_writer::start_div('format-selfstudy-patheditor-canvas');
 echo html_writer::start_div('format-selfstudy-patheditor-canvasbar');
 echo html_writer::tag('h3', get_string('learningpathgrid', 'format_selfstudy'));
@@ -431,28 +452,9 @@ foreach ($grid['milestones'] as $milestoneindex => $milestone) {
 echo html_writer::end_div();
 echo html_writer::end_div();
 echo html_writer::end_div();
-
-echo html_writer::start_div('format-selfstudy-patheditor-actions');
-echo html_writer::tag('button', get_string('learningpathsavedraft', 'format_selfstudy'), [
-    'type' => 'submit',
-    'name' => 'saveaction',
-    'class' => 'btn btn-secondary',
-    'value' => 'draft',
-]);
-if ($currentpath) {
-    echo html_writer::link(new moodle_url('/course/format/selfstudy/path_diagnosis.php', [
-        'id' => $course->id,
-        'pathid' => $currentpath->id,
-    ]), get_string('authoringworkflowactioncheck', 'format_selfstudy'), ['class' => 'btn btn-secondary']);
-}
-echo html_writer::tag('button', get_string('learningpathpublish', 'format_selfstudy'), [
-    'type' => 'submit',
-    'name' => 'saveaction',
-    'class' => 'btn btn-primary',
-    'value' => 'publish',
-    'data-format-selfstudy-sync-submit' => '1',
-]);
 echo html_writer::end_div();
+
+echo format_selfstudy_path_editor_render_actions($course, $currentpath, $baseurl);
 echo html_writer::end_tag('form');
 
 if ($currentpath) {
@@ -477,7 +479,38 @@ if (!$paths) {
 }
 
 echo html_writer::end_div();
-echo $OUTPUT->footer();
+if (!$inline) {
+    echo $OUTPUT->footer();
+}
+}
+
+/**
+ * Renders the primary editor actions.
+ *
+ * @param stdClass $course
+ * @param stdClass|null $currentpath
+ * @param moodle_url $baseurl
+ * @return string
+ */
+function format_selfstudy_path_editor_render_actions(stdClass $course, ?stdClass $currentpath,
+        moodle_url $baseurl): string {
+    $output = html_writer::start_div('format-selfstudy-patheditor-actions');
+    $output .= html_writer::tag('button', get_string('learningpathsavedraft', 'format_selfstudy'), [
+        'type' => 'submit',
+        'name' => 'saveaction',
+        'class' => 'btn btn-secondary',
+        'value' => 'draft',
+    ]);
+    $output .= html_writer::tag('button', get_string('learningpathpublish', 'format_selfstudy'), [
+        'type' => 'submit',
+        'name' => 'saveaction',
+        'class' => 'btn btn-primary',
+        'value' => 'publish',
+        'data-format-selfstudy-sync-submit' => '1',
+    ]);
+    $output .= html_writer::end_div();
+
+    return $output;
 }
 
 /**
@@ -1328,8 +1361,19 @@ function format_selfstudy_path_editor_render_activity_settings_panel(stdClass $c
     $output = html_writer::start_tag('details', [
         'id' => 'format-selfstudy-activitysettings',
         'class' => 'format-selfstudy-patheditor-activitysettings',
-        'open' => optional_param('showactivitysettings', 0, PARAM_BOOL) ? 'open' : null,
+        'open' => optional_param('showactivitysettings', 0, PARAM_BOOL) ||
+            optional_param('selfstudyactivitysettings', 0, PARAM_BOOL) ? 'open' : null,
     ]);
+    $output .= html_writer::tag('style',
+        '.format-selfstudy-patheditor-activitysettingsitem{' .
+            'border-left:.45rem solid var(--format-selfstudy-patheditor-section-color,#94a3b8)!important;' .
+            'border-color:color-mix(in srgb,var(--format-selfstudy-patheditor-section-color,#94a3b8) 36%,#e2e8f0)!important;' .
+            'background:linear-gradient(180deg,var(--format-selfstudy-patheditor-section-bg,#f8fafc) 0,#fff 12rem)!important;' .
+        '}' .
+        '.format-selfstudy-patheditor-activitysettingsname{' .
+            'color:color-mix(in srgb,var(--format-selfstudy-patheditor-section-color,#1f2937) 58%,#1f2937)!important;' .
+        '}'
+    );
     $output .= html_writer::tag('summary', get_string('learningpathactivitysettings', 'format_selfstudy'));
     $output .= html_writer::tag('p', get_string($metadataenabled ? 'learningpathactivitysettingsintro' :
             'learningpathactivitysettingsintrocompletiononly', 'format_selfstudy'),
@@ -1348,7 +1392,15 @@ function format_selfstudy_path_editor_render_activity_settings_panel(stdClass $c
         $cmid = (int)$activity->id;
         $name = 'activitymeta[' . $cmid . ']';
         $completionrules = (array)($activity->completionrules ?? []);
-        $output .= html_writer::start_div('format-selfstudy-patheditor-activitysettingsitem');
+        $sectionnum = (int)($activity->sectionnum ?? 0);
+        $sectioncolors = format_selfstudy_path_editor_section_colors($sectionnum);
+        $output .= html_writer::start_div('format-selfstudy-patheditor-activitysettingsitem', [
+            'data-sectionnum' => $sectionnum,
+            'style' => '--format-selfstudy-patheditor-section-color: ' . $sectioncolors->color .
+                '; --format-selfstudy-patheditor-section-bg: ' . $sectioncolors->background .
+                '; border-left: .45rem solid ' . $sectioncolors->color .
+                '; background: linear-gradient(180deg, ' . $sectioncolors->background . ' 0, #fff 12rem);',
+        ]);
         $output .= html_writer::empty_tag('img', [
             'src' => $activity->iconurl,
             'alt' => '',
@@ -1846,6 +1898,28 @@ function format_selfstudy_path_editor_get_validation_milestone_label(array $mile
 }
 
 /**
+ * Returns stable accent colours for one course section in the path editor.
+ *
+ * @param int $sectionnum
+ * @return stdClass
+ */
+function format_selfstudy_path_editor_section_colors(int $sectionnum): stdClass {
+    $palette = [
+        ['color' => '#2563eb', 'background' => '#eff6ff'],
+        ['color' => '#0f766e', 'background' => '#ecfdf5'],
+        ['color' => '#7c3aed', 'background' => '#f5f3ff'],
+        ['color' => '#c2410c', 'background' => '#fff7ed'],
+        ['color' => '#be123c', 'background' => '#fff1f2'],
+        ['color' => '#047857', 'background' => '#ecfdf5'],
+        ['color' => '#a16207', 'background' => '#fefce8'],
+        ['color' => '#0369a1', 'background' => '#f0f9ff'],
+    ];
+    $index = max(0, $sectionnum - 1) % count($palette);
+
+    return (object)$palette[$index];
+}
+
+/**
  * Validates milestone alternative relationships.
  *
  * @param array $grid
@@ -1926,10 +2000,14 @@ function format_selfstudy_path_editor_render_grid_milestone(array $milestone, in
         $title = $sectiontitle;
     }
     $alternativepeers = format_selfstudy_path_editor_clean_string_array($milestone['alternativepeers'] ?? []);
+    $sectioncolors = format_selfstudy_path_editor_section_colors($sectionnum ?: $milestoneindex + 1);
 
     $output = html_writer::start_div('format-selfstudy-patheditor-milestone', [
         'data-format-selfstudy-milestone' => '1',
         'data-format-selfstudy-milestone-key' => $key,
+        'data-sectionnum' => $sectionnum,
+        'style' => '--format-selfstudy-patheditor-section-color: ' . $sectioncolors->color .
+            '; --format-selfstudy-patheditor-section-bg: ' . $sectioncolors->background . ';',
     ]);
     $output .= html_writer::start_div('format-selfstudy-patheditor-milestonehead');
     $output .= html_writer::span('↕', 'format-selfstudy-patheditor-draghandle', [
@@ -2624,6 +2702,153 @@ function format_selfstudy_path_editor_text_input(string $name, string $label, st
         ]),
         'form-group'
     );
+}
+
+/**
+ * Renders the learning path preview image with Moodle's core file manager.
+ *
+ * @param stdClass $course
+ * @param int $pathid
+ * @return string
+ */
+function format_selfstudy_path_editor_image_picker(stdClass $course, int $pathid): string {
+    $context = context_course::instance((int)$course->id);
+    $draftitemid = file_get_submitted_draft_itemid('pathimagefilemanager');
+    if ($pathid > 0) {
+        file_prepare_draft_area($draftitemid, $context->id, 'format_selfstudy', 'pathimage', $pathid,
+            format_selfstudy_path_editor_image_filemanager_options());
+    }
+
+    $id = 'format-selfstudy-path-imagefilemanager';
+    $filemanager = new MoodleQuickForm_filemanager('pathimagefilemanager', get_string('learningpathimageurl',
+        'format_selfstudy'), ['id' => $id], format_selfstudy_path_editor_image_filemanager_options());
+    $filemanager->setValue($draftitemid);
+
+    return html_writer::div(
+        html_writer::label(get_string('learningpathimageurl', 'format_selfstudy'), $id) .
+        html_writer::div($filemanager->toHtml(), 'format-selfstudy-patheditor-corefilemanager'),
+        'form-group format-selfstudy-patheditor-imagepicker'
+    );
+}
+
+/**
+ * Returns Moodle core file manager options for path preview images.
+ *
+ * @return array
+ */
+function format_selfstudy_path_editor_image_filemanager_options(): array {
+    global $CFG;
+
+    return [
+        'subdirs' => 0,
+        'maxfiles' => 1,
+        'maxbytes' => $CFG->maxbytes,
+        'accepted_types' => ['web_image'],
+        'return_types' => FILE_INTERNAL,
+    ];
+}
+
+/**
+ * Saves the submitted Moodle file manager draft area and returns the pluginfile URL.
+ *
+ * @param stdClass $course
+ * @param int $pathid
+ * @return string|null Null when no file manager was submitted, empty string when the image was removed.
+ */
+function format_selfstudy_path_editor_save_path_image_filemanager(stdClass $course, int $pathid): ?string {
+    $draftitemid = optional_param('pathimagefilemanager', 0, PARAM_INT);
+    if ($draftitemid <= 0 || $pathid <= 0) {
+        return null;
+    }
+
+    $context = context_course::instance((int)$course->id);
+    file_save_draft_area_files($draftitemid, $context->id, 'format_selfstudy', 'pathimage', $pathid,
+        format_selfstudy_path_editor_image_filemanager_options());
+
+    $files = get_file_storage()->get_area_files($context->id, 'format_selfstudy', 'pathimage', $pathid,
+        'sortorder, id', false);
+    $file = reset($files);
+    if (!$file) {
+        return '';
+    }
+
+    return moodle_url::make_pluginfile_url($context->id, 'format_selfstudy', 'pathimage', $pathid, '/',
+        $file->get_filename())->out(false);
+}
+
+/**
+ * Renders a Moodle pix icon selector for the learning path.
+ *
+ * @param string $currenticon
+ * @return string
+ */
+function format_selfstudy_path_editor_icon_select(string $currenticon): string {
+    global $OUTPUT;
+
+    $id = 'format-selfstudy-path-icon';
+    $options = html_writer::start_div('format-selfstudy-patheditor-icongrid', [
+        'role' => 'radiogroup',
+        'aria-labelledby' => $id . '-label',
+    ]);
+    foreach (format_selfstudy_path_editor_icon_options() as $value => $label) {
+        $inputid = $id . '-' . ($value === '' ? 'default' : preg_replace('/[^a-z0-9_-]+/i', '-', $value));
+        $attributes = [
+            'type' => 'radio',
+            'name' => 'icon',
+            'id' => $inputid,
+            'value' => $value,
+        ];
+        if ($value === $currenticon) {
+            $attributes['checked'] = 'checked';
+        }
+        $icon = $value === '' ?
+            html_writer::span('', 'format-selfstudy-patheditor-iconempty', ['aria-hidden' => 'true']) :
+            $OUTPUT->pix_icon($value, '', 'moodle');
+        $options .= html_writer::tag('label',
+            html_writer::empty_tag('input', $attributes) .
+            html_writer::span($icon, 'format-selfstudy-patheditor-iconchoiceicon') .
+            html_writer::span($label, 'format-selfstudy-patheditor-iconchoicelabel'),
+            ['class' => 'format-selfstudy-patheditor-iconchoice', 'for' => $inputid]
+        );
+    }
+    $options .= html_writer::end_div();
+
+    return html_writer::div(
+        html_writer::div(get_string('learningpathicon', 'format_selfstudy'), '', ['id' => $id . '-label']) .
+        $options,
+        'form-group'
+    );
+}
+
+/**
+ * Returns available Moodle core pix icons for learning paths.
+ *
+ * @return array
+ */
+function format_selfstudy_path_editor_icon_options(): array {
+    return [
+        '' => get_string('learningpathicondefault', 'format_selfstudy'),
+        'i/home' => get_string('learningpathiconstart', 'format_selfstudy'),
+        'i/navigationitem' => get_string('learningpathiconorientation', 'format_selfstudy'),
+        'i/location' => get_string('learningpathiconlocation', 'format_selfstudy'),
+        'i/marker' => get_string('learningpathiconstage', 'format_selfstudy'),
+        'i/activities' => get_string('learningpathiconsteps', 'format_selfstudy'),
+        'i/switch' => get_string('learningpathicondecision', 'format_selfstudy'),
+        'i/questions' => get_string('learningpathiconreflection', 'format_selfstudy'),
+        'i/search' => get_string('learningpathicondiscovery', 'format_selfstudy'),
+        'i/progressbar' => get_string('learningpathiconprogress', 'format_selfstudy'),
+        'i/timer' => get_string('learningpathicontimebox', 'format_selfstudy'),
+        'i/calendar' => get_string('learningpathiconschedule', 'format_selfstudy'),
+        'i/checkedcircle' => get_string('learningpathiconcheckpoint', 'format_selfstudy'),
+        'i/grade_correct' => get_string('learningpathiconreview', 'format_selfstudy'),
+        'i/flagged' => get_string('learningpathicongoal', 'format_selfstudy'),
+        'i/star' => get_string('learningpathiconachievement', 'format_selfstudy'),
+        'i/badge' => get_string('learningpathiconaward', 'format_selfstudy'),
+        'i/publish' => get_string('learningpathiconlaunch', 'format_selfstudy'),
+        'i/report' => get_string('learningpathiconevaluation', 'format_selfstudy'),
+        'i/return' => get_string('learningpathiconiteration', 'format_selfstudy'),
+        'i/course' => get_string('learningpathiconlearningroute', 'format_selfstudy'),
+    ];
 }
 
 /**

@@ -1025,43 +1025,10 @@
     width: 100%;
 }
 
-.format-selfstudy-accessiblepath {
-    display: grid;
-    gap: .75rem;
-    border: 1px solid #d7dfe8;
-    border-radius: .5rem;
-    padding: 1rem;
-    background: #fff;
-}
-
-.format-selfstudy-accessiblepath h3 {
-    margin: 0;
-}
-
-.format-selfstudy-accessiblepath-progress {
-    font-weight: 700;
-}
-
-.format-selfstudy-accessiblepath-nav {
-    display: flex;
-    flex-wrap: wrap;
-    gap: .5rem;
-    align-items: center;
-}
-
-.format-selfstudy-map-course-link,
-.format-selfstudy-accessiblepath-link {
+.format-selfstudy-map-course-link {
     max-width: min(18rem, calc(100vw - 1.5rem));
     white-space: normal;
     text-align: center;
-}
-
-.format-selfstudy-accessiblepath-list {
-    display: grid;
-    gap: .35rem;
-    margin: 0;
-    padding: 0;
-    list-style: none;
 }
 
 .format-selfstudy-activitypath-type-alternative {
@@ -1440,6 +1407,13 @@ body.format-selfstudy-hide-courseindex #page.drawers.show-drawer-left {
     align-items: center;
 }
 
+.format-selfstudy-patheditor-embed {
+    display: block;
+    width: 100%;
+    min-height: 82rem;
+    border: 0;
+}
+
 .format-selfstudy-patheditor-select {
     display: flex;
     flex-wrap: wrap;
@@ -1467,6 +1441,89 @@ body.format-selfstudy-hide-courseindex #page.drawers.show-drawer-left {
     gap: 1rem;
 }
 
+@media (min-width: 960px) {
+    .format-selfstudy-patheditor-inline {
+        width: calc(100vw - 2rem);
+        max-width: none;
+        margin-left: calc((100% - 100vw + 2rem) / 2);
+    }
+}
+
+.format-selfstudy-patheditor-corefilemanager {
+    margin-top: .35rem;
+}
+
+.format-selfstudy-patheditor-corefilemanager .filemanager {
+    max-width: 34rem;
+}
+
+.format-selfstudy-patheditor-icongrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(7.25rem, 1fr));
+    gap: .4rem;
+    margin-top: .35rem;
+}
+
+.format-selfstudy-patheditor-iconchoice {
+    display: grid;
+    grid-template-columns: 2rem minmax(0, 1fr);
+    align-items: center;
+    gap: .5rem;
+    min-height: 2.6rem;
+    margin: 0;
+    border: 1px solid #d7dfe8;
+    border-radius: .35rem;
+    padding: .35rem .45rem;
+    background: #fff;
+    cursor: pointer;
+}
+
+.format-selfstudy-patheditor-iconchoice:has(input:checked) {
+    border-color: #0f6cbf;
+    background: #eef6ff;
+    box-shadow: 0 0 0 2px rgba(15, 108, 191, .18);
+}
+
+.format-selfstudy-patheditor-iconchoice input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.format-selfstudy-patheditor-iconchoiceicon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: .3rem;
+    background: #f8fafc;
+}
+
+.format-selfstudy-patheditor-iconchoiceicon img,
+.format-selfstudy-patheditor-iconchoiceicon .icon {
+    max-width: 1.25rem;
+    max-height: 1.25rem;
+    margin: 0;
+}
+
+.format-selfstudy-patheditor-iconempty {
+    display: block;
+    width: 1.1rem;
+    height: 1.1rem;
+    border: 1px dashed #94a3b8;
+    border-radius: 50%;
+}
+
+.format-selfstudy-patheditor-iconchoicelabel {
+    overflow: hidden;
+    color: #1f2937;
+    font-size: .9rem;
+    font-weight: 600;
+    line-height: 1.2;
+    text-overflow: ellipsis;
+}
+
 .format-selfstudy-patheditor-details,
 .format-selfstudy-patheditor-activitysettings,
 .format-selfstudy-patheditor-activities,
@@ -1480,6 +1537,65 @@ body.format-selfstudy-hide-courseindex #page.drawers.show-drawer-left {
     border-radius: .5rem;
     padding: 1rem;
     background: #fff;
+}
+
+.format-selfstudy-patheditor-details {
+    padding: 0;
+    overflow: hidden;
+}
+
+.format-selfstudy-patheditor-details summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    align-items: center;
+    justify-content: space-between;
+    padding: .65rem .85rem;
+    cursor: pointer;
+}
+
+.format-selfstudy-patheditor-detailstitle {
+    color: #1f2937;
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.format-selfstudy-patheditor-detailsstatus {
+    border: 1px solid #d7dfe8;
+    border-radius: 999px;
+    padding: .22rem .55rem;
+    background: #f8fafc;
+    color: #475569;
+    font-size: .78rem;
+    font-weight: 700;
+}
+
+.format-selfstudy-patheditor-detailsbody {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: .75rem;
+    border-top: 1px solid #e2e8f0;
+    padding: .85rem;
+}
+
+@media (min-width: 960px) {
+    .format-selfstudy-patheditor-detailsbody {
+        grid-template-columns: minmax(0, 1fr) minmax(18rem, .8fr);
+    }
+
+    .format-selfstudy-patheditor-detailsbody .form-group:nth-child(2),
+    .format-selfstudy-patheditor-detailsbody .format-selfstudy-patheditor-imagepicker,
+    .format-selfstudy-patheditor-detailsbody .form-group:last-child {
+        grid-column: auto;
+    }
+}
+
+.format-selfstudy-patheditor-detailsbody .form-group {
+    margin: 0;
+}
+
+.format-selfstudy-patheditor-detailsbody textarea {
+    min-height: 5.5rem;
 }
 
 .format-selfstudy-patheditor-activitysettings summary {
@@ -1512,19 +1628,24 @@ body.format-selfstudy-hide-courseindex #page.drawers.show-drawer-left {
 
 @media (min-width: 1100px) {
     .format-selfstudy-patheditor-activitysettingslist {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: minmax(0, 1fr);
     }
 }
 
 .format-selfstudy-patheditor-activitysettingsitem {
     display: grid;
-    grid-template-columns: 1.75rem minmax(0, 1fr) minmax(6rem, .45fr);
+    grid-template-columns: 1.75rem minmax(0, 1fr);
     gap: .45rem .65rem;
     align-items: start;
-    border: 1px solid #e2e8f0;
+    border: 1px solid color-mix(in srgb, var(--format-selfstudy-patheditor-section-color, #e2e8f0) 36%, #e2e8f0);
+    border-left: .45rem solid var(--format-selfstudy-patheditor-section-color, #94a3b8);
     border-radius: .35rem;
     padding: .65rem;
-    background: #f8fafc;
+    background: linear-gradient(
+        180deg,
+        var(--format-selfstudy-patheditor-section-bg, #f8fafc) 0,
+        #fff 12rem
+    );
 }
 
 .format-selfstudy-patheditor-activitysettingsheading {
@@ -1532,6 +1653,7 @@ body.format-selfstudy-hide-courseindex #page.drawers.show-drawer-left {
 }
 
 .format-selfstudy-patheditor-activitysettingsname {
+    color: color-mix(in srgb, var(--format-selfstudy-patheditor-section-color, #1f2937) 58%, #1f2937);
     font-weight: 700;
     overflow-wrap: anywhere;
 }
@@ -1601,8 +1723,25 @@ body.format-selfstudy-hide-courseindex #page.drawers.show-drawer-left {
 
 @media (min-width: 960px) {
     .format-selfstudy-patheditor-gridwrap {
-        grid-template-columns: minmax(15rem, 20rem) minmax(0, 1fr);
+        grid-template-columns: minmax(18rem, 30%) minmax(0, 1fr);
     }
+}
+
+.format-selfstudy-patheditor-workspace {
+    display: grid;
+    gap: .75rem;
+    min-width: 0;
+}
+
+.format-selfstudy-patheditor-workspace > .format-selfstudy-patheditor-actions {
+    position: sticky;
+    top: .75rem;
+    z-index: 5;
+    border: 1px solid #d7dfe8;
+    border-radius: .5rem;
+    padding: .55rem;
+    background: rgba(255, 255, 255, .94);
+    box-shadow: 0 .35rem 1rem rgba(15, 23, 42, .08);
 }
 
 .format-selfstudy-patheditor-palette,
@@ -1635,6 +1774,19 @@ body.format-selfstudy-hide-courseindex #page.drawers.show-drawer-left {
     margin: 0;
 }
 
+@media (min-width: 960px) {
+    .format-selfstudy-patheditor-palette {
+        position: sticky;
+        top: .75rem;
+        max-height: calc(100vh - 1.5rem);
+        overflow: hidden;
+    }
+
+    .format-selfstudy-patheditor-paletteitems {
+        max-height: calc(100vh - 14rem);
+    }
+}
+
 .format-selfstudy-patheditor-palettefilterwrap {
     display: grid;
     gap: .25rem;
@@ -1648,6 +1800,17 @@ body.format-selfstudy-hide-courseindex #page.drawers.show-drawer-left {
     .format-selfstudy-patheditor-palettefilterwrap label:first-child,
     .format-selfstudy-patheditor-palettefilterwrap .format-selfstudy-patheditor-palettefilter {
         grid-column: 1 / -1;
+    }
+}
+
+@media (min-width: 960px) {
+    .format-selfstudy-patheditor-palettefilterwrap {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .format-selfstudy-patheditor-palettefilterwrap label:first-child,
+    .format-selfstudy-patheditor-palettefilterwrap .format-selfstudy-patheditor-palettefilter {
+        grid-column: auto;
     }
 }
 
@@ -1682,22 +1845,33 @@ body.format-selfstudy-hide-courseindex #page.drawers.show-drawer-left {
 }
 
 .format-selfstudy-patheditor-milestonegrid {
-    display: flex;
+    display: grid;
     gap: calc(.75rem * var(--format-selfstudy-patheditor-zoom, 1));
     min-height: 18rem;
-    overflow: auto;
-    padding-bottom: .35rem;
-    scroll-snap-type: x proximity;
+    overflow: visible;
 }
 
 .format-selfstudy-patheditor-milestone {
-    flex: 0 0 min(calc(24rem * var(--format-selfstudy-patheditor-zoom, 1)), 86vw);
     align-content: start;
-    border: 1px solid #cbd5e1;
+    min-width: 0;
+    border: 1px solid var(--format-selfstudy-patheditor-section-color, #cbd5e1);
+    border-left-width: .45rem;
     border-radius: .35rem;
     padding: calc(.75rem * var(--format-selfstudy-patheditor-zoom, 1));
-    background: #f8fafc;
-    scroll-snap-align: start;
+    background: linear-gradient(
+        180deg,
+        var(--format-selfstudy-patheditor-section-bg, #f8fafc) 0,
+        #fff 10rem
+    );
+}
+
+.format-selfstudy-patheditor-milestone .format-selfstudy-patheditor-milestonetitle {
+    border-color: color-mix(in srgb, var(--format-selfstudy-patheditor-section-color, #94a3b8) 45%, #fff);
+}
+
+.format-selfstudy-patheditor-milestone .format-selfstudy-patheditor-draghandle,
+.format-selfstudy-patheditor-milestone .format-selfstudy-patheditor-milestonestatus {
+    border-color: color-mix(in srgb, var(--format-selfstudy-patheditor-section-color, #94a3b8) 45%, #fff);
 }
 
 .format-selfstudy-patheditor-milestonealternative {
@@ -1839,6 +2013,29 @@ body.format-selfstudy-hide-courseindex #page.drawers.show-drawer-left {
     transition: background-color .12s ease, border-color .12s ease, box-shadow .12s ease;
 }
 
+.format-selfstudy-patheditor-rowempty {
+    align-items: center;
+    min-height: calc(4.5rem * var(--format-selfstudy-patheditor-zoom, 1));
+    background:
+        repeating-linear-gradient(
+            -45deg,
+            #f8fafc,
+            #f8fafc .55rem,
+            #fff .55rem,
+            #fff 1.1rem
+        );
+}
+
+.format-selfstudy-patheditor-rowempty::after {
+    flex: 1 1 auto;
+    min-width: 10rem;
+    color: #64748b;
+    content: "Aktivität hier ablegen";
+    font-size: .88rem;
+    font-weight: 700;
+    text-align: center;
+}
+
 .format-selfstudy-patheditor-row::before {
     position: absolute;
     top: 50%;
@@ -1907,6 +2104,15 @@ body.format-selfstudy-hide-courseindex #page.drawers.show-drawer-left {
     cursor: grab;
 }
 
+.format-selfstudy-patheditor-palettecard .format-selfstudy-patheditor-carddetails,
+.format-selfstudy-patheditor-palettecard .format-selfstudy-patheditor-cardsettings {
+    display: none;
+}
+
+.format-selfstudy-patheditor-palettecard .format-selfstudy-patheditor-cardmeta {
+    font-size: .74rem;
+}
+
 .format-selfstudy-patheditor-palettecard:hover,
 .format-selfstudy-patheditor-palettecard:focus,
 .format-selfstudy-patheditor-cardselected {
@@ -1920,13 +2126,22 @@ body.format-selfstudy-hide-courseindex #page.drawers.show-drawer-left {
 
 .format-selfstudy-patheditor-gridcard {
     position: relative;
-    flex: 1 1 calc(12rem * var(--format-selfstudy-patheditor-zoom, 1));
-    max-width: calc(18rem * var(--format-selfstudy-patheditor-zoom, 1));
+    flex: 1 1 calc(14rem * var(--format-selfstudy-patheditor-zoom, 1));
+    max-width: calc(22rem * var(--format-selfstudy-patheditor-zoom, 1));
     cursor: grab;
 }
 
+.format-selfstudy-patheditor-gridcard .format-selfstudy-patheditor-carddetails,
+.format-selfstudy-patheditor-gridcard .format-selfstudy-patheditor-cardsettings {
+    display: none;
+}
+
+.format-selfstudy-patheditor-gridcard .format-selfstudy-patheditor-cardmeta {
+    font-size: .74rem;
+}
+
 .format-selfstudy-patheditor-compact .format-selfstudy-patheditor-milestone {
-    flex-basis: min(calc(18rem * var(--format-selfstudy-patheditor-zoom, 1)), 82vw);
+    padding: calc(.55rem * var(--format-selfstudy-patheditor-zoom, 1));
 }
 
 .format-selfstudy-patheditor-compact .format-selfstudy-patheditor-row {
@@ -2049,6 +2264,733 @@ body.format-selfstudy-hide-courseindex #page.drawers.show-drawer-left {
     align-self: center;
 }
 
+.format-selfstudy-patheditor-visual {
+    --pathways-bg: #fff;
+    --pathways-canvas: #f8fafc;
+    --pathways-surface: #fff;
+    --pathways-surface-low: #f8fafc;
+    --pathways-surface-mid: #e2e8f0;
+    --pathways-surface-high: #cbd5e1;
+    --pathways-text: #031635;
+    --pathways-muted: #475569;
+    --pathways-outline: #d7dfe8;
+    --pathways-outline-strong: #94a3b8;
+    --pathways-primary: var(--format-selfstudy-path-color, #6f1ab1);
+    --pathways-primary-action: var(--format-selfstudy-next-button-color, #006b5c);
+    --pathways-primary-soft: color-mix(in srgb, var(--pathways-primary) 14%, #fff);
+    --pathways-secondary: #334155;
+    --pathways-danger-soft: #fff7ed;
+    --pathways-danger: #9a3412;
+    color: var(--pathways-text);
+    font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.format-selfstudy-patheditor-visual > h2 {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    min-height: 4.25rem;
+    margin: 0 calc(-1 * clamp(1rem, 2vw, 1.5rem)) 0;
+    border-bottom: 1px solid var(--pathways-outline);
+    padding: 0 clamp(1rem, 2vw, 1.5rem);
+    background: var(--pathways-bg);
+    color: var(--pathways-text);
+    font-size: 2rem;
+    font-weight: 800;
+    line-height: 1.2;
+}
+
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-intro,
+.format-selfstudy-patheditor-visual .format-selfstudy-authoring-publishstatus,
+.format-selfstudy-patheditor-visual .format-selfstudy-authoring-workflow {
+    display: none;
+}
+
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    align-items: center;
+    margin: 0;
+    border-bottom: 1px solid var(--pathways-outline);
+    padding: .75rem 0;
+    background: var(--pathways-bg);
+}
+
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-toolbar .btn,
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-actions .btn,
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-canvasbar .btn,
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-milestonehead .btn,
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-addcell {
+    min-height: 2.5rem;
+    border: 1px solid transparent;
+    border-radius: .25rem;
+    padding: .5rem .9rem;
+    font-size: .88rem;
+    font-weight: 700;
+}
+
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-actions .btn-primary,
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-toolbar .btn-primary {
+    background: var(--pathways-primary-action);
+    border-color: var(--pathways-primary-action);
+    color: #fff;
+}
+
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-actions .btn-secondary,
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-toolbar .btn-secondary,
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-canvasbar .btn,
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-milestonehead .btn,
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-addcell {
+    background: #e5ebf0;
+    border-color: #e5ebf0;
+    color: var(--pathways-text);
+}
+
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-select {
+    display: inline-flex;
+    gap: .5rem;
+    align-items: center;
+}
+
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-select label {
+    margin: 0;
+    color: var(--pathways-muted);
+    font-size: .9rem;
+    font-weight: 600;
+}
+
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-select select,
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-palettefilter,
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-palettefilterselect,
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-milestonesection,
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-milestonedescription,
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-milestonetitle,
+.format-selfstudy-patheditor-visual input.form-control,
+.format-selfstudy-patheditor-visual textarea.form-control,
+.format-selfstudy-patheditor-visual select.form-control {
+    border: 1px solid var(--pathways-outline);
+    border-radius: .25rem;
+    background: var(--pathways-surface);
+    color: var(--pathways-text);
+    box-shadow: none;
+}
+
+.format-selfstudy-patheditor-visual :is(input, textarea, select):focus {
+    border-color: var(--pathways-primary-action);
+    box-shadow: 0 0 0 .15rem rgba(29, 112, 184, .22);
+    outline: 0;
+}
+
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-details {
+    margin: .85rem 0;
+    border: 1px solid var(--pathways-outline);
+    border-radius: .5rem;
+    background: var(--pathways-surface);
+    overflow: hidden;
+}
+
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-details > summary {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: center;
+    padding: .85rem 1rem;
+    background: var(--pathways-surface-low);
+    cursor: pointer;
+}
+
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-detailstitle {
+    font-size: 1rem;
+    font-weight: 800;
+}
+
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-detailsstatus {
+    border-radius: 999px;
+    padding: .25rem .6rem;
+    background: var(--pathways-surface);
+    color: var(--pathways-muted);
+    font-size: .78rem;
+    font-weight: 700;
+}
+
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-detailsbody {
+    display: grid;
+    gap: .75rem;
+    padding: 1rem;
+}
+
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-gridwrap {
+    --format-selfstudy-patheditor-zoom: 1;
+    display: grid;
+    gap: 0;
+    align-items: stretch;
+    min-height: calc(100vh - 10rem);
+    border: 1px solid var(--pathways-outline);
+    background: var(--pathways-canvas);
+}
+
+@media (min-width: 1040px) {
+    .format-selfstudy-patheditor-visual .format-selfstudy-patheditor-gridwrap {
+        grid-template-columns: 320px minmax(0, 1fr);
+    }
+}
+
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-palette {
+    display: flex;
+    flex-direction: column;
+    gap: .75rem;
+    min-width: 0;
+    border-right: 1px solid var(--pathways-outline);
+    padding: 1rem;
+    background: var(--pathways-bg);
+}
+
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-palette h3 {
+    margin: 0;
+    color: var(--pathways-primary);
+    font-size: 1.55rem;
+    font-weight: 800;
+}
+
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-palette h3::after {
+    display: block;
+    margin-top: .25rem;
+    color: var(--pathways-muted);
+    content: "Bibliothek & Vorlagen";
+    font-size: .82rem;
+    font-weight: 600;
+}
+
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-palettefilterwrap {
+    display: grid;
+    gap: .7rem;
+    margin-top: .75rem;
+}
+
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-palettefilterwrap label {
+    margin: 0 0 -.45rem;
+    color: var(--pathways-text);
+    font-size: .82rem;
+    font-weight: 700;
+}
+
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-paletteitems {
+    display: flex;
+    flex-direction: column;
+    gap: .75rem;
+    align-content: start;
+    overflow: auto;
+    padding-right: .15rem;
+}
+
+@media (min-width: 1040px) {
+    .format-selfstudy-patheditor-visual .format-selfstudy-patheditor-palette {
+        position: sticky;
+        top: 4.25rem;
+        max-height: calc(100vh - 4.25rem);
+    }
+
+    .format-selfstudy-patheditor-visual .format-selfstudy-patheditor-paletteitems {
+        max-height: calc(100vh - 18rem);
+    }
+}
+
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-workspace {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: 0;
+    min-width: 0;
+    background: var(--pathways-canvas);
+}
+
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-workspace > .format-selfstudy-patheditor-actions {
+    position: sticky;
+    top: 4.25rem;
+    z-index: 12;
+    display: flex;
+    justify-content: flex-end;
+    gap: .55rem;
+    border: 0;
+    border-bottom: 1px solid var(--pathways-outline);
+    border-radius: 0;
+    padding: .85rem 1rem;
+    background: rgba(248, 249, 250, .96);
+    box-shadow: none;
+}
+
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-canvas {
+    display: grid;
+    gap: 1.5rem;
+    min-width: 0;
+    padding: 1.5rem;
+    background: var(--pathways-canvas);
+}
+
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-canvasbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: end;
+    justify-content: space-between;
+    padding: 0;
+}
+
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-canvasbar h3 {
+    flex: 1 0 100%;
+    margin: 0 0 -.35rem;
+    color: var(--pathways-text);
+    font-size: 2rem;
+    font-weight: 800;
+    line-height: 1.2;
+}
+
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-viewcontrols {
+    display: inline-flex;
+    gap: 0;
+    border-radius: .25rem;
+    padding: .25rem;
+    background: var(--pathways-surface-mid);
+}
+
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-viewcontrols .btn {
+    margin: 0;
+    border: 0;
+    background: transparent;
+}
+
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-viewcontrols .btn:first-child {
+    background: var(--pathways-surface);
+}
+
+.format-selfstudy-patheditor-visual [data-format-selfstudy-add-milestone] {
+    margin-left: auto;
+    background: var(--pathways-secondary) !important;
+    border-color: #303a40 !important;
+    color: #fff !important;
+}
+
+.format-selfstudy-patheditor-visual [data-format-selfstudy-add-milestone]::before {
+    content: "+ ";
+    font-size: 1.1rem;
+    line-height: 0;
+}
+
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-milestonegrid {
+    display: grid;
+    gap: .75rem;
+    max-width: 72rem;
+    min-height: 30rem;
+}
+
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-milestone {
+    position: relative;
+    display: grid;
+    gap: 1.5rem;
+    align-content: start;
+    border: 1px solid var(--pathways-outline);
+    border-left: .4rem solid var(--pathways-primary-action);
+    border-radius: .5rem;
+    padding: 1.25rem 1.25rem 1.25rem 1.55rem;
+    background: var(--pathways-surface);
+    box-shadow: none;
+}
+
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-milestonerequired {
+    box-shadow: none;
+}
+
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-milestonealternative {
+    border-color: var(--pathways-outline);
+    border-left-color: var(--pathways-primary-action);
+    box-shadow: none;
+}
+
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-milestonehead {
+    display: grid;
+    grid-template-columns: 3.25rem minmax(0, 1fr) auto auto;
+    gap: .85rem;
+    align-items: center;
+}
+
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-draghandle {
+    width: 3.25rem;
+    min-height: 3.75rem;
+    border: 1px solid var(--pathways-outline);
+    border-radius: .25rem;
+    background: var(--pathways-surface-low);
+    color: var(--pathways-muted);
+    font-size: 0;
+}
+
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-draghandle::before {
+    content: "↕";
+    font-size: 1.25rem;
+    font-weight: 800;
+}
+
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-milestonetitle {
+    min-width: 0;
+    border: 0;
+    background: var(--pathways-surface-low);
+    color: var(--pathways-text);
+    font-size: 1.25rem;
+    font-weight: 800;
+}
+
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-milestonestatus {
+    min-height: 2.5rem;
+    border: 1px solid var(--pathways-outline);
+    border-radius: .25rem;
+    padding: 0 .9rem;
+    background: var(--pathways-surface);
+    color: var(--pathways-text);
+    font-size: .9rem;
+    font-weight: 700;
+}
+
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-milestone .format-selfstudy-patheditor-milestonestatus {
+    border-color: var(--pathways-outline);
+}
+
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-milestonehead > .btn {
+    min-height: 2.5rem;
+    background: var(--pathways-surface-high);
+    color: var(--pathways-text);
+}
+
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-milestonehead > .btn:hover {
+    background: var(--pathways-danger-soft);
+    color: var(--pathways-danger);
+}
+
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-milestonesectionwrap,
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-milestonealt,
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-milestonewarning,
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-milestonedescription,
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-rows,
+.format-selfstudy-patheditor-visual [data-format-selfstudy-add-row] {
+    margin-left: 4rem;
+}
+
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-milestonesectionwrap,
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-milestonealt {
+    display: grid;
+    gap: .45rem;
+}
+
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-milestonesectionwrap label,
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-milestonealt label {
+    margin: 0;
+    color: var(--pathways-muted);
+    font-size: .78rem;
+    font-weight: 700;
+}
+
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-dropdownsummary {
+    border: 1px solid var(--pathways-outline);
+    border-radius: .25rem;
+    padding: .55rem .75rem;
+    background: var(--pathways-surface);
+}
+
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-dropdownoptions {
+    border-color: var(--pathways-outline);
+    background: var(--pathways-surface);
+}
+
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-milestonedescription {
+    min-height: 3.75rem;
+}
+
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-rows {
+    display: grid;
+    gap: 1.25rem;
+    position: relative;
+}
+
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-rows::before {
+    left: 0;
+    top: -1.25rem;
+    bottom: .75rem;
+    width: 0;
+    border-left: 2px dashed var(--pathways-outline);
+    background: none;
+}
+
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: stretch;
+    margin-left: 2rem;
+    min-height: 0;
+    border: 0;
+    border-radius: .5rem;
+    padding: 0;
+    background: transparent;
+    cursor: grab;
+}
+
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-row::before {
+    left: -2rem;
+    width: 2rem;
+    height: 0;
+    border-top: 2px dashed var(--pathways-outline);
+    background: none;
+}
+
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-rowalternative {
+    position: relative;
+    border: 2px dashed var(--pathways-outline);
+    border-radius: .5rem;
+    padding: 2rem 1.5rem 1.5rem;
+    background: var(--pathways-surface);
+}
+
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-rowalternative::before {
+    left: -2rem;
+    top: 50%;
+    width: 2rem;
+    border-top: 2px dashed var(--pathways-outline);
+    background: none;
+}
+
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-rowalternative::after {
+    position: absolute;
+    top: -.8rem;
+    left: 1.2rem;
+    width: auto;
+    height: auto;
+    border: 0;
+    border-radius: 0;
+    padding: 0 .65rem;
+    background: var(--pathways-surface);
+    color: var(--pathways-primary);
+    box-shadow: none;
+    content: "⌘ Alternative Zweige";
+    font-size: .75rem;
+    font-weight: 800;
+    letter-spacing: .02em;
+    text-transform: uppercase;
+}
+
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-rowempty {
+    min-height: 4.5rem;
+    border: 2px dashed var(--pathways-outline);
+    padding: 1rem;
+    background: transparent;
+}
+
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-rowempty::after {
+    content: "+ Aktivität hierher ziehen oder klicken zum Hinzufügen";
+    color: var(--pathways-outline);
+    font-size: .9rem;
+}
+
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-rowdrop {
+    border-color: var(--pathways-primary-action);
+    background: rgba(210, 228, 255, .38);
+    box-shadow: inset 0 0 0 1px rgba(29, 112, 184, .25);
+}
+
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-card {
+    display: grid;
+    grid-template-columns: 2.65rem minmax(0, 1fr) auto;
+    gap: .25rem 1rem;
+    align-items: start;
+    border: 1px solid var(--pathways-outline);
+    border-radius: .35rem;
+    padding: 1rem;
+    background: var(--pathways-surface);
+    color: var(--pathways-text);
+    text-align: left;
+}
+
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-cardicon {
+    grid-row: 1 / span 3;
+    width: 2.65rem;
+    height: 2.65rem;
+    border-radius: .35rem;
+    padding: .55rem;
+    background: var(--pathways-primary-soft);
+    object-fit: contain;
+}
+
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-cardtitle {
+    color: var(--pathways-text);
+    font-size: 1rem;
+    font-weight: 800;
+    line-height: 1.25;
+}
+
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-cardmeta {
+    grid-column: 2;
+    color: var(--pathways-muted);
+    font-size: .7rem;
+    font-weight: 600;
+    letter-spacing: .04em;
+}
+
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-palettecard {
+    flex: 0 0 auto;
+    min-height: 0;
+    height: auto;
+    cursor: grab;
+}
+
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-palettecard .format-selfstudy-patheditor-cardicon {
+    margin-top: .1rem;
+}
+
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-palettecard .format-selfstudy-patheditor-cardtitle {
+    font-size: .95rem;
+}
+
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-palettecard .format-selfstudy-patheditor-cardmeta {
+    grid-column: 2 / -1;
+    overflow-wrap: anywhere;
+}
+
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-palettecard .format-selfstudy-patheditor-carddetails,
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-palettecard .format-selfstudy-patheditor-cardsettings {
+    display: none;
+}
+
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-palettecard:hover,
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-palettecard:focus,
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-cardselected {
+    border-color: var(--pathways-primary-action);
+    background: var(--pathways-surface-low);
+}
+
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-palettecard::after {
+    grid-column: 3;
+    grid-row: 1;
+    color: var(--pathways-outline-strong);
+    content: "⋮⋮";
+    font-size: 1.25rem;
+    opacity: 0;
+}
+
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-palettecard:hover::after {
+    opacity: 1;
+}
+
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-gridcard {
+    flex: 1 1 18rem;
+    max-width: 34rem;
+    min-height: 6rem;
+    box-shadow: 0 .15rem .45rem rgba(27, 28, 28, .05);
+}
+
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-rowrequired .format-selfstudy-patheditor-gridcard {
+    flex-basis: min(42rem, 100%);
+}
+
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-rowalternative .format-selfstudy-patheditor-gridcard {
+    flex: 1 1 18rem;
+    max-width: 24rem;
+}
+
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-gridcard:hover {
+    border-color: var(--pathways-primary-action);
+}
+
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-carddetails {
+    grid-column: 2 / -1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: .35rem;
+}
+
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-cardchip {
+    border: 0;
+    border-radius: 999px;
+    padding: .2rem .55rem;
+    background: var(--pathways-surface-mid);
+    color: var(--pathways-muted);
+    font-size: .7rem;
+}
+
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-cardsettings {
+    grid-column: 3;
+    grid-row: 1;
+    color: var(--pathways-muted);
+    font-size: 0;
+}
+
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-cardsettings::before {
+    content: "⚙";
+    font-size: 1.35rem;
+}
+
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-removecard {
+    grid-column: 2;
+    justify-self: start;
+    border: 0;
+    padding: 0;
+    color: var(--pathways-primary);
+    background: transparent;
+    font-weight: 700;
+}
+
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-addcell {
+    align-self: stretch;
+    min-width: 12rem;
+    border: 2px dashed var(--pathways-outline);
+    background: transparent;
+    color: var(--pathways-outline-strong);
+}
+
+.format-selfstudy-patheditor-visual [data-format-selfstudy-add-row] {
+    justify-self: start;
+    border: 2px dashed var(--pathways-outline) !important;
+    background: transparent !important;
+    color: var(--pathways-outline-strong) !important;
+}
+
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-compact .format-selfstudy-patheditor-milestone {
+    padding: .85rem;
+}
+
+.format-selfstudy-patheditor-visual .format-selfstudy-patheditor-compact .format-selfstudy-patheditor-gridcard {
+    flex-basis: 12rem;
+    max-width: 18rem;
+}
+
+@media (max-width: 1039px) {
+    .format-selfstudy-patheditor-visual .format-selfstudy-patheditor-gridwrap {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .format-selfstudy-patheditor-visual .format-selfstudy-patheditor-palette {
+        border-right: 0;
+        border-bottom: 1px solid var(--pathways-outline);
+    }
+
+    .format-selfstudy-patheditor-visual .format-selfstudy-patheditor-paletteitems {
+        max-height: 22rem;
+    }
+}
+
+@media (max-width: 720px) {
+    .format-selfstudy-patheditor-visual .format-selfstudy-patheditor-milestonehead {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .format-selfstudy-patheditor-visual .format-selfstudy-patheditor-milestonesectionwrap,
+    .format-selfstudy-patheditor-visual .format-selfstudy-patheditor-milestonealt,
+    .format-selfstudy-patheditor-visual .format-selfstudy-patheditor-milestonewarning,
+    .format-selfstudy-patheditor-visual .format-selfstudy-patheditor-milestonedescription,
+    .format-selfstudy-patheditor-visual .format-selfstudy-patheditor-rows,
+    .format-selfstudy-patheditor-visual [data-format-selfstudy-add-row] {
+        margin-left: 0;
+    }
+}
+
 @media (max-width: 900px) {
     .format-selfstudy-coursehero {
         grid-template-columns: 1fr;
@@ -2068,7 +3010,6 @@ body.format-selfstudy-hide-courseindex #page.drawers.show-drawer-left {
 
     .format-selfstudy-pathchoice-actions,
     .format-selfstudy-pathchoice-form,
-    .format-selfstudy-accessiblepath-nav,
     .format-selfstudy-patheditor-toolbar,
     .format-selfstudy-patheditor-actions,
     .format-selfstudy-patheditor-select,
@@ -2114,7 +3055,6 @@ body.format-selfstudy-hide-courseindex #page.drawers.show-drawer-left {
     }
 
     .format-selfstudy-pathchoice-actions .btn,
-    .format-selfstudy-accessiblepath-nav .btn,
     .format-selfstudy-patheditor-toolbar .btn,
     .format-selfstudy-patheditor-actions .btn,
     .format-selfstudy-patheditor-select .btn,
@@ -2192,14 +3132,12 @@ body.format-selfstudy-hide-courseindex #page.drawers.show-drawer-left {
 
     .format-selfstudy-patheditor-milestonegrid {
         gap: .6rem;
-        margin-right: -.75rem;
-        padding-right: .75rem;
-        scroll-snap-type: x mandatory;
+        margin-right: 0;
+        padding-right: 0;
     }
 
     .format-selfstudy-patheditor-milestone,
     .format-selfstudy-patheditor-compact .format-selfstudy-patheditor-milestone {
-        flex-basis: min(22rem, calc(100vw - 2.5rem));
         padding: .65rem;
     }
 
@@ -2688,35 +3626,8 @@ body.format-selfstudy-hide-courseindex #page.drawers.show-drawer-left {
     position: fixed;
 }
 
-.format-selfstudy-avatar-marker[hidden],
-.format-selfstudy-avatar-connector[hidden],
-.format-selfstudy-avatar-target-ring[hidden] {
+.format-selfstudy-avatar-marker[hidden] {
     display: none;
-}
-
-.format-selfstudy-avatar-connector {
-    position: absolute;
-    z-index: 30;
-    height: .18rem;
-    border-radius: 999px;
-    background: rgba(255, 255, 255, .95);
-    box-shadow: 0 0 0 .08rem rgba(15, 23, 42, .48), 0 .12rem .35rem rgba(15, 23, 42, .24);
-    pointer-events: none;
-    transform-origin: 0 50%;
-}
-
-.format-selfstudy-avatar-target-ring {
-    position: absolute;
-    z-index: 33;
-    display: block;
-    width: 1.85rem;
-    height: 1.85rem;
-    border: .2rem solid #fff;
-    border-radius: 50%;
-    background: rgba(37, 99, 235, .13);
-    box-shadow: 0 0 0 .16rem rgba(37, 99, 235, .82), 0 .18rem .5rem rgba(15, 23, 42, .34);
-    pointer-events: none;
-    transform: translate(-50%, -50%);
 }
 
 .format-selfstudy-avatar-marker::after {
@@ -2951,15 +3862,25 @@ body.format-selfstudy-hide-courseindex #page.drawers.show-drawer-left {
     max-width: 42rem;
 }
 
-.format-selfstudy-fullscreen-toggle {
-    position: fixed;
-    top: 5rem;
-    right: .75rem;
-    z-index: 1050;
+.format-selfstudy-learningmap-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: .5rem;
+    margin: 0 0 .75rem;
 }
 
-.format-selfstudy-learningmap-fullscreen .format-selfstudy-fullscreen-toggle {
+.format-selfstudy-learningmap-actions .btn {
+    min-width: 0;
+    white-space: normal;
+}
+
+.format-selfstudy-learningmap-fullscreen .format-selfstudy-learningmap-actions {
+    position: fixed;
     top: .75rem;
+    right: .75rem;
+    z-index: 1050;
+    margin: 0;
 }
 
 .format-selfstudy-learningmap-fullscreen {
@@ -3304,7 +4225,54 @@ body.format-selfstudy-hide-courseindex #page.drawers.show-drawer-left {
     color: #46556d;
 }
 
-.format-selfstudy-colorpicker {
+.format-selfstudy-colorinput.fitem,
+.format-selfstudy-colorpicker.fitem,
+.format-selfstudy-colorpicker-row.fitem {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: flex-start !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    padding: 0 !important;
+    cursor: default !important;
+    vertical-align: baseline !important;
+    margin-right: 0 !important;
+    margin-bottom: 1rem !important;
+    margin-left: 0 !important;
+}
+
+.format-selfstudy-colorinput.fitem .fitemtitle,
+.format-selfstudy-colorpicker.fitem .fitemtitle,
+.format-selfstudy-colorpicker-row.fitem .fitemtitle {
+    flex: 0 0 25% !important;
+    max-width: 25% !important;
+    min-height: 1px;
+    padding-right: 15px !important;
+    padding-left: 15px !important;
+    padding-bottom: 0 !important;
+    color: #1f2d3d;
+    font-weight: 400;
+}
+
+.format-selfstudy-colorinput.fitem .felement,
+.format-selfstudy-colorpicker.fitem .felement,
+.format-selfstudy-colorpicker-row.fitem .felement {
+    flex: 0 0 75% !important;
+    max-width: 75% !important;
+    min-height: 1px;
+    padding-right: 15px !important;
+    padding-left: 15px !important;
+}
+
+.format-selfstudy-colorinput.fitem .fitemtitle label,
+.format-selfstudy-colorpicker.fitem .fitemtitle label,
+.format-selfstudy-colorpicker-row.fitem .fitemtitle label {
+    margin-bottom: 0;
+}
+
+.format-selfstudy-colorinput.fitem input[type="color"],
+.format-selfstudy-colorpicker:not(.fitem) {
     display: inline-block;
     width: 3.5rem;
     height: 2.35rem;
@@ -3325,6 +4293,18 @@ body.format-selfstudy-hide-courseindex #page.drawers.show-drawer-left {
 .format-selfstudy-colorpicker::-moz-color-swatch {
     border: 0;
     border-radius: .2rem;
+}
+
+@media (max-width: 767.98px) {
+    .format-selfstudy-colorinput.fitem .fitemtitle,
+    .format-selfstudy-colorpicker.fitem .fitemtitle,
+    .format-selfstudy-colorpicker-row.fitem .fitemtitle,
+    .format-selfstudy-colorinput.fitem .felement,
+    .format-selfstudy-colorpicker.fitem .felement,
+    .format-selfstudy-colorpicker-row.fitem .felement {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
 }
 
 .format-selfstudy-course-settings-experiences {
@@ -3443,4 +4423,293 @@ body.format-selfstudy-hide-courseindex #page.drawers.show-drawer-left {
 
 .format-selfstudy-learningmap-sectionsettings {
     margin: .25rem 0 0;
+}
+
+.format-selfstudy-learningmap-startpage {
+    display: grid;
+    gap: 2rem;
+    background: #f8f9fb;
+}
+
+.format-selfstudy-learningmap-hero {
+    display: grid;
+    gap: 1.5rem;
+}
+
+.format-selfstudy-learningmap-hero-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(18rem, .85fr);
+    gap: 1.5rem;
+    align-items: stretch;
+    border-radius: 1rem;
+    padding: clamp(1.25rem, 3vw, 2rem);
+    background: #1e3a8a;
+    color: #fff;
+    overflow: hidden;
+}
+
+.format-selfstudy-learningmap-hero-copy {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 1rem;
+    min-width: 0;
+}
+
+.format-selfstudy-learningmap-eyebrow {
+    width: fit-content;
+    border-radius: 999px;
+    padding: .3rem .7rem;
+    background: rgba(255, 255, 255, .16);
+    color: #dce1ff;
+    font-size: .75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.format-selfstudy-learningmap-hero h2 {
+    margin: 0;
+    max-width: 48rem;
+    color: #fff;
+    font-size: clamp(1.8rem, 4vw, 3rem);
+    line-height: 1.1;
+}
+
+.format-selfstudy-learningmap-hero p {
+    max-width: 52rem;
+    margin: 0;
+    color: rgba(255, 255, 255, .82);
+    font-size: 1.05rem;
+    line-height: 1.6;
+}
+
+.format-selfstudy-learningmap-hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .75rem;
+    padding-top: .5rem;
+}
+
+.format-selfstudy-learningmap-primary {
+    background: #006e2f;
+    border-color: #006e2f;
+}
+
+.format-selfstudy-learningmap-hero-media {
+    display: grid;
+    gap: .75rem;
+}
+
+.format-selfstudy-learningmap-mapimage {
+    min-height: 17rem;
+    border: 1px solid rgba(255, 255, 255, .25);
+    border-radius: .75rem;
+    background: #0f2630;
+    overflow: hidden;
+}
+
+.format-selfstudy-learningmap-mapimage img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    min-height: 17rem;
+    object-fit: cover;
+}
+
+.format-selfstudy-learningmap-hero-mapfallback {
+    display: grid;
+    min-height: 17rem;
+    place-items: center;
+    color: #dce1ff;
+    font-weight: 700;
+}
+
+.format-selfstudy-learningmap-summary {
+    color: #dce1ff;
+    font-size: .9rem;
+    line-height: 1.5;
+}
+
+.format-selfstudy-learningmap-infogrid {
+    display: grid;
+    grid-template-columns: minmax(16rem, .65fr) minmax(0, 1fr);
+    gap: 1.5rem;
+}
+
+.format-selfstudy-learningmap-progresscard,
+.format-selfstudy-learningmap-journeycard {
+    border: 1px solid #c5c5d3;
+    border-radius: .75rem;
+    padding: 1.5rem;
+    background: #fff;
+    box-shadow: 0 4px 18px rgba(0, 35, 111, .04);
+}
+
+.format-selfstudy-learningmap-progress-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    color: #191c1e;
+    font-size: 1.2rem;
+    font-weight: 800;
+}
+
+.format-selfstudy-learningmap-progress-head strong {
+    color: #006e2f;
+}
+
+.format-selfstudy-learningmap-progressbar {
+    height: .7rem;
+    margin: 1rem 0 .75rem;
+    border-radius: 999px;
+    background: #e1e2e4;
+    overflow: hidden;
+}
+
+.format-selfstudy-learningmap-progress-fill {
+    height: 100%;
+    border-radius: inherit;
+    background: #006e2f;
+}
+
+.format-selfstudy-learningmap-progress-note,
+.format-selfstudy-learningmap-journeycard p,
+.format-selfstudy-learningmap-sectiongoal,
+.format-selfstudy-learningmap-sectioncount {
+    color: #444651;
+}
+
+.format-selfstudy-learningmap-journeycard h3 {
+    margin: 0 0 .5rem;
+    color: #191c1e;
+}
+
+.format-selfstudy-learningmap-sections {
+    display: grid;
+    gap: 1rem;
+}
+
+.format-selfstudy-learningmap-sections-head {
+    display: grid;
+    gap: .35rem;
+}
+
+.format-selfstudy-learningmap-sections-head h2,
+.format-selfstudy-learningmap-sections-head p {
+    margin: 0;
+}
+
+.format-selfstudy-learningmap-sectionlist {
+    display: grid;
+    gap: 1.5rem;
+    padding: .5rem 0;
+}
+
+.format-selfstudy-learningmap-sectionitem {
+    display: grid;
+    grid-template-columns: 9rem minmax(0, 1fr) auto;
+    gap: 1rem;
+    align-items: center;
+    border: 1px solid #c5c5d3;
+    border-radius: .75rem;
+    padding: 1rem;
+    background: #fff;
+    box-shadow: 0 4px 18px rgba(0, 35, 111, .035);
+}
+
+.format-selfstudy-learningmap-sectionmedia {
+    aspect-ratio: 4 / 3;
+    border-radius: .5rem;
+    overflow: hidden;
+    background: #e1e2e4;
+}
+
+.format-selfstudy-learningmap-sectionmedia img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.format-selfstudy-learningmap-sectionmedia-fallback {
+    display: grid;
+    place-items: center;
+    background: #dce1ff;
+    color: #00236f;
+}
+
+.format-selfstudy-learningmap-sectionnumber {
+    font-size: 2rem;
+    font-weight: 800;
+}
+
+.format-selfstudy-learningmap-sectionbody {
+    min-width: 0;
+}
+
+.format-selfstudy-learningmap-sectionbody h3 {
+    margin: .35rem 0;
+    color: #191c1e;
+}
+
+.format-selfstudy-learningmap-sectionmeta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+}
+
+.format-selfstudy-learningmap-sectionchip,
+.format-selfstudy-learningmap-sectionstatus {
+    border-radius: 999px;
+    padding: .2rem .6rem;
+    background: #f3f4f6;
+    color: #444651;
+    font-size: .75rem;
+    font-weight: 700;
+}
+
+.format-selfstudy-learningmap-sectionchip {
+    background: #dce1ff;
+    color: #00236f;
+}
+
+.format-selfstudy-learningmap-sectionaction {
+    justify-self: end;
+}
+
+@media (max-width: 900px) {
+    .format-selfstudy-learningmap-hero-grid,
+    .format-selfstudy-learningmap-infogrid,
+    .format-selfstudy-learningmap-sectionitem {
+        grid-template-columns: 1fr;
+    }
+
+    .format-selfstudy-learningmap-sectionaction {
+        justify-self: start;
+    }
+}
+
+.format-selfstudy-learningmap-mappingpanel {
+    display: grid;
+    gap: .75rem;
+    margin: 1rem 0;
+    border: 1px solid #cbd5e1;
+    border-radius: .5rem;
+    padding: 1rem;
+    background: #f8fafc;
+}
+
+.format-selfstudy-learningmap-mappingstatus {
+    color: #1f2937;
+    font-weight: 700;
+}
+
+.format-selfstudy-learningmap-mappinghelp {
+    color: #475569;
+}
+
+.format-selfstudy-learningmap-mappingactions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    align-items: center;
 }

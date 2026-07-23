@@ -388,12 +388,10 @@ class authoring_workflow {
      */
     private function build_steps(\stdClass $course, \stdClass $state): array {
         $pathid = (int)$state->pathid;
-        $editorurl = new \moodle_url('/course/format/selfstudy/path_editor.php', ['id' => $course->id] +
-            ($pathid ? ['pathid' => $pathid] : []));
-        $diagnosisurl = new \moodle_url('/course/format/selfstudy/path_diagnosis.php', [
+        $editorurl = new \moodle_url('/course/view.php', [
             'id' => $course->id,
-            'pathid' => $pathid,
-        ]);
+            'selfstudypatheditor' => 1,
+        ] + ($pathid ? ['pathid' => $pathid] : []));
 
         $steps = [];
         $steps[] = (object)[
@@ -407,9 +405,7 @@ class authoring_workflow {
             ]),
             'actionurl' => new \moodle_url('/course/view.php', [
                 'id' => $course->id,
-                'section' => 1,
-                'edit' => 1,
-                'sesskey' => sesskey(),
+                'selfstudycontent' => 1,
             ]),
             'actionlabel' => get_string('authoringworkflowactionstructure', 'format_selfstudy'),
         ];
@@ -431,9 +427,10 @@ class authoring_workflow {
                     'activities' => count($state->activities),
                     'metadata' => $state->activitymetadata->withoutmetadata,
                 ]),
-            'actionurl' => new \moodle_url('/course/format/selfstudy/path_editor.php', ['id' => $course->id] +
-                ($pathid ? ['pathid' => $pathid] : []) + ['showactivitysettings' => 1],
-                'format-selfstudy-activitysettings'),
+            'actionurl' => new \moodle_url('/course/view.php', [
+                'id' => $course->id,
+                'selfstudyactivitysettings' => 1,
+            ], 'format-selfstudy-activitysettings'),
             'actionlabel' => get_string('authoringworkflowactioncontent', 'format_selfstudy'),
         ];
 
@@ -452,36 +449,6 @@ class authoring_workflow {
             'actionlabel' => get_string('authoringworkflowactionpath', 'format_selfstudy'),
         ];
 
-        $steps[] = (object)[
-            'key' => 'check',
-            'status' => $state->diagnosissummary->status,
-            'title' => get_string('authoringworkflowstepcheck', 'format_selfstudy'),
-            'summary' => get_string('authoringworkflowstepchecksummary', 'format_selfstudy', (object)[
-                'blockers' => $state->diagnosissummary->blockercount,
-                'repairable' => $state->diagnosissummary->repairablecount,
-            ]),
-            'actionurl' => $pathid ? $diagnosisurl : $editorurl,
-            'actionlabel' => get_string('authoringworkflowactioncheck', 'format_selfstudy'),
-        ];
-
-        $publishstatus = $state->activerevision ? self::STATUS_PUBLISHED : self::STATUS_NOTSTARTED;
-        if ($state->draftchanged) {
-            $publishstatus = self::STATUS_WARNING;
-        }
-        $steps[] = (object)[
-            'key' => 'publish',
-            'status' => $publishstatus,
-            'title' => get_string('authoringworkflowsteppublish', 'format_selfstudy'),
-            'summary' => $state->activerevision ?
-                get_string('authoringworkflowsteppublishsummaryrevision', 'format_selfstudy', (object)[
-                    'revision' => (int)$state->activerevision->revision,
-                    'timepublished' => userdate((int)$state->activerevision->timepublished),
-                ]) :
-                get_string('authoringworkflowsteppublishsummarynone', 'format_selfstudy'),
-            'actionurl' => $pathid ? $editorurl : null,
-            'actionlabel' => get_string('authoringworkflowactionpublish', 'format_selfstudy'),
-        ];
-
         $viewstatus = self::STATUS_READY;
         if ($state->experience->enabledmissing > 0) {
             $viewstatus = self::STATUS_NEEDSWORK;
@@ -496,7 +463,10 @@ class authoring_workflow {
                 'enabled' => $state->experience->enabled,
                 'missing' => $state->experience->missing,
             ]),
-            'actionurl' => new \moodle_url('/course/format/selfstudy/experience_settings.php', ['id' => $course->id]),
+            'actionurl' => new \moodle_url('/course/view.php', [
+                'id' => $course->id,
+                'selfstudyexperiencesettings' => 1,
+            ]),
             'actionlabel' => get_string('authoringworkflowactionviews', 'format_selfstudy'),
         ];
 
@@ -517,6 +487,6 @@ class authoring_workflow {
             }
         }
 
-        return $state->steps[5] ?? null;
+        return $state->steps ? $state->steps[count($state->steps) - 1] : null;
     }
 }

@@ -746,7 +746,7 @@ class path_repository {
         $record->description = clean_param($data['description'] ?? ($record->description ?? ''), PARAM_RAW);
         $record->descriptionformat = clean_param($data['descriptionformat'] ?? ($record->descriptionformat ?? FORMAT_HTML), PARAM_INT);
         $record->imageurl = clean_param($data['imageurl'] ?? ($record->imageurl ?? ''), PARAM_URL);
-        $record->icon = clean_param($data['icon'] ?? ($record->icon ?? ''), PARAM_ALPHANUMEXT);
+        $record->icon = clean_param($data['icon'] ?? ($record->icon ?? ''), PARAM_SAFEPATH);
         if (array_key_exists('enabled', $data)) {
             $record->enabled = empty($data['enabled']) ? 0 : 1;
         } else {

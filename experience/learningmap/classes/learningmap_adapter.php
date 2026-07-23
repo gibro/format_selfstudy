@@ -6,7 +6,10 @@ namespace selfstudyexperience_learningmap;
 defined('MOODLE_INTERNAL') || die();
 
 /**
- * Adapter boundary for mod_learningmap.
+ * Read-only adapter boundary for mod_learningmap.
+ *
+ * Teachers curate places and paths in the Learningmap editor. The selfstudy
+ * experience only links to that activity and reports mapping coverage.
  */
 class learningmap_adapter {
 
@@ -53,13 +56,32 @@ class learningmap_adapter {
     }
 
     /**
-     * Prepares sync metadata for a future mod_learningmap write adapter.
+     * Returns the configured Learningmap background image URL.
+     *
+     * @param \cm_info $cm
+     * @return \moodle_url|null
+     */
+    public function get_background_image_url(\cm_info $cm): ?\moodle_url {
+        $context = \context_module::instance((int)$cm->id);
+        $files = get_file_storage()->get_area_files($context->id, 'mod_learningmap', 'background', 0,
+            'sortorder, id', false);
+        $file = reset($files);
+        if (!$file) {
+            return null;
+        }
+
+        return \moodle_url::make_pluginfile_url($context->id, 'mod_learningmap', 'background', 0, '/',
+            $file->get_filename(), false);
+    }
+
+    /**
+     * Describes the selected Learningmap activity and neutral path model.
      *
      * @param \cm_info $cm
      * @param \stdClass $mapmodel
      * @return \stdClass
      */
-    public function describe_sync(\cm_info $cm, \stdClass $mapmodel): \stdClass {
+    public function describe_context(\cm_info $cm, \stdClass $mapmodel): \stdClass {
         return (object)[
             'cmid' => (int)$cm->id,
             'nodecount' => count((array)($mapmodel->nodes ?? [])),
@@ -68,4 +90,58 @@ class learningmap_adapter {
             'revision' => (int)($mapmodel->revision ?? 0),
         ];
     }
+
+    /**
+     * Analyses how well the configured Learningmap covers the published selfstudy path.
+     *
+     * @param \cm_info $cm
+     * @param \stdClass $mapmodel
+     * @return \stdClass
+     */
+    public function get_mapping_status(\cm_info $cm, \stdClass $mapmodel): \stdClass {
+        global $DB;
+
+        $record = $DB->get_record('learningmap', ['id' => (int)$cm->instance], 'id, placestore', IGNORE_MISSING);
+        $placestore = $record ? json_decode((string)$record->placestore, true) : null;
+        if (!is_array($placestore)) {
+            $placestore = [];
+        }
+
+        $pathcmids = [];
+        $pathcmidlist = [];
+        foreach ((array)($mapmodel->nodes ?? []) as $node) {
+            $cmid = (int)($node->cmid ?? 0);
+            if ($cmid > 0) {
+                $pathcmids[$cmid] = true;
+                $pathcmidlist[] = $cmid;
+            }
+        }
+
+        $mappedcmids = [];
+        foreach ((array)($placestore['places'] ?? []) as $place) {
+            $cmid = (int)($place['linkedActivity'] ?? 0);
+            if ($cmid > 0) {
+                $mappedcmids[$cmid] = true;
+            }
+        }
+
+        $missing = array_values(array_diff(array_keys($pathcmids), array_keys($mappedcmids)));
+        $orphaned = array_values(array_diff(array_keys($mappedcmids), array_keys($pathcmids)));
+        $placecount = count((array)($placestore['places'] ?? []));
+
+        return (object)[
+            'cmid' => (int)$cm->id,
+            'nodecount' => count($pathcmidlist),
+            'placecount' => $placecount,
+            'mappedcount' => count(array_filter($pathcmidlist, static function(int $cmid) use ($mappedcmids): bool {
+                return isset($mappedcmids[$cmid]);
+            })),
+            'missingcount' => count($missing),
+            'orphanedcount' => count($orphaned),
+            'missingcmids' => $missing,
+            'orphanedcmids' => $orphaned,
+            'hasmap' => $placecount > 0,
+        ];
+    }
+
 }

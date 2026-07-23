@@ -80,7 +80,6 @@ class format_selfstudy extends core_courseformat\base {
     public function page_set_course(moodle_page $page): void {
         global $OUTPUT, $USER;
 
-        $this->add_course_more_navigation($page);
         $path = $page->url ? $page->url->get_path(false) : '';
         if ($path === '/course/view.php') {
             $page->add_body_class('format-selfstudy-hide-courseindex');
@@ -143,10 +142,6 @@ class format_selfstudy extends core_courseformat\base {
                 'showPathOutline' => $showpathui,
                 'pathPointColor' => $pathpointcolor,
                 'nextButtonColor' => $nextbuttoncolor,
-                'accessiblePathUrl' => $showpathui ?
-                    (new moodle_url('/course/format/selfstudy/accessible_path.php',
-                        ['id' => $this->courseid]))->out(false) : '',
-                'accessiblePathLabel' => get_string('learningpathaccessibleview', 'format_selfstudy'),
             ]]);
             return;
         }
@@ -316,7 +311,7 @@ class format_selfstudy extends core_courseformat\base {
         $statuslabel = $this->get_path_status_label((string)$entry->status);
         $parts = [
             (string)$entry->title,
-            get_string('learningpathaccessiblestatus', 'format_selfstudy', $statuslabel),
+            get_string('learningpathstatuslabel', 'format_selfstudy', $statuslabel),
         ];
         if (!empty($entry->availableinfo)) {
             $parts[] = trim(strip_tags((string)$entry->availableinfo));
@@ -412,7 +407,7 @@ class format_selfstudy extends core_courseformat\base {
                 }
 
                 $data = $completion->get_data($cm, false, $USER->id);
-                if ($this->is_completion_done((int)$data->completionstate)) {
+                if ($this->is_completion_done_for_cm($data, $cm)) {
                     $completedtime = (int)($data->timemodified ?? 0);
                     if (!$latestcompletedid || $completedtime >= $latestcompletedtime) {
                         $latestcompletedid = (int)$cm->id;
@@ -592,7 +587,7 @@ class format_selfstudy extends core_courseformat\base {
                 $completiontime = 0;
                 if ($completion->is_enabled($cm)) {
                     $data = $completion->get_data($cm, false, $USER->id);
-                    if ($this->is_completion_done((int)$data->completionstate)) {
+                    if ($this->is_completion_done_for_cm($data, $cm)) {
                         $statuskey = 'complete';
                         $statuslabel = get_string('statuscomplete', 'format_selfstudy');
                         $completiontime = (int)($data->timemodified ?? 0);
@@ -632,94 +627,6 @@ class format_selfstudy extends core_courseformat\base {
     }
 
     /**
-     * Adds selfstudy administration links to Moodle's course "More" menu.
-     *
-     * @param moodle_page $page
-     */
-    protected function add_course_more_navigation(moodle_page $page): void {
-        try {
-            $course = $this->get_course();
-            $coursecontext = context_course::instance($course->id);
-            if (!has_capability('moodle/course:update', $coursecontext)) {
-                return;
-            }
-
-            $settingsnav = $page->settingsnav;
-            $courseadminnode = $settingsnav->find('courseadmin', navigation_node::TYPE_COURSE);
-            if (!$courseadminnode) {
-                return;
-            }
-
-            if ($courseadminnode->find('format_selfstudy', navigation_node::TYPE_CONTAINER)) {
-                return;
-            }
-
-            $authoringurl = new moodle_url('/course/format/selfstudy/authoring.php', ['id' => $course->id]);
-            $editorurl = new moodle_url('/course/format/selfstudy/path_editor.php', ['id' => $course->id]);
-            $selfstudynode = $courseadminnode->add(
-                get_string('selfstudynavigation', 'format_selfstudy'),
-                $authoringurl,
-                navigation_node::TYPE_CONTAINER,
-                null,
-                'format_selfstudy',
-                new pix_icon('i/settings', '')
-            );
-            $selfstudynode->set_force_into_more_menu(true);
-
-            $selfstudynode->add(
-                get_string('authoringworkflow', 'format_selfstudy'),
-                $authoringurl,
-                navigation_node::TYPE_SETTING,
-                null,
-                'format_selfstudy_authoring',
-                new pix_icon('i/course', '')
-            );
-
-            $selfstudynode->add(
-                get_string('learningpatheditor', 'format_selfstudy'),
-                $editorurl,
-                navigation_node::TYPE_SETTING,
-                null,
-                'format_selfstudy_path_editor',
-                new pix_icon('t/edit', '')
-            );
-
-            $importurl = new moodle_url('/course/format/selfstudy/path_import.php', ['id' => $course->id]);
-            $selfstudynode->add(
-                get_string('learningpathimport', 'format_selfstudy'),
-                $importurl,
-                navigation_node::TYPE_SETTING,
-                null,
-                'format_selfstudy_path_import',
-                new pix_icon('i/import', '')
-            );
-
-            $experienceurl = new moodle_url('/course/format/selfstudy/experience_settings.php', ['id' => $course->id]);
-            $selfstudynode->add(
-                get_string('experiencesettings', 'format_selfstudy'),
-                $experienceurl,
-                navigation_node::TYPE_SETTING,
-                null,
-                'format_selfstudy_experience_settings',
-                new pix_icon('i/settings', '')
-            );
-
-            $settingsurl = new moodle_url('/course/edit.php', ['id' => $course->id]);
-            $settingsurl->set_anchor('id_format_selfstudy');
-            $selfstudynode->add(
-                get_string('formatoptions', 'format_selfstudy'),
-                $settingsurl,
-                navigation_node::TYPE_SETTING,
-                null,
-                'format_selfstudy_settings',
-                new pix_icon('i/settings', '')
-            );
-        } catch (Throwable $exception) {
-            return;
-        }
-    }
-
-    /**
      * Checks whether a completion state is done.
      *
      * @param int $completionstate
@@ -727,6 +634,47 @@ class format_selfstudy extends core_courseformat\base {
      */
     protected function is_completion_done(int $completionstate): bool {
         return $completionstate === COMPLETION_COMPLETE || $completionstate === COMPLETION_COMPLETE_PASS;
+    }
+
+    /**
+     * Checks whether a module is complete, including Moodle's view-only completion state.
+     *
+     * @param stdClass $data
+     * @param cm_info $cm
+     * @return bool
+     */
+    protected function is_completion_done_for_cm(stdClass $data, cm_info $cm): bool {
+        if ($this->is_completion_done((int)$data->completionstate)) {
+            return true;
+        }
+
+        return $this->is_view_only_completion($cm) && !empty($data->viewed);
+    }
+
+    /**
+     * Checks whether the only enabled automatic completion rule is "view activity".
+     *
+     * @param cm_info $cm
+     * @return bool
+     */
+    protected function is_view_only_completion(cm_info $cm): bool {
+        if ((int)$cm->completion !== COMPLETION_TRACKING_AUTOMATIC ||
+                (int)$cm->completionview !== COMPLETION_VIEW_REQUIRED) {
+            return false;
+        }
+
+        if (!empty($cm->completiongradeitemnumber) || !empty($cm->completionpassgrade)) {
+            return false;
+        }
+
+        $customdata = (array)$cm->get_custom_data();
+        foreach ((array)($customdata['customcompletionrules'] ?? []) as $enabled) {
+            if (!empty($enabled)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
@@ -1122,6 +1070,10 @@ class format_selfstudy extends core_courseformat\base {
      */
     public function update_course_format_options($data, $oldcourse = null) {
         $changed = parent::update_course_format_options($data, $oldcourse);
+        $dataarray = (array)$data;
+        if (array_key_exists('learnerview', $dataarray)) {
+            $changed = $this->save_learning_view_option((string)$dataarray['learnerview']) || $changed;
+        }
         $dataobject = (object)$data;
         if (!empty($this->courseid) && !empty($dataobject->selfstudyheroimage_filemanager)) {
             $context = context_course::instance($this->courseid);
@@ -1130,6 +1082,57 @@ class format_selfstudy extends core_courseformat\base {
         }
         $this->save_course_contacts_from_form($dataobject);
         $this->save_course_experiences_from_request();
+
+        return $changed;
+    }
+
+    /**
+     * Persists the learner view course format option.
+     *
+     * The option is intentionally hidden from Moodle's generic course edit form,
+     * so the standard format option writer will not include it in that context.
+     *
+     * @param string $learnerview
+     * @return bool whether the stored value changed
+     */
+    public function save_learning_view_option(string $learnerview): bool {
+        global $DB;
+
+        if (empty($this->courseid)) {
+            return false;
+        }
+
+        $learnerview = clean_param($learnerview, PARAM_TEXT);
+        if ($learnerview === '') {
+            $learnerview = 'base';
+        }
+
+        $conditions = [
+            'courseid' => (int)$this->courseid,
+            'format' => $this->format,
+            'sectionid' => 0,
+            'name' => 'learnerview',
+        ];
+        $record = $DB->get_record('course_format_options', $conditions, '*', IGNORE_MISSING);
+        $changed = false;
+
+        if ($record) {
+            if ((string)$record->value !== $learnerview) {
+                $DB->set_field('course_format_options', 'value', $learnerview, ['id' => $record->id]);
+                $changed = true;
+            }
+        } else {
+            $newrecord = (object)$conditions;
+            $newrecord->value = $learnerview;
+            $DB->insert_record('course_format_options', $newrecord);
+            $changed = ($learnerview !== 'base');
+        }
+
+        if ($changed) {
+            rebuild_course_cache((int)$this->courseid);
+            $this->course = false;
+            unset($this->formatoptions[0]);
+        }
 
         return $changed;
     }
@@ -1347,7 +1350,7 @@ class format_selfstudy extends core_courseformat\base {
         if (!in_array($learnerview, $validviews, true)) {
             $learnerview = 'base';
         }
-        parent::update_course_format_options(['learnerview' => $learnerview]);
+        $this->save_learning_view_option($learnerview);
     }
 
     /**
@@ -1619,7 +1622,8 @@ class format_selfstudy extends core_courseformat\base {
  */
 function format_selfstudy_pluginfile($course, $cm, $context, $filearea, $args, $forcedownload,
         array $options = []): bool {
-    if ($context->contextlevel !== CONTEXT_COURSE || !in_array($filearea, ['heroimage', 'sectionimage'], true)) {
+    if ($context->contextlevel !== CONTEXT_COURSE ||
+            !in_array($filearea, ['heroimage', 'sectionimage', 'pathimage'], true)) {
         return false;
     }
     if (!has_capability('moodle/course:view', $context)) {
@@ -1627,7 +1631,7 @@ function format_selfstudy_pluginfile($course, $cm, $context, $filearea, $args, $
     }
 
     $filename = array_pop($args);
-    $itemid = $filearea === 'sectionimage' ? (int)array_shift($args) : 0;
+    $itemid = in_array($filearea, ['sectionimage', 'pathimage'], true) ? (int)array_shift($args) : 0;
     if (!$filename || $filename === '.') {
         return false;
     }

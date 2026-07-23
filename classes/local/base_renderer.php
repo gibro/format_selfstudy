@@ -164,95 +164,6 @@ class base_renderer {
     }
 
     /**
-     * Renders the active path as an explicit accessible alternative to visual experiences.
-     *
-     * @param \stdClass $activepath
-     * @param \stdClass|null $progress
-     * @param \stdClass[] $outline
-     * @param \cm_info|null $mainmapcm
-     * @param string $pathpointcolor
-     * @param bool $showlockedactivities
-     * @return string
-     */
-    public function render_accessible_path_view(\stdClass $activepath, ?\stdClass $progress, array $outline,
-            ?\cm_info $mainmapcm, string $pathpointcolor = '#6f1ab1', bool $showlockedactivities = true): string {
-        $outline = \format_selfstudy_filter_locked_outline($outline, $showlockedactivities);
-        $nav = $this->get_path_outline_navigation($outline);
-        $titleid = 'format-selfstudy-accessiblepath-title';
-        $pathpointcolor = \format_selfstudy_normalise_hex_color($pathpointcolor);
-
-        $output = \html_writer::start_tag('section', [
-            'class' => 'format-selfstudy-accessiblepath',
-            'aria-labelledby' => $titleid,
-            'style' => '--format-selfstudy-path-color: ' . $pathpointcolor,
-        ]);
-        $output .= \html_writer::tag('h3', get_string('learningpathaccessibleview', 'format_selfstudy'),
-            ['id' => $titleid]);
-        $output .= \html_writer::div(get_string('learningpathaccessibleintro', 'format_selfstudy'), 'text-muted');
-
-        if ($progress) {
-            $progresslabel = get_string('learningpathprogresscount', 'format_selfstudy', (object)[
-                'complete' => $progress->complete,
-                'total' => $progress->total,
-                'percentage' => $progress->percentage,
-            ]);
-            $output .= \html_writer::div($progresslabel, 'format-selfstudy-accessiblepath-progress');
-        }
-
-        $output .= \html_writer::start_tag('nav', [
-            'class' => 'format-selfstudy-accessiblepath-nav',
-            'aria-label' => get_string('learningpathaccessiblenavigation', 'format_selfstudy'),
-        ]);
-        if (!empty($nav['previous'])) {
-            $output .= \html_writer::link($nav['previous']->url,
-                get_string('learningpathaccessibleprevious', 'format_selfstudy'), ['class' => 'btn btn-secondary']);
-        }
-        if (!empty($activepath->courseid)) {
-            $output .= \html_writer::link(new \moodle_url('/course/view.php', ['id' => (int)$activepath->courseid]),
-                get_string('viewcourse', 'format_selfstudy'), ['class' => 'btn btn-secondary']);
-        }
-        if ($mainmapcm) {
-            $output .= \html_writer::link(new \moodle_url('/mod/learningmap/view.php', ['id' => $mainmapcm->id]),
-                get_string('learningpathaccessiblemap', 'format_selfstudy'), ['class' => 'btn btn-secondary']);
-        }
-        if (!empty($nav['next'])) {
-            $output .= \html_writer::link($nav['next']->url,
-                get_string('learningpathaccessiblenext', 'format_selfstudy'), ['class' => 'btn btn-primary']);
-        }
-        $output .= \html_writer::end_tag('nav');
-
-        $output .= $this->render_path_outline($outline, 'format-selfstudy-accessiblepath-list', $pathpointcolor);
-        $output .= \html_writer::end_tag('section');
-
-        return $output;
-    }
-
-    /**
-     * Finds previous and next stations for accessible path navigation.
-     *
-     * @param \stdClass[] $outline
-     * @return array
-     */
-    public function get_path_outline_navigation(array $outline): array {
-        $navigation = ['previous' => null, 'next' => null];
-
-        foreach ($outline as $entry) {
-            if (empty($entry->url)) {
-                continue;
-            }
-            if ($entry->status === 'complete') {
-                $navigation['previous'] = $entry;
-                continue;
-            }
-            if (!$navigation['next'] && in_array($entry->status, ['recommended', 'started', 'review', 'open'], true)) {
-                $navigation['next'] = $entry;
-            }
-        }
-
-        return $navigation;
-    }
-
-    /**
      * Renders a compact learning path outline.
      *
      * @param \stdClass[] $outline
@@ -296,7 +207,7 @@ class base_renderer {
 
         return \html_writer::tag('ol', implode('', $items), [
             'class' => $class,
-            'aria-label' => get_string('learningpathaccessibleoutline', 'format_selfstudy'),
+            'aria-label' => get_string('learningpathoutline', 'format_selfstudy'),
             'data-format-selfstudy-outline' => '1',
             'style' => '--format-selfstudy-path-color: ' . $pathpointcolor,
         ]);
@@ -410,7 +321,7 @@ class base_renderer {
     public function get_path_item_aria_label(\stdClass $entry, string $statuslabel): string {
         $parts = [
             $entry->title,
-            get_string('learningpathaccessiblestatus', 'format_selfstudy', $statuslabel),
+            get_string('learningpathstatuslabel', 'format_selfstudy', $statuslabel),
         ];
         if (!empty($entry->availableinfo)) {
             $parts[] = self::normalise_plain_text((string)$entry->availableinfo);

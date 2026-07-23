@@ -115,7 +115,7 @@ class experience_repository {
 
         $installed = array_flip(array_map([$this, 'normalise_component'], $installedcomponents));
         foreach ($this->get_course_experiences($courseid) as $record) {
-            $ismissing = empty($installed[$record->component]);
+            $ismissing = !array_key_exists($record->component, $installed);
             if ((int)$record->missing === (int)$ismissing) {
                 continue;
             }

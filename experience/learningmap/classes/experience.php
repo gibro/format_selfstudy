@@ -18,8 +18,8 @@ class experience {
     public static function get_metadata(): \stdClass {
         return (object)[
             'component' => 'selfstudyexperience_learningmap',
-            'name' => get_string('pluginname', 'selfstudyexperience_learningmap'),
-            'description' => get_string('plugindescription', 'selfstudyexperience_learningmap'),
+            'name' => get_string('learningmapexperience_name', 'format_selfstudy'),
+            'description' => get_string('learningmapexperience_plugindescription', 'format_selfstudy'),
             'icon' => 'i/navigationitem',
             'schema' => 1,
             'features' => ['map', 'activitynavigation'],

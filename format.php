@@ -11,9 +11,75 @@ if (empty($FORMAT_SELFSTUDY_FUNCTIONS_ONLY)) {
 $format = course_get_format($course);
 $formatoptions = $format->get_format_options();
 $course = $format->get_course();
+if (optional_param('selfstudyexperiencesettings', 0, PARAM_BOOL)) {
+    $FORMAT_SELFSTUDY_EXPERIENCE_SETTINGS_INLINE = true;
+    require(__DIR__ . '/experience_settings.php');
+    return;
+}
 if ($PAGE->user_is_editing()) {
     course_create_sections_if_missing($course, 0);
     $renderer = $PAGE->get_renderer('format_selfstudy');
+    $pathrepository = new \format_selfstudy\local\path_repository();
+    $authoringstate = (new \format_selfstudy\local\authoring_workflow($pathrepository))->get_state($course);
+    $authoringrenderer = new \format_selfstudy\local\authoring_renderer();
+    echo html_writer::start_div('format-selfstudy-editing-workflow');
+    echo $authoringrenderer->workflow($authoringstate);
+    echo html_writer::end_div();
+
+    if (optional_param('selfstudyactivitysettings', 0, PARAM_BOOL)) {
+        $FORMAT_SELFSTUDY_PATH_EDITOR_FUNCTIONS_ONLY = true;
+        require_once(__DIR__ . '/path_editor.php');
+        $activities = format_selfstudy_path_editor_get_activities($course);
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            require_sesskey();
+            if (format_selfstudy_path_editor_save_activity_settings($course, $activities)) {
+                rebuild_course_cache((int)$course->id, true);
+            }
+            redirect(new moodle_url('/course/view.php', [
+                'id' => $course->id,
+                'selfstudyactivitysettings' => 1,
+            ]), get_string('changessaved'), null, \core\output\notification::NOTIFY_SUCCESS);
+        }
+
+        echo html_writer::start_tag('form', [
+            'method' => 'post',
+            'action' => (new moodle_url('/course/view.php', [
+                'id' => $course->id,
+                'selfstudyactivitysettings' => 1,
+            ]))->out(false),
+            'class' => 'format-selfstudy-patheditor-form format-selfstudy-activitysettings-embed',
+        ]);
+        echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'sesskey', 'value' => sesskey()]);
+        echo format_selfstudy_path_editor_render_activity_settings_panel($course, $activities);
+        echo html_writer::div(
+            html_writer::tag('button', get_string('savechanges'), [
+                'type' => 'submit',
+                'name' => 'saveaction',
+                'class' => 'btn btn-primary',
+                'value' => 'draft',
+            ]),
+            'format-selfstudy-patheditor-actions'
+        );
+        echo html_writer::end_tag('form');
+        return;
+    }
+
+    if (optional_param('selfstudypatheditor', 0, PARAM_BOOL)) {
+        $FORMAT_SELFSTUDY_PATH_EDITOR_INLINE = true;
+        require(__DIR__ . '/path_editor.php');
+        return;
+    }
+
+    if (optional_param('selfstudyexperiencesettings', 0, PARAM_BOOL)) {
+        $FORMAT_SELFSTUDY_EXPERIENCE_SETTINGS_INLINE = true;
+        require(__DIR__ . '/experience_settings.php');
+        return;
+    }
+
+    if (!optional_param('selfstudycontent', 0, PARAM_BOOL)) {
+        return;
+    }
+
     if (isset($displaysection) && !is_null($displaysection)) {
         $format->set_sectionnum($displaysection);
     }
@@ -892,7 +958,7 @@ function format_selfstudy_render_fallback_cm_list(stdClass $course, section_info
             $status = html_writer::span(
                 $statuslabel,
                 'format-selfstudy-activitystatus format-selfstudy-activitystatus-' . $statuskey,
-                ['aria-label' => get_string('learningpathaccessiblestatus', 'format_selfstudy', $statuslabel)]
+                ['aria-label' => get_string('learningpathstatuslabel', 'format_selfstudy', $statuslabel)]
             );
         }
         $content = html_writer::span($icon, 'activityiconcontainer') .
@@ -1560,34 +1626,6 @@ function format_selfstudy_render_learning_trace_list(string $title, array $items
 }
 
 /**
- * Renders the active path as an explicit accessible alternative to the map.
- *
- * @param stdClass $activepath
- * @param stdClass|null $progress
- * @param stdClass[] $outline
- * @param cm_info|null $mainmapcm
- * @param string $pathpointcolor
- * @return string
- */
-function format_selfstudy_render_accessible_path_view(stdClass $activepath, ?stdClass $progress, array $outline,
-        ?cm_info $mainmapcm, string $pathpointcolor = '#6f1ab1', bool $showlockedactivities = true): string {
-    $renderer = new \format_selfstudy\local\base_renderer();
-    return $renderer->render_accessible_path_view($activepath, $progress, $outline, $mainmapcm, $pathpointcolor,
-        $showlockedactivities);
-}
-
-/**
- * Finds previous and next stations for the accessible path navigation.
- *
- * @param stdClass[] $outline
- * @return array
- */
-function format_selfstudy_get_path_outline_navigation(array $outline): array {
-    $renderer = new \format_selfstudy\local\base_renderer();
-    return $renderer->get_path_outline_navigation($outline);
-}
-
-/**
  * Renders a compact learning path outline.
  *
  * @param stdClass[] $outline
@@ -1825,7 +1863,7 @@ function format_selfstudy_get_learning_summaries(stdClass $course, core_coursefo
 
                 $summary->completionenabled++;
                 $data = $completion->get_data($cm, false, $USER->id);
-                if (format_selfstudy_is_completion_done((int)$data->completionstate)) {
+                if (format_selfstudy_is_cm_completion_done($cm, $data)) {
                     $summary->completioncomplete++;
                     continue;
                 }
@@ -1996,8 +2034,7 @@ function format_selfstudy_get_section_status_label(section_info $section, course
 
         $enabled++;
         $data = $completion->get_data($cm, false, $USER->id);
-        if ((int)$data->completionstate === COMPLETION_COMPLETE ||
-                (int)$data->completionstate === COMPLETION_COMPLETE_PASS) {
+        if (format_selfstudy_is_cm_completion_done($cm, $data)) {
             $complete++;
         }
     }
@@ -2017,6 +2054,47 @@ function format_selfstudy_get_section_status_label(section_info $section, course
  */
 function format_selfstudy_is_completion_done(int $completionstate): bool {
     return $completionstate === COMPLETION_COMPLETE || $completionstate === COMPLETION_COMPLETE_PASS;
+}
+
+/**
+ * Checks whether a course module is complete, including Moodle's view-only completion state.
+ *
+ * @param cm_info $cm
+ * @param stdClass $data
+ * @return bool
+ */
+function format_selfstudy_is_cm_completion_done(cm_info $cm, stdClass $data): bool {
+    if (format_selfstudy_is_completion_done((int)$data->completionstate)) {
+        return true;
+    }
+
+    return format_selfstudy_is_view_only_completion($cm) && !empty($data->viewed);
+}
+
+/**
+ * Checks whether the only enabled automatic completion rule is "view activity".
+ *
+ * @param cm_info $cm
+ * @return bool
+ */
+function format_selfstudy_is_view_only_completion(cm_info $cm): bool {
+    if ((int)$cm->completion !== COMPLETION_TRACKING_AUTOMATIC ||
+            (int)$cm->completionview !== COMPLETION_VIEW_REQUIRED) {
+        return false;
+    }
+
+    if (!empty($cm->completiongradeitemnumber) || !empty($cm->completionpassgrade)) {
+        return false;
+    }
+
+    $customdata = (array)$cm->get_custom_data();
+    foreach ((array)($customdata['customcompletionrules'] ?? []) as $enabled) {
+        if (!empty($enabled)) {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 /**
@@ -2073,7 +2151,7 @@ function format_selfstudy_get_cm_status_key(cm_info $cm, completion_info $comple
     }
 
     $data = $completion->get_data($cm, false, $USER->id);
-    if (format_selfstudy_is_completion_done((int)$data->completionstate)) {
+    if (format_selfstudy_is_cm_completion_done($cm, $data)) {
         return 'complete';
     }
 
