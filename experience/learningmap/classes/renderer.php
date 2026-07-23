@@ -197,9 +197,9 @@ class renderer implements experience_renderer_interface {
                             ['style' => 'width: ' . $percentage . '%']),
                         'format-selfstudy-learningmap-progressbar'
                     ) .
-                    \html_writer::div(get_string('courseherorequiredvalue', 'format_selfstudy',
+                    \html_writer::div(get_string('learningmapexperience_progressnote', 'format_selfstudy',
                         (object)['complete' => (int)($progress->complete ?? 0),
-                            'open' => max(0, (int)($progress->total ?? 0) - (int)($progress->complete ?? 0))]),
+                            'total' => (int)($progress->total ?? 0)]),
                         'format-selfstudy-learningmap-progress-note'),
                     'format-selfstudy-learningmap-progresscard'
                 ) .
@@ -297,7 +297,7 @@ class renderer implements experience_renderer_interface {
                     'format-selfstudy-learningmap-sectionbody'
                 ) .
                 \html_writer::div(
-                    \html_writer::link($sectionurl, get_string('learningpathcontinue', 'format_selfstudy'), [
+                    \html_writer::link($sectionurl, $this->section_action_label($cms, $statuskey), [
                         'class' => 'btn btn-link format-selfstudy-learningmap-sectionlink',
                     ]),
                     'format-selfstudy-learningmap-sectionaction'
@@ -387,6 +387,28 @@ class renderer implements experience_renderer_interface {
         }
 
         return true;
+    }
+
+    /**
+     * Returns the label for the section action link.
+     *
+     * "Weiterlernen" only fits a section that still has something to do. A finished
+     * section offers a revisit, and a section without learning activities is just
+     * opened.
+     *
+     * @param \cm_info[] $cms learning activities in the section
+     * @param string $statuskey
+     * @return string
+     */
+    private function section_action_label(array $cms, string $statuskey): string {
+        if (!$cms) {
+            return get_string('learningmapexperience_sectionopen', 'format_selfstudy');
+        }
+        if ($statuskey === 'complete') {
+            return get_string('learningmapexperience_sectionrevisit', 'format_selfstudy');
+        }
+
+        return get_string('learningpathcontinue', 'format_selfstudy');
     }
 
     /**
