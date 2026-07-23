@@ -52,12 +52,11 @@ class renderer implements experience_renderer_interface {
 
         $mapmodel = (new map_builder())->build($course, $baseview, $config);
         $mapurl = $adapter->get_map_url($cm, $mapmodel);
-        $context = $adapter->describe_context($cm, $mapmodel);
         $backgroundurl = $adapter->get_background_image_url($cm);
         $modeljson = json_encode($mapmodel, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 
         return \html_writer::tag('section',
-            $this->render_startpage_hero($course, $baseview, $mapurl, $backgroundurl, $mapmodel, $context) .
+            $this->render_startpage_hero($course, $baseview, $mapurl, $backgroundurl, $mapmodel) .
             $this->render_section_preview($course),
             [
                 'class' => 'format-selfstudy-learningmap-experience format-selfstudy-learningmap-startpage ' .
@@ -92,41 +91,43 @@ class renderer implements experience_renderer_interface {
     }
 
     /**
-     * Renders a compact model summary for the first version.
+     * Renders the compact state summary below the map.
+     *
+     * The wording follows the configured theme: the adventure theme stays inside
+     * one picture (places are explored, stages are completed, what is still locked
+     * lies in the fog), the quiet theme names the same things plainly. Both avoid
+     * promising Moodle badges, which this experience does not award.
      *
      * @param \stdClass $mapmodel
-     * @param \stdClass $context
      * @return string
      */
-    private function render_status_summary(\stdClass $mapmodel, \stdClass $context): string {
+    private function render_status_summary(\stdClass $mapmodel): string {
         $counts = [];
         foreach ((array)($mapmodel->nodes ?? []) as $node) {
             $state = (string)($node->gamestate ?? 'available');
             $counts[$state] = ($counts[$state] ?? 0) + 1;
         }
 
+        $suffix = (string)($mapmodel->theme ?? 'adventure') === 'quiet' ? 'quiet' : 'adventure';
         $labels = [
-            'checkpoint' => get_string('learningmapexperience_statecheckpoint', 'format_selfstudy'),
-            'discovered' => get_string('learningmapexperience_statediscovered', 'format_selfstudy'),
-            'next' => get_string('learningmapexperience_statenext', 'format_selfstudy'),
-            'fog' => get_string('learningmapexperience_statefog', 'format_selfstudy'),
-            'badge-earned' => get_string('learningmapexperience_statebadgeearned', 'format_selfstudy'),
+            'checkpoint' => 'learningmapexperience_statecheckpoint',
+            'discovered' => 'learningmapexperience_statediscovered',
+            'next' => 'learningmapexperience_statenext',
+            'fog' => 'learningmapexperience_statefog',
+            'badge-earned' => 'learningmapexperience_statedone',
         ];
 
         $items = [
-            \html_writer::span(get_string('learningmapexperience_stationcount', 'format_selfstudy',
+            \html_writer::span(get_string('learningmapexperience_stationcount' . $suffix, 'format_selfstudy',
                 count((array)($mapmodel->nodes ?? []))), 'format-selfstudy-learningmap-state'),
         ];
-        foreach ($labels as $state => $label) {
+        foreach ($labels as $state => $identifier) {
             if (empty($counts[$state])) {
                 continue;
             }
-            $items[] = \html_writer::span($label . ': ' . (int)$counts[$state],
-                'format-selfstudy-learningmap-state');
+            $items[] = \html_writer::span(get_string($identifier . $suffix, 'format_selfstudy') . ': ' .
+                (int)$counts[$state], 'format-selfstudy-learningmap-state');
         }
-
-        $items[] = \html_writer::span(get_string('learningmapexperience_revision', 'format_selfstudy') . ' ' .
-            (int)$context->revision, 'format-selfstudy-learningmap-state');
 
         return implode(\html_writer::span(' · ', 'format-selfstudy-learningmap-separator'), $items);
     }
@@ -139,11 +140,10 @@ class renderer implements experience_renderer_interface {
      * @param \moodle_url $mapurl
      * @param \moodle_url|null $backgroundurl
      * @param \stdClass $mapmodel
-     * @param \stdClass $context
      * @return string
      */
     private function render_startpage_hero(\stdClass $course, \stdClass $baseview, \moodle_url $mapurl,
-            ?\moodle_url $backgroundurl, \stdClass $mapmodel, \stdClass $context): string {
+            ?\moodle_url $backgroundurl, \stdClass $mapmodel): string {
         $progress = $baseview->progress ?? (object)['percentage' => 0, 'complete' => 0, 'total' => 0];
         $percentage = max(0, min(100, (int)($progress->percentage ?? 0)));
         $nexturl = trim((string)($progress->nexturl ?? '')) !== '' ? new \moodle_url((string)$progress->nexturl) : $mapurl;
@@ -179,7 +179,7 @@ class renderer implements experience_renderer_interface {
                 ) .
                 \html_writer::div(
                     \html_writer::div($mapmedia, 'format-selfstudy-learningmap-mapimage') .
-                    \html_writer::div($this->render_status_summary($mapmodel, $context),
+                    \html_writer::div($this->render_status_summary($mapmodel),
                         'format-selfstudy-learningmap-summary'),
                     'format-selfstudy-learningmap-hero-media'
                 ),
