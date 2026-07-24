@@ -883,7 +883,7 @@ class format_selfstudy extends core_courseformat\base {
             file_prepare_draft_area($draftitemid, $context->id, 'format_selfstudy', 'heroimage', 0, $fileoptions);
             $startheader = $mform->addElement('header', 'selfstudycourseformatstart',
                 get_string('courseformatsettingsstart', 'format_selfstudy'));
-            $mform->setExpanded('selfstudycourseformatstart', true);
+            $mform->setExpanded('selfstudycourseformatstart', false);
             $startintro = $mform->addElement('static', 'selfstudycourseformatstart_intro', '',
                 get_string('courseformatsettingsstart_desc', 'format_selfstudy'));
             $heroimage = $mform->addElement('filemanager', 'selfstudyheroimage_filemanager',
@@ -892,15 +892,13 @@ class format_selfstudy extends core_courseformat\base {
             $mform->setDefault('selfstudyheroimage_filemanager', $draftitemid);
             $heroimagehint = $mform->addElement('static', 'selfstudyheroimage_hint', '',
                 get_string('courseheroimage_hint', 'format_selfstudy'));
-            $contactheading = $mform->addElement('static', 'selfstudycoursecontacts_heading', '',
-                html_writer::div(
-                    html_writer::tag('h4', get_string('coursecontacts', 'format_selfstudy')),
-                    'format-selfstudy-settings-subsection'
-                ));
+            $contactsheader = $mform->addElement('header', 'selfstudycourseformatcontacts',
+                get_string('coursecontacts', 'format_selfstudy'));
+            $mform->setExpanded('selfstudycourseformatcontacts', false);
             $contactintro = $mform->addElement('static', 'selfstudycoursecontacts_intro', '',
                 get_string('coursecontactsintro', 'format_selfstudy'));
 
-            $contactelements = [$contactheading, $contactintro];
+            $contactelements = [$contactsheader, $contactintro];
             $contactusers = $this->get_course_contact_user_options($context);
             unset($contactusers[0]);
             $contacts = format_selfstudy_get_course_contacts((int)$this->courseid);
@@ -931,14 +929,12 @@ class format_selfstudy extends core_courseformat\base {
 
             $generalheader = $mform->addElement('header', 'selfstudycourseformatgeneral',
                 get_string('courseformatsettingsgeneral', 'format_selfstudy'));
-            $mform->setExpanded('selfstudycourseformatgeneral', true);
+            $mform->setExpanded('selfstudycourseformatgeneral', false);
             $generalintro = $mform->addElement('static', 'selfstudycourseformatgeneral_intro', '',
                 get_string('courseformatsettingsgeneral_desc', 'format_selfstudy'));
-            $designheader = $mform->addElement('header', 'selfstudycourseformatdesign',
-                get_string('courseformatsettingsdesign', 'format_selfstudy'));
-            $mform->setExpanded('selfstudycourseformatdesign', true);
-            $designintro = $mform->addElement('static', 'selfstudycourseformatdesign_intro', '',
-                get_string('courseformatsettingsdesign_desc', 'format_selfstudy'));
+            $colorsheader = $mform->addElement('header', 'selfstudycourseformatdesigncolors',
+                get_string('courseformatsettingsdesigncolors', 'format_selfstudy'));
+            $mform->setExpanded('selfstudycourseformatdesigncolors', false);
             $designcolorsintro = $mform->addElement('static', 'selfstudycourseformatdesign_colors', '',
                 html_writer::tag('style',
                     '.format-selfstudy-colorpicker::-webkit-color-swatch-wrapper{padding:0;}' .
@@ -964,22 +960,17 @@ class format_selfstudy extends core_courseformat\base {
                     '});' .
                     '});'
                 ) .
-                html_writer::div(
-                    html_writer::tag('h4', get_string('courseformatsettingsdesigncolors', 'format_selfstudy')) .
-                    html_writer::div(get_string('courseformatsettingsdesigncolors_desc', 'format_selfstudy'),
-                        'format-selfstudy-settings-help'),
-                    'format-selfstudy-settings-subsection'
-                ));
+                html_writer::div(get_string('courseformatsettingsdesigncolors_desc', 'format_selfstudy'),
+                    'format-selfstudy-settings-help'));
+            $navheader = $mform->addElement('header', 'selfstudycourseformatnavigation',
+                get_string('courseformatsettingsdesignnavigation', 'format_selfstudy'));
+            $mform->setExpanded('selfstudycourseformatnavigation', false);
             $designnavigationintro = $mform->addElement('static', 'selfstudycourseformatdesign_navigation', '',
-                html_writer::div(
-                    html_writer::tag('h4', get_string('courseformatsettingsdesignnavigation', 'format_selfstudy')) .
-                    html_writer::div(get_string('courseformatsettingsdesignnavigation_desc', 'format_selfstudy'),
-                        'format-selfstudy-settings-help'),
-                    'format-selfstudy-settings-subsection'
-                ));
+                html_writer::div(get_string('courseformatsettingsdesignnavigation_desc', 'format_selfstudy'),
+                    'format-selfstudy-settings-help'));
             $experienceheader = $mform->addElement('header', 'selfstudycourseformatexperience',
                 get_string('courseformatsettingsexperience', 'format_selfstudy'));
-            $mform->setExpanded('selfstudycourseformatexperience', true);
+            $mform->setExpanded('selfstudycourseformatexperience', false);
             $experienceintro = $mform->addElement('static', 'selfstudycourseformatexperience_intro', '',
                 get_string('courseformatsettingsexperience_desc', 'format_selfstudy'));
             $experiencecontrols = $this->add_experience_form_elements($mform);
@@ -1008,12 +999,13 @@ class format_selfstudy extends core_courseformat\base {
             }
 
             $elements = array_merge(
-                array_merge([$startheader, $startintro, $heroimage, $heroimagehint], $contactelements,
-                    [$generalheader, $generalintro]),
+                [$startheader, $startintro, $heroimage, $heroimagehint],
+                $contactelements,
+                [$generalheader, $generalintro],
                 $generalelements,
-                [$designheader, $designintro, $designcolorsintro],
+                [$colorsheader, $designcolorsintro],
                 $designcolorelements,
-                [$designnavigationintro],
+                [$navheader, $designnavigationintro],
                 $designnavigationelements,
                 array_merge([$experienceheader, $experienceintro], $experiencecontrols)
             );
