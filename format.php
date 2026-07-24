@@ -1054,8 +1054,14 @@ function format_selfstudy_render_learningmap_editing_fallback(stdClass $course, 
  */
 function format_selfstudy_render_path_choice(stdClass $course, array $paths, ?stdClass $activepath,
         ?stdClass $progress, array $outline = [], string $pathpointcolor = '#6f1ab1'): string {
+    $competencylabels = [];
+    if ($activepath) {
+        $competencylabels = (new \format_selfstudy\local\path_competency_service())
+            ->profile_labels_for_path((int)$course->id, (int)$activepath->id);
+    }
     $renderer = new \format_selfstudy\local\base_renderer();
-    return $renderer->render_path_choice($course, $paths, $activepath, $progress, $outline, $pathpointcolor);
+    return $renderer->render_path_choice($course, $paths, $activepath, $progress, $outline, $pathpointcolor,
+        $competencylabels);
 }
 
 /**

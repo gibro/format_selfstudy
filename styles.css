@@ -456,6 +456,12 @@
     color: #475569;
 }
 
+.format-selfstudy-pathchoice-competencies {
+    margin-top: .35rem;
+    font-size: .85rem;
+    color: #475569;
+}
+
 .format-selfstudy-pathchoice-meter {
     overflow: hidden;
     width: 100%;
@@ -4181,6 +4187,7 @@ body.format-selfstudy-hide-courseindex #page.drawers.show-drawer-left {
 .format-selfstudy-authoring-publishstatus,
 .format-selfstudy-authoring-diagnosis,
 .format-selfstudy-authoring-revisions,
+.format-selfstudy-authoring-competencies,
 .format-selfstudy-authoring-issues {
     padding: 1rem;
     border: 1px solid #d5dce8;

@@ -92,6 +92,7 @@ echo html_writer::div(
 
 echo $renderer->publish_status($state);
 echo $renderer->workflow($state);
+echo $renderer->competency_summary($state);
 echo $renderer->revisions($state);
 
 echo html_writer::end_div();

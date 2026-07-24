@@ -160,6 +160,7 @@ echo html_writer::tag('p', get_string('learningpatheditorintro', 'format_selfstu
 if (!$embedded) {
     echo $authoringrenderer->publish_status($authoringstate);
     echo $authoringrenderer->workflow($authoringstate);
+    echo $authoringrenderer->competency_summary($authoringstate);
 }
 
 echo html_writer::start_div('format-selfstudy-patheditor-toolbar');

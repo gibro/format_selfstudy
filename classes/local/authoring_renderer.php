@@ -149,6 +149,37 @@ class authoring_renderer {
     }
 
     /**
+     * Renders the derived competency profile of the current path.
+     *
+     * The profile is derived from the competencies linked to the path's
+     * stations. Renders nothing when no station uses competencies, so the
+     * competency layer stays invisible in courses that do not work with it.
+     *
+     * @param \stdClass $state
+     * @return string
+     */
+    public function competency_summary(\stdClass $state): string {
+        $profile = array_values((array)($state->competencyprofile ?? []));
+        if (!$profile) {
+            return '';
+        }
+
+        $items = array_map(static function(\stdClass $entry): string {
+            $count = (int)$entry->stationcount;
+            $countlabel = $count === 1 ?
+                get_string('authoringcompetencystation', 'format_selfstudy') :
+                get_string('authoringcompetencystations', 'format_selfstudy', $count);
+            return \s($entry->label . ' (' . $countlabel . ')');
+        }, $profile);
+
+        return \html_writer::div(
+            \html_writer::tag('h3', get_string('authoringcompetencysummary', 'format_selfstudy')) .
+            \html_writer::alist($items),
+            'format-selfstudy-authoring-competencies'
+        );
+    }
+
+    /**
      * Renders blockers and warnings.
      *
      * @param \stdClass $state

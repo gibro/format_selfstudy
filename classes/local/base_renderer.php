@@ -22,7 +22,8 @@ class base_renderer {
      * @return string
      */
     public function render_path_choice(\stdClass $course, array $paths, ?\stdClass $activepath,
-            ?\stdClass $progress, array $outline = [], string $pathpointcolor = '#6f1ab1'): string {
+            ?\stdClass $progress, array $outline = [], string $pathpointcolor = '#6f1ab1',
+            array $competencylabels = []): string {
         $pathpointcolor = \format_selfstudy_normalise_hex_color($pathpointcolor);
         $output = \html_writer::start_tag('details', [
             'class' => 'format-selfstudy-pathchoice',
@@ -51,6 +52,14 @@ class base_renderer {
             $output .= \html_writer::div('', 'format-selfstudy-pathchoice-meterbar',
                 ['style' => 'width: ' . $progress->percentage . '%']);
             $output .= \html_writer::end_div();
+
+            if ($competencylabels) {
+                $output .= \html_writer::div(
+                    s(get_string('learningpathcompetencies', 'format_selfstudy') . ': ' .
+                        implode(', ', $competencylabels)),
+                    'format-selfstudy-pathchoice-competencies'
+                );
+            }
 
             if ($outline) {
                 $output .= $this->render_path_outline($outline, 'format-selfstudy-pathoutline', $pathpointcolor);

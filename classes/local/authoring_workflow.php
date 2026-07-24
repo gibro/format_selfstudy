@@ -74,6 +74,8 @@ class authoring_workflow {
             'withoutmetadata' => 0,
         ];
         $missingcmids = $pathwithitems ? $this->get_missing_path_cmids($pathwithitems, $activities) : [];
+        $competencyprofile = $pathid ?
+            (new path_competency_service($this->pathrepository))->profile_for_path((int)$course->id, $pathid) : [];
         $draftchanged = $pathwithitems && $activerevision &&
             (int)($pathwithitems->timemodified ?? 0) > (int)($activerevision->timepublished ?? 0);
 
@@ -115,6 +117,7 @@ class authoring_workflow {
             'experience' => $experience,
             'activitymetadata' => $metadata,
             'activitymetadatacheckenabled' => $metadatacheckenabled,
+            'competencyprofile' => $competencyprofile,
             'missingcmids' => $missingcmids,
             'blockers' => array_values(array_unique($blockers)),
             'warnings' => array_values(array_unique($warnings)),
