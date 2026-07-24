@@ -138,6 +138,8 @@ $missingcmids = format_selfstudy_path_editor_get_missing_path_cmids($currentpath
 $grid = format_selfstudy_path_editor_grid_from_path($currentpath, $activities, $editorsections);
 $usedcmids = format_selfstudy_path_editor_get_grid_cmids($grid);
 $activerevision = $currentpath ? (new path_snapshot_repository())->get_active_revision((int)$currentpath->id) : null;
+$sourcepath = $repository->get_source_path((int)$course->id);
+$currentissource = $currentpath && $sourcepath && (int)$sourcepath->id === (int)$currentpath->id;
 $authoringstate = (new authoring_workflow($repository))->get_state($course, $currentpath ? (int)$currentpath->id : 0);
 $authoringrenderer = new authoring_renderer();
 
@@ -178,7 +180,11 @@ if ($paths) {
     echo html_writer::label(get_string('learningpathselect', 'format_selfstudy'), 'format-selfstudy-path-select');
     $options = [];
     foreach ($paths as $path) {
-        $options[(int)$path->id] = format_string($path->name);
+        $optionlabel = format_string($path->name);
+        if ($sourcepath && (int)$path->id === (int)$sourcepath->id) {
+            $optionlabel .= ' · ' . get_string('learningpathsourcebadge', 'format_selfstudy');
+        }
+        $options[(int)$path->id] = $optionlabel;
     }
     echo html_writer::select($options, 'pathid', $pathid, false, [
         'id' => 'format-selfstudy-path-select',
@@ -190,6 +196,41 @@ if ($paths) {
 echo html_writer::link(new moodle_url($baseurl, ['new' => 1]),
     get_string('learningpathnew', 'format_selfstudy'), ['class' => 'btn btn-secondary']);
 echo html_writer::end_div();
+
+// Availability source panel: exactly one published course path writes the
+// Moodle availability chain, sibling paths only arrange the same activities.
+if ($currentpath) {
+    echo html_writer::start_div('format-selfstudy-patheditor-sourcepanel');
+    if ($currentissource) {
+        echo html_writer::span(get_string('learningpathsourcebadge', 'format_selfstudy'),
+            'badge badge-info format-selfstudy-patheditor-sourcebadge');
+        echo html_writer::span(get_string('learningpathsourceinfo', 'format_selfstudy'),
+            'format-selfstudy-patheditor-sourceinfo text-muted');
+    } else {
+        echo html_writer::span($sourcepath ?
+            get_string('learningpathsourcecurrent', 'format_selfstudy', format_string($sourcepath->name)) :
+            get_string('learningpathsourcenone', 'format_selfstudy'),
+            'format-selfstudy-patheditor-sourceinfo text-muted');
+        if (!empty($currentpath->enabled)) {
+            echo html_writer::start_tag('form', [
+                'method' => 'post',
+                'action' => (new moodle_url($baseurl, ['pathid' => $pathid]))->out(false),
+                'class' => 'format-selfstudy-patheditor-sourceform',
+            ]);
+            echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'sesskey', 'value' => sesskey()]);
+            echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'action', 'value' => 'setsource']);
+            echo html_writer::tag('button', get_string('learningpathsetsource', 'format_selfstudy'), [
+                'type' => 'submit',
+                'class' => 'btn btn-outline-secondary btn-sm',
+            ]);
+            echo html_writer::end_tag('form');
+        } else {
+            echo html_writer::span(get_string('learningpathsourcenotpublished', 'format_selfstudy'),
+                'format-selfstudy-patheditor-sourcehint text-muted');
+        }
+    }
+    echo html_writer::end_div();
+}
 
 echo html_writer::start_tag('form', [
     'method' => 'post',
@@ -210,6 +251,9 @@ $status = !empty($currentpath->enabled) && $activerevision ?
     ]) :
     get_string(!empty($currentpath->enabled) ? 'learningpathstatuspublished' : 'learningpathstatusdraft',
         'format_selfstudy');
+if ($currentissource) {
+    $status .= ' · ' . get_string('learningpathsourcebadge', 'format_selfstudy');
+}
 echo html_writer::start_tag('details', ['class' => 'format-selfstudy-patheditor-details']);
 echo html_writer::tag('summary',
     html_writer::span(get_string('learningpath', 'format_selfstudy'), 'format-selfstudy-patheditor-detailstitle') .
@@ -432,6 +476,29 @@ function format_selfstudy_path_editor_handle_post(stdClass $course, moodle_url $
     if ($action === 'delete' && $pathid) {
         $repository->delete_path($pathid);
         format_selfstudy_redirect_after_save($baseurl, get_string('learningpathdeleted', 'format_selfstudy'));
+    }
+
+    if ($action === 'setsource' && $pathid) {
+        $sourcecandidate = $repository->get_path($pathid);
+        if (!$sourcecandidate || (int)$sourcecandidate->courseid !== (int)$course->id ||
+                (int)($sourcecandidate->userid ?? 0) !== 0 || empty($sourcecandidate->enabled)) {
+            format_selfstudy_redirect_after_save($baseurl,
+                get_string('learningpathsourcenotpublished', 'format_selfstudy'),
+                \core\output\notification::NOTIFY_WARNING);
+        }
+        $result = (new path_publish_service($repository))->set_course_source_path($course, $pathid);
+        $sourceurl = new moodle_url($baseurl, ['pathid' => $pathid]);
+        if (!empty($result->errors)) {
+            format_selfstudy_redirect_after_save($sourceurl,
+                get_string('learningpathsourceseterrors', 'format_selfstudy') .
+                    html_writer::alist(array_map('s', $result->errors)),
+                \core\output\notification::NOTIFY_WARNING);
+        }
+        format_selfstudy_redirect_after_save($sourceurl,
+            get_string('learningpathsourceset', 'format_selfstudy', (object)[
+                'written' => (int)$result->written,
+                'skipped' => (int)$result->skipped,
+            ]));
     }
 
     // The title lives in a collapsed panel, so an empty submission is a normal case

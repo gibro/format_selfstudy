@@ -9,7 +9,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'format_selfstudy';
-$plugin->version = 2026072315;
+$plugin->version = 2026072400;
 $plugin->requires = 2023100900;
 $plugin->maturity = MATURITY_ALPHA;
 $plugin->release = '0.2.0-alpha';

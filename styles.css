@@ -1407,6 +1407,19 @@ body.format-selfstudy-hide-courseindex #page.drawers.show-drawer-left {
     align-items: center;
 }
 
+.format-selfstudy-patheditor-sourcepanel {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    align-items: center;
+    margin: .75rem 0;
+}
+
+.format-selfstudy-patheditor-sourceform {
+    display: inline-flex;
+    margin: 0;
+}
+
 .format-selfstudy-patheditor-embed {
     display: block;
     width: 100%;

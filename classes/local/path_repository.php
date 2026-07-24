@@ -180,7 +180,11 @@ class path_repository {
     }
 
     /**
-     * Publishes one course-level path and unpublishes other course-level paths.
+     * Publishes one course-level path without touching sibling paths.
+     *
+     * Several published course paths may coexist; learners pick one of them.
+     * The first published path in a course also becomes the availability
+     * source path, later ones only become visible choices.
      *
      * @param int $courseid
      * @param int $pathid
@@ -195,13 +199,62 @@ class path_repository {
         ], '*', MUST_EXIST);
 
         $transaction = $DB->start_delegated_transaction();
-        $DB->set_field(self::TABLE_PATHS, 'enabled', 0, [
+        $DB->set_field(self::TABLE_PATHS, 'enabled', 1, ['id' => (int)$path->id]);
+        $DB->set_field(self::TABLE_PATHS, 'timemodified', time(), ['id' => (int)$path->id]);
+        if (!$this->get_source_path($courseid)) {
+            $DB->set_field(self::TABLE_PATHS, 'issource', 1, ['id' => (int)$path->id]);
+        }
+        $transaction->allow_commit();
+    }
+
+    /**
+     * Marks one published course path as the single availability source path.
+     *
+     * Exactly one course path drives Moodle activity availability via
+     * path_sync. All other paths are view-level alternatives that arrange the
+     * same course activities differently but never gate them.
+     *
+     * @param int $courseid
+     * @param int $pathid
+     */
+    public function set_source_path(int $courseid, int $pathid): void {
+        global $DB;
+
+        $path = $DB->get_record(self::TABLE_PATHS, [
+            'id' => $pathid,
+            'courseid' => $courseid,
+            'userid' => 0,
+        ], '*', MUST_EXIST);
+        if (empty($path->enabled)) {
+            throw new \coding_exception('Only a published course path can become the availability source path.');
+        }
+
+        $transaction = $DB->start_delegated_transaction();
+        $DB->set_field(self::TABLE_PATHS, 'issource', 0, [
             'courseid' => $courseid,
             'userid' => 0,
         ]);
-        $DB->set_field(self::TABLE_PATHS, 'enabled', 1, ['id' => (int)$path->id]);
+        $DB->set_field(self::TABLE_PATHS, 'issource', 1, ['id' => (int)$path->id]);
         $DB->set_field(self::TABLE_PATHS, 'timemodified', time(), ['id' => (int)$path->id]);
         $transaction->allow_commit();
+    }
+
+    /**
+     * Returns the course path marked as availability source, if any.
+     *
+     * @param int $courseid
+     * @return \stdClass|null
+     */
+    public function get_source_path(int $courseid): ?\stdClass {
+        global $DB;
+
+        $paths = $DB->get_records(self::TABLE_PATHS, [
+            'courseid' => $courseid,
+            'userid' => 0,
+            'issource' => 1,
+        ], 'sortorder ASC, id ASC');
+
+        return $paths ? reset($paths) : null;
     }
 
     /**

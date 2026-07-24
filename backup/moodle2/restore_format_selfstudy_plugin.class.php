@@ -52,6 +52,18 @@ class restore_format_selfstudy_plugin extends restore_format_plugin {
             return;
         }
 
+        // The target course keeps at most one availability source path. When
+        // restoring into a course that already has one, the restored path
+        // arrives as a view-level alternative instead.
+        if (!empty($data->issource) &&
+                $DB->record_exists('format_selfstudy_paths', [
+                    'courseid' => (int)$data->courseid,
+                    'userid' => 0,
+                    'issource' => 1,
+                ])) {
+            $data->issource = 0;
+        }
+
         $newid = $DB->insert_record('format_selfstudy_paths', $data);
         $this->set_mapping('format_selfstudy_path', $oldid, $newid);
     }

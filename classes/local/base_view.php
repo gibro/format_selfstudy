@@ -13,9 +13,10 @@ class base_view {
     /**
      * Returns the active base view for one learner.
      *
-     * The active course-level published revision is preferred. Personal learner
-     * paths and enabled paths remain compatibility fallbacks for older courses
-     * without a published runtime revision.
+     * The learner's own path choice wins as long as that path is published.
+     * Learners without a usable choice fall back to the availability source
+     * path with its published revision; the first enabled course path remains
+     * a compatibility fallback for older courses without revisions.
      *
      * @param \stdClass $course
      * @param int $userid
@@ -24,8 +25,8 @@ class base_view {
     public static function create(\stdClass $course, int $userid): \stdClass {
         $repository = new path_repository();
         $runtime = new path_runtime($repository);
-        $path = self::get_active_published_course_path((int)$course->id) ??
-            self::get_selected_path($repository, (int)$course->id, $userid) ??
+        $path = self::get_selected_path($repository, (int)$course->id, $userid) ??
+            self::get_source_published_path((int)$course->id) ??
             self::get_first_enabled_course_path($repository, (int)$course->id);
 
         $snapshot = $path ? $runtime->get_runtime_snapshot($course, (int)$path->id) : null;
@@ -67,12 +68,12 @@ class base_view {
     }
 
     /**
-     * Returns the enabled course path with an active published revision.
+     * Returns the availability source path with an active published revision.
      *
      * @param int $courseid
      * @return \stdClass|null
      */
-    private static function get_active_published_course_path(int $courseid): ?\stdClass {
+    private static function get_source_published_path(int $courseid): ?\stdClass {
         global $DB;
 
         $sql = "SELECT p.*
@@ -81,6 +82,7 @@ class base_view {
                  WHERE p.courseid = :courseid
                    AND p.userid = 0
                    AND p.enabled = 1
+                   AND p.issource = 1
                    AND r.active = 1
                    AND r.status = :status
               ORDER BY p.sortorder ASC, p.id ASC";

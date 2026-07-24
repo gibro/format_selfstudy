@@ -28,7 +28,7 @@ class backup_format_selfstudy_plugin extends backup_format_plugin {
         $paths = new backup_nested_element('paths');
         $path = new backup_nested_element('path', ['id'], [
             'courseid', 'userid', 'name', 'description', 'descriptionformat', 'imageurl', 'icon',
-            'sortorder', 'enabled', 'timecreated', 'timemodified',
+            'sortorder', 'enabled', 'issource', 'timecreated', 'timemodified',
         ]);
         $items = new backup_nested_element('items');
         $item = new backup_nested_element('item', ['id'], [

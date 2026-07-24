@@ -280,5 +280,34 @@ function xmldb_format_selfstudy_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026051500, 'format', 'selfstudy');
     }
 
+    if ($oldversion < 2026072400) {
+        $table = new xmldb_table('format_selfstudy_paths');
+        $field = new xmldb_field('issource', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0', 'enabled');
+
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Until now the single enabled course path was implicitly the
+        // availability source. Mark it explicitly so decoupling enabled
+        // from issource keeps the current behaviour for existing courses.
+        $courseids = $DB->get_fieldset_sql(
+            'SELECT DISTINCT courseid FROM {format_selfstudy_paths} WHERE userid = 0 AND enabled = 1'
+        );
+        foreach ($courseids as $courseid) {
+            $paths = $DB->get_records('format_selfstudy_paths', [
+                'courseid' => $courseid,
+                'userid' => 0,
+                'enabled' => 1,
+            ], 'sortorder ASC, id ASC', 'id', 0, 1);
+            $path = reset($paths);
+            if ($path) {
+                $DB->set_field('format_selfstudy_paths', 'issource', 1, ['id' => (int)$path->id]);
+            }
+        }
+
+        upgrade_plugin_savepoint(true, 2026072400, 'format', 'selfstudy');
+    }
+
     return true;
 }
