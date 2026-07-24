@@ -73,7 +73,11 @@ class base_renderer {
 
             $options = [];
             foreach ($paths as $path) {
-                $options[(int)$path->id] = format_string($path->name);
+                $optionlabel = format_string($path->name);
+                if (!empty($path->issource)) {
+                    $optionlabel .= ' · ' . get_string('learningpathstatusrecommended', 'format_selfstudy');
+                }
+                $options[(int)$path->id] = $optionlabel;
             }
             $selected = ($activepath && (int)($activepath->userid ?? 0) === 0) ? (int)$activepath->id : 0;
             $output .= \html_writer::select($options, 'pathid', $selected, false, [

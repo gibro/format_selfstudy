@@ -277,6 +277,68 @@ class path_sync {
     }
 
     /**
+     * Removes the availability rules a path has written from its target activities.
+     *
+     * Used when the availability source path changes: the old source path's
+     * completion conditions are removed target by target, limited to conditions
+     * that reference the rule's own source activities. Manually added conditions
+     * and rules written by other tools stay untouched.
+     *
+     * @param \stdClass $course
+     * @param int $pathid
+     * @return \stdClass
+     */
+    public function remove_path_written_availability(\stdClass $course, int $pathid): \stdClass {
+        global $DB;
+
+        $diagnosis = $this->diagnose($course, $pathid);
+        $result = (object)[
+            'removed' => 0,
+            'skipped' => 0,
+            'errors' => [],
+        ];
+
+        $transaction = $DB->start_delegated_transaction();
+        foreach ($diagnosis->rules as $rule) {
+            $targetcmid = (int)($rule->target->cmid ?? 0);
+            $sourcecmids = array_values(array_filter(array_map('intval', $rule->sourcecmids ?? [])));
+            if (!$targetcmid || !$sourcecmids) {
+                continue;
+            }
+
+            $availability = $DB->get_field('course_modules', 'availability', ['id' => $targetcmid], IGNORE_MISSING);
+            if ($availability === false || $availability === null || $availability === '') {
+                continue;
+            }
+
+            $tree = json_decode($availability);
+            if (!$tree) {
+                $result->skipped++;
+                continue;
+            }
+
+            $cleaned = $this->remove_completion_conditions_for_cmids($tree, $sourcecmids);
+            if ($cleaned !== null) {
+                $cleaned = $this->normalise_availability_structure($cleaned);
+            }
+            $newavailability = $cleaned === null ? null : json_encode($cleaned);
+            if ($newavailability === $availability) {
+                continue;
+            }
+
+            $DB->set_field('course_modules', 'availability', $newavailability, ['id' => $targetcmid]);
+            $result->removed++;
+        }
+        $transaction->allow_commit();
+
+        if ($result->removed > 0) {
+            rebuild_course_cache((int)$course->id, true);
+        }
+
+        return $result;
+    }
+
+    /**
      * Returns the availability JSON this service would assign to a course module.
      *
      * This method intentionally does not write to course_modules. The editor uses
@@ -1223,6 +1285,49 @@ class path_sync {
             $showconditions = [];
             foreach ($node->c as $index => $condition) {
                 $cleaned = $this->remove_completion_conditions($condition);
+                if ($cleaned === null) {
+                    continue;
+                }
+                $conditions[] = $cleaned;
+                if (isset($node->showc) && is_array($node->showc) && array_key_exists($index, $node->showc)) {
+                    $showconditions[] = (bool)$node->showc[$index];
+                } else {
+                    $showconditions[] = true;
+                }
+            }
+
+            if (!$conditions) {
+                return null;
+            }
+
+            $node->c = $conditions;
+            $node->showc = $showconditions;
+            return $node;
+        }
+
+        return $node;
+    }
+
+    /**
+     * Removes completion conditions that reference the given course modules.
+     *
+     * @param mixed $node
+     * @param int[] $cmids
+     * @return mixed|null
+     */
+    private function remove_completion_conditions_for_cmids($node, array $cmids) {
+        if (is_object($node) && isset($node->type)) {
+            if ($node->type === 'completion' && in_array((int)($node->cm ?? $node->cmid ?? 0), $cmids, true)) {
+                return null;
+            }
+            return $node;
+        }
+
+        if (is_object($node) && isset($node->c) && is_array($node->c)) {
+            $conditions = [];
+            $showconditions = [];
+            foreach ($node->c as $index => $condition) {
+                $cleaned = $this->remove_completion_conditions_for_cmids($condition, $cmids);
                 if ($cleaned === null) {
                     continue;
                 }

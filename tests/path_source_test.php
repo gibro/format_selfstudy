@@ -83,6 +83,79 @@ class format_selfstudy_path_source_test extends advanced_testcase {
         $this->assertSame(7, $changed->written);
     }
 
+    public function test_source_switch_removes_old_source_availability_rules(): void {
+        global $DB;
+        $this->resetAfterTest();
+        set_config('enablecompletion', 1);
+        $generator = $this->getDataGenerator();
+        $course = $generator->create_course(['format' => 'selfstudy', 'numsections' => 1, 'enablecompletion' => 1]);
+        $first = $generator->create_module('page', ['course' => $course->id, 'name' => 'Chain start',
+            'completion' => COMPLETION_TRACKING_MANUAL], ['section' => 1]);
+        $second = $generator->create_module('page', ['course' => $course->id, 'name' => 'Chain end',
+            'completion' => COMPLETION_TRACKING_MANUAL], ['section' => 1]);
+        $other = $generator->create_module('page', ['course' => $course->id, 'name' => 'Alternative only',
+            'completion' => COMPLETION_TRACKING_MANUAL], ['section' => 1]);
+
+        $repository = new \format_selfstudy\local\path_repository();
+        $chainpathid = $repository->create_path((int)$course->id, [
+            'name' => 'Chain path',
+            'enabled' => 0,
+            'userid' => 0,
+        ]);
+        $repository->replace_path_items($chainpathid, [
+            [
+                'itemtype' => \format_selfstudy\local\path_repository::ITEM_MILESTONE,
+                'title' => 'Start',
+                'configdata' => ['milestonekey' => 'start'],
+            ],
+            [
+                'itemtype' => \format_selfstudy\local\path_repository::ITEM_STATION,
+                'cmid' => (int)$first->cmid,
+            ],
+            [
+                'itemtype' => \format_selfstudy\local\path_repository::ITEM_STATION,
+                'cmid' => (int)$second->cmid,
+            ],
+        ]);
+
+        $flatpathid = $repository->create_path((int)$course->id, [
+            'name' => 'Flat path',
+            'enabled' => 0,
+            'userid' => 0,
+        ]);
+        $repository->replace_path_items($flatpathid, [
+            [
+                'itemtype' => \format_selfstudy\local\path_repository::ITEM_MILESTONE,
+                'title' => 'Start',
+                'configdata' => ['milestonekey' => 'start'],
+            ],
+            [
+                'itemtype' => \format_selfstudy\local\path_repository::ITEM_STATION,
+                'cmid' => (int)$other->cmid,
+            ],
+        ]);
+
+        // Real sync: publishing the chain path gates the second station.
+        $publisher = new \format_selfstudy\local\path_publish_service($repository);
+        $chainresult = $publisher->publish_course_path($course, $chainpathid);
+        $this->assertTrue($chainresult->published);
+        $this->assertGreaterThan(0, $chainresult->written);
+        $availability = $DB->get_field('course_modules', 'availability', ['id' => (int)$second->cmid]);
+        $this->assertNotEmpty($availability);
+        $this->assertStringContainsString('"completion"', $availability);
+
+        $flatresult = $publisher->publish_course_path($course, $flatpathid);
+        $this->assertTrue($flatresult->published);
+
+        // Switching the source to the flat path removes the chain rule again.
+        $switchresult = $publisher->set_course_source_path($course, $flatpathid);
+        $this->assertTrue($switchresult->changed);
+        $this->assertGreaterThan(0, $switchresult->removed);
+        $availability = $DB->get_field('course_modules', 'availability', ['id' => (int)$second->cmid]);
+        $this->assertTrue($availability === null || $availability === '',
+            'Old source path availability must be removed, got: ' . var_export($availability, true));
+    }
+
     /**
      * Creates a selfstudy course with two course-level draft paths.
      *
@@ -157,6 +230,8 @@ class format_selfstudy_path_source_sync_stub extends \format_selfstudy\local\pat
             'invalidcompletionavailability' => [],
             'invalidstructureavailability' => [],
             'untranslatable' => [],
+            'rules' => [],
+            'activities' => [],
         ];
     }
 

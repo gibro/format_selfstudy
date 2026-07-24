@@ -144,9 +144,10 @@ class path_publish_service {
     /**
      * Makes one published course path the availability source path.
      *
-     * The previous source path's rules may linger on activities that the new
-     * source path does not cover; invalid leftovers are cleaned up and the new
-     * source path re-syncs its own availability chain.
+     * The previous source path's completion rules are removed from its target
+     * activities first, so no stale gating survives on activities the new
+     * source path does not cover. Afterwards the new source path repairs and
+     * re-syncs its own availability chain.
      *
      * @param \stdClass $course
      * @param int $pathid
@@ -158,12 +159,21 @@ class path_publish_service {
             'written' => 0,
             'skipped' => 0,
             'fixed' => 0,
+            'removed' => 0,
             'errors' => [],
         ];
 
         $current = $this->repository->get_source_path((int)$course->id);
         if ($current && (int)$current->id === $pathid) {
             return $result;
+        }
+
+        if ($current) {
+            $removal = $this->sync->remove_path_written_availability($course, (int)$current->id);
+            $result->removed = (int)($removal->removed ?? 0);
+            if (!empty($removal->errors)) {
+                $result->errors = array_values($removal->errors);
+            }
         }
 
         $this->repository->set_source_path((int)$course->id, $pathid);
