@@ -161,6 +161,7 @@ if (!$embedded) {
     echo $authoringrenderer->publish_status($authoringstate);
     echo $authoringrenderer->workflow($authoringstate);
     echo $authoringrenderer->competency_summary($authoringstate);
+    echo $authoringrenderer->certificate_bridge($authoringstate);
 }
 
 echo html_writer::start_div('format-selfstudy-patheditor-toolbar');

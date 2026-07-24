@@ -106,6 +106,80 @@ class base_renderer {
     }
 
     /**
+     * Renders a learner's evidence of achievement for a path.
+     *
+     * Shows completion status, completed stations and milestones and, when the
+     * path uses competencies, which competencies are achieved. Renders nothing
+     * when there is no path data or the learner has not started yet.
+     *
+     * @param \stdClass $evidence
+     * @return string
+     */
+    public function render_evidence(\stdClass $evidence): string {
+        if (empty($evidence->hasdata) || empty($evidence->started)) {
+            return '';
+        }
+
+        $progress = $evidence->progress;
+        $statuskey = !empty($evidence->iscomplete) ? 'complete' : 'inprogress';
+
+        $output = \html_writer::start_tag('section', [
+            'class' => 'format-selfstudy-evidence format-selfstudy-evidence-' . $statuskey,
+        ]);
+        $output .= \html_writer::tag('h3', get_string('evidencetitle', 'format_selfstudy'),
+            ['class' => 'format-selfstudy-evidence-title']);
+
+        $statuslabel = !empty($evidence->iscomplete) ?
+            get_string('evidencestatuscomplete', 'format_selfstudy') :
+            get_string('evidencestatusinprogress', 'format_selfstudy', (object)[
+                'complete' => (int)$progress->complete,
+                'total' => (int)$progress->total,
+                'percentage' => (int)$progress->percentage,
+            ]);
+        $output .= \html_writer::div(\s($statuslabel), 'format-selfstudy-evidence-status');
+
+        $donestations = array_values(array_filter((array)($evidence->stations ?? []),
+            static function(\stdClass $station): bool {
+                return !empty($station->iscomplete);
+            }));
+        if ($donestations) {
+            $output .= \html_writer::tag('h4', get_string('evidencestationsdone', 'format_selfstudy'));
+            $output .= \html_writer::alist(array_map(static function(\stdClass $station): string {
+                return \s($station->title);
+            }, $donestations), ['class' => 'format-selfstudy-evidence-stations']);
+        }
+
+        $donemilestones = array_values(array_filter((array)($evidence->milestones ?? []),
+            static function(\stdClass $milestone): bool {
+                return !empty($milestone->iscomplete);
+            }));
+        if ($donemilestones) {
+            $output .= \html_writer::tag('h4', get_string('evidencemilestonesdone', 'format_selfstudy'));
+            $output .= \html_writer::alist(array_map(static function(\stdClass $milestone): string {
+                return \s($milestone->title);
+            }, $donemilestones), ['class' => 'format-selfstudy-evidence-milestones']);
+        }
+
+        if (!empty($evidence->competencies)) {
+            $output .= \html_writer::tag('h4', get_string('evidencecompetencies', 'format_selfstudy', (object)[
+                'achieved' => (int)$evidence->competenciesachieved,
+                'total' => (int)$evidence->competenciestotal,
+            ]));
+            $items = array_map(static function(\stdClass $entry): string {
+                $marker = !empty($entry->achieved) ?
+                    get_string('evidencecompetencyachieved', 'format_selfstudy') :
+                    get_string('evidencecompetencyopen', 'format_selfstudy');
+                return \s($entry->label . ' — ' . $marker);
+            }, $evidence->competencies);
+            $output .= \html_writer::alist($items, ['class' => 'format-selfstudy-evidence-competencies']);
+        }
+
+        $output .= \html_writer::end_tag('section');
+
+        return $output;
+    }
+
+    /**
      * Renders the learner's recent and upcoming path movement.
      *
      * @param \stdClass[] $outline

@@ -180,6 +180,32 @@ class authoring_renderer {
     }
 
     /**
+     * Renders the certificate bridge hint.
+     *
+     * The format issues no certificates. This tells the teacher whether course
+     * completion is configured so that a certificate plugin can key off a
+     * completed learning path.
+     *
+     * @param \stdClass $state
+     * @return string
+     */
+    public function certificate_bridge(\stdClass $state): string {
+        $bridge = $state->certificatebridge ?? null;
+        if (!$bridge) {
+            return '';
+        }
+
+        $status = (string)($bridge->status ?? 'disabled');
+        $text = get_string('authoringcertificatebridge' . $status, 'format_selfstudy');
+
+        return \html_writer::div(
+            \html_writer::tag('h3', get_string('authoringcertificatebridge', 'format_selfstudy')) .
+            \html_writer::div(\s($text), 'format-selfstudy-authoring-certificatebridge-text'),
+            'format-selfstudy-authoring-certificatebridge format-selfstudy-authoring-certificatebridge-' . $status
+        );
+    }
+
+    /**
      * Renders blockers and warnings.
      *
      * @param \stdClass $state

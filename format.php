@@ -126,6 +126,9 @@ if ($learnerview !== 'base') {
     echo $selectedexperience->notice;
     if ($selectedexperience->html !== '') {
         echo $selectedexperience->html;
+        if (!empty($activepath)) {
+            echo format_selfstudy_render_path_evidence($course, (int)$activepath->id, (int)$USER->id);
+        }
         return;
     }
     // The base view is the guaranteed fallback: if the selected learning view is
@@ -166,6 +169,13 @@ if ($enabledashboard) {
             ['class' => 'btn btn-secondary']
         );
     }
+    if (!empty($activepath) && $pathstarted) {
+        echo html_writer::link(
+            new moodle_url('/course/format/selfstudy/evidence.php', ['id' => $course->id]),
+            get_string('evidencebutton', 'format_selfstudy'),
+            ['class' => 'btn btn-secondary']
+        );
+    }
     echo html_writer::end_div();
     echo format_selfstudy_render_coursehero_contacts($course, $coursecontacts);
     echo html_writer::end_div();
@@ -196,6 +206,10 @@ if ($enabledashboard) {
     echo html_writer::end_tag('section');
 
     echo format_selfstudy_render_section_overview($course, $learningsummaries);
+
+    if (!empty($activepath)) {
+        echo format_selfstudy_render_path_evidence($course, (int)$activepath->id, (int)$USER->id);
+    }
 
     if ($caneditsections) {
         echo html_writer::start_div('format-selfstudy-actions');
@@ -1062,6 +1076,22 @@ function format_selfstudy_render_path_choice(stdClass $course, array $paths, ?st
     $renderer = new \format_selfstudy\local\base_renderer();
     return $renderer->render_path_choice($course, $paths, $activepath, $progress, $outline, $pathpointcolor,
         $competencylabels);
+}
+
+/**
+ * Renders the learner's evidence of achievement for a path.
+ *
+ * @param stdClass $course
+ * @param int $pathid
+ * @param int $userid
+ * @return string
+ */
+function format_selfstudy_render_path_evidence(stdClass $course, int $pathid, int $userid): string {
+    if (!$pathid) {
+        return '';
+    }
+    $evidence = (new \format_selfstudy\local\path_evidence_service())->build_evidence($course, $pathid, $userid);
+    return (new \format_selfstudy\local\base_renderer())->render_evidence($evidence);
 }
 
 /**

@@ -76,6 +76,7 @@ class authoring_workflow {
         $missingcmids = $pathwithitems ? $this->get_missing_path_cmids($pathwithitems, $activities) : [];
         $competencyprofile = $pathid ?
             (new path_competency_service($this->pathrepository))->profile_for_path((int)$course->id, $pathid) : [];
+        $certificatebridge = $this->summarise_certificate_bridge($course);
         $draftchanged = $pathwithitems && $activerevision &&
             (int)($pathwithitems->timemodified ?? 0) > (int)($activerevision->timepublished ?? 0);
 
@@ -118,6 +119,7 @@ class authoring_workflow {
             'activitymetadata' => $metadata,
             'activitymetadatacheckenabled' => $metadatacheckenabled,
             'competencyprofile' => $competencyprofile,
+            'certificatebridge' => $certificatebridge,
             'missingcmids' => $missingcmids,
             'blockers' => array_values(array_unique($blockers)),
             'warnings' => array_values(array_unique($warnings)),
@@ -379,6 +381,44 @@ class authoring_workflow {
             'missing' => count($missing),
             'enabledmissing' => count($enabledmissing),
             'basisavailable' => true,
+        ];
+    }
+
+    /**
+     * Summarises whether course completion can act as a certificate bridge.
+     *
+     * The format issues no certificates itself. Path completion becomes usable
+     * for any certificate plugin through Moodle course completion, so this
+     * reports whether course completion is enabled and has criteria.
+     *
+     * @param \stdClass $course
+     * @return \stdClass
+     */
+    private function summarise_certificate_bridge(\stdClass $course): \stdClass {
+        $enabled = false;
+        $hascriteria = false;
+
+        try {
+            $completion = new \completion_info($course);
+            $enabled = (bool)$completion->is_enabled();
+            $hascriteria = $enabled && $completion->has_criteria();
+        } catch (\Throwable $exception) {
+            $enabled = false;
+            $hascriteria = false;
+        }
+
+        if (!$enabled) {
+            $status = 'disabled';
+        } else if (!$hascriteria) {
+            $status = 'nocriteria';
+        } else {
+            $status = 'ready';
+        }
+
+        return (object)[
+            'completionenabled' => $enabled,
+            'hascriteria' => $hascriteria,
+            'status' => $status,
         ];
     }
 

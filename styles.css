@@ -438,6 +438,38 @@
     background: #fff;
 }
 
+.format-selfstudy-evidence {
+    margin-top: 1.5rem;
+    border: 1px solid #d7dfe8;
+    border-radius: .5rem;
+    padding: 1rem 1.25rem;
+    background: #fff;
+}
+
+.format-selfstudy-evidence-complete {
+    border-color: #16a34a;
+    background: #f0fdf4;
+}
+
+.format-selfstudy-evidence-title {
+    margin-top: 0;
+}
+
+.format-selfstudy-evidence-status {
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: .5rem;
+}
+
+.format-selfstudy-evidence h4 {
+    margin: .75rem 0 .25rem;
+    font-size: .95rem;
+}
+
+.format-selfstudy-evidence-complete .format-selfstudy-evidence-status {
+    color: #15803d;
+}
+
 .format-selfstudy-pathchoice-summary {
     margin: 0;
     cursor: pointer;
@@ -4188,6 +4220,7 @@ body.format-selfstudy-hide-courseindex #page.drawers.show-drawer-left {
 .format-selfstudy-authoring-diagnosis,
 .format-selfstudy-authoring-revisions,
 .format-selfstudy-authoring-competencies,
+.format-selfstudy-authoring-certificatebridge,
 .format-selfstudy-authoring-issues {
     padding: 1rem;
     border: 1px solid #d5dce8;
