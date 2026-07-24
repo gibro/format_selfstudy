@@ -1199,6 +1199,9 @@ class format_selfstudy extends core_courseformat\base {
                         (array)($definition['options'] ?? []));
                 } else if ($type === 'advcheckbox') {
                     $element = $mform->addElement('advcheckbox', $elementname, $definition['label']);
+                } else if ($type === 'textarea') {
+                    $element = $mform->addElement('textarea', $elementname, $definition['label'],
+                        ['rows' => 4, 'style' => 'width: 100%;']);
                 } else {
                     $element = $mform->addElement('text', $elementname, $definition['label']);
                 }

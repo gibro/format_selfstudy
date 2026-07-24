@@ -4795,3 +4795,218 @@ body.format-selfstudy-hide-courseindex #page.drawers.show-drawer-left {
     margin-bottom: .15rem;
     font-size: .85rem;
 }
+
+/* Escape experience */
+.format-selfstudy-escape {
+    --format-selfstudy-escape-accent: #7c3aed;
+    display: grid;
+    gap: 1.25rem;
+}
+
+.format-selfstudy-escape-theme-spaceship {
+    --format-selfstudy-escape-accent: #0ea5e9;
+}
+
+.format-selfstudy-escape-theme-mansion {
+    --format-selfstudy-escape-accent: #b45309;
+}
+
+.format-selfstudy-escape-intro {
+    display: flex;
+    gap: 1.25rem;
+    align-items: flex-start;
+    border: 1px solid #d7dfe8;
+    border-radius: .9rem;
+    padding: 1.5rem 1.75rem;
+    color: #f8fafc;
+    background:
+        radial-gradient(120% 140% at 100% 0%, color-mix(in srgb, var(--format-selfstudy-escape-accent) 55%, transparent), transparent 60%),
+        linear-gradient(135deg, #111827, #1f2937);
+}
+
+.format-selfstudy-escape-badge {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--format-selfstudy-escape-accent) 30%, #0b1220);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--format-selfstudy-escape-accent) 25%, transparent);
+}
+
+.format-selfstudy-escape-badgeicon {
+    font-size: 1.75rem;
+    line-height: 1;
+}
+
+.format-selfstudy-escape-introcopy {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.format-selfstudy-escape-title {
+    margin: .15rem 0 .5rem;
+    color: #fff;
+}
+
+.format-selfstudy-escape-eyebrow {
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    font-size: .72rem;
+    font-weight: 700;
+    color: color-mix(in srgb, var(--format-selfstudy-escape-accent) 55%, #ffffff);
+}
+
+.format-selfstudy-escape-story {
+    margin: .5rem 0 1rem;
+    color: #e2e8f0;
+    max-width: 60ch;
+}
+
+.format-selfstudy-escape-actions {
+    margin: 0 0 1rem;
+}
+
+.format-selfstudy-escape-startbutton {
+    background: var(--format-selfstudy-escape-accent);
+    border-color: var(--format-selfstudy-escape-accent);
+    font-weight: 700;
+    padding: .55rem 1.4rem;
+}
+
+.format-selfstudy-escape-solved,
+.format-selfstudy-escape-locknote {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    margin: 0 0 1rem;
+    padding: .6rem .9rem;
+    border-radius: .5rem;
+    background: rgba(255, 255, 255, .08);
+    color: #f1f5f9;
+    font-size: .9rem;
+}
+
+.format-selfstudy-escape-solved {
+    background: rgba(22, 163, 74, .25);
+}
+
+.format-selfstudy-escape-progressnote {
+    color: #cbd5e1;
+}
+
+.format-selfstudy-escape-progressbar {
+    overflow: hidden;
+    width: 100%;
+    height: .6rem;
+    border-radius: 999px;
+    background: #e2e8f0;
+}
+
+.format-selfstudy-escape-progressfill {
+    height: 100%;
+    background: var(--format-selfstudy-escape-accent);
+}
+
+.format-selfstudy-escape-progressnote {
+    margin-top: .35rem;
+    font-size: .85rem;
+    color: #475569;
+}
+
+.format-selfstudy-escape-inventory {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .6rem 1rem;
+    border-radius: 999px;
+    background: #f1f5f9;
+    font-weight: 600;
+    color: #1f2937;
+    width: fit-content;
+}
+
+.format-selfstudy-escape-rooms {
+    display: grid;
+    gap: 1rem;
+}
+
+.format-selfstudy-escape-room {
+    border: 1px solid #d7dfe8;
+    border-radius: .75rem;
+    padding: 1rem 1.25rem;
+    background: #fff;
+}
+
+.format-selfstudy-escape-room-locked {
+    background: #f8fafc;
+    border-style: dashed;
+    color: #64748b;
+}
+
+.format-selfstudy-escape-room-complete {
+    border-color: #16a34a;
+    background: #f0fdf4;
+}
+
+.format-selfstudy-escape-roommeta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: .8rem;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+}
+
+.format-selfstudy-escape-roomtitle {
+    margin: .25rem 0 .75rem;
+}
+
+.format-selfstudy-escape-roomlocked {
+    color: #64748b;
+    font-style: italic;
+}
+
+.format-selfstudy-escape-hotspots {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: .4rem;
+}
+
+.format-selfstudy-escape-hotspot {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+}
+
+.format-selfstudy-escape-hotspoticon {
+    display: inline-flex;
+    width: 1.4rem;
+    justify-content: center;
+    color: var(--format-selfstudy-escape-accent);
+}
+
+.format-selfstudy-escape-hotspot-done .format-selfstudy-escape-hotspottitle {
+    color: #15803d;
+}
+
+.format-selfstudy-escape-hotspot-locked .format-selfstudy-escape-hotspottitle {
+    color: #94a3b8;
+}
+
+.format-selfstudy-escape-hotspot {
+    flex-wrap: wrap;
+}
+
+.format-selfstudy-escape-hotspothint {
+    flex: 1 1 100%;
+    margin-left: 1.9rem;
+    font-size: .8rem;
+    font-style: italic;
+    color: #94a3b8;
+}
