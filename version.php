@@ -9,7 +9,12 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'format_selfstudy';
-$plugin->version = 2026072400;
+$plugin->version = 2026073100;
 $plugin->requires = 2023100900;
 $plugin->maturity = MATURITY_ALPHA;
-$plugin->release = '0.2.0-alpha';
+$plugin->release = '0.3.0-alpha';
+
+// The learning path core lives in the shared library, this format only renders it.
+$plugin->dependencies = [
+    'local_selfstudy' => 2026073100,
+];

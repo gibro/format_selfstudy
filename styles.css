@@ -4221,6 +4221,7 @@ body.format-selfstudy-hide-courseindex #page.drawers.show-drawer-left {
 .format-selfstudy-authoring-revisions,
 .format-selfstudy-authoring-competencies,
 .format-selfstudy-authoring-certificatebridge,
+.format-selfstudy-authoring-escapeguide,
 .format-selfstudy-authoring-issues {
     padding: 1rem;
     border: 1px solid #d5dce8;
@@ -4916,6 +4917,12 @@ body.format-selfstudy-hide-courseindex #page.drawers.show-drawer-left {
     color: #475569;
 }
 
+.format-selfstudy-escape-inventoryrow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+}
+
 .format-selfstudy-escape-inventory {
     display: flex;
     align-items: center;
@@ -5009,4 +5016,1819 @@ body.format-selfstudy-hide-courseindex #page.drawers.show-drawer-left {
     font-size: .8rem;
     font-style: italic;
     color: #94a3b8;
+}
+
+/* Escape guide */
+.format-selfstudy-escapeguide {
+    display: grid;
+    gap: 1.5rem;
+    max-width: 60rem;
+}
+
+.format-selfstudy-escapeguide-lead {
+    max-width: 60rem;
+    margin-bottom: 1rem;
+    color: #334155;
+    font-size: 1.05rem;
+}
+
+.format-selfstudy-escapeguide-section {
+    border: 1px solid #d7dfe8;
+    border-radius: .75rem;
+    padding: 1.25rem 1.5rem;
+    background: #fff;
+}
+
+.format-selfstudy-escapeguide-section h3 {
+    margin-top: 0;
+}
+
+.format-selfstudy-escapeguide-intro {
+    color: #475569;
+    margin-bottom: .75rem;
+}
+
+.format-selfstudy-escapeguide-list li {
+    margin-bottom: .4rem;
+}
+
+.format-selfstudy-escapeguide-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+    gap: .75rem;
+}
+
+.format-selfstudy-escapeguide-card {
+    border: 1px solid #e2e8f0;
+    border-radius: .5rem;
+    padding: .9rem 1rem;
+    background: #f8fafc;
+}
+
+.format-selfstudy-escapeguide-card h4 {
+    margin: 0 0 .35rem;
+    font-size: .95rem;
+}
+
+.format-selfstudy-escapeguide-tablewrap {
+    overflow-x: auto;
+}
+
+.format-selfstudy-escapeguide-checklist li {
+    margin-bottom: .5rem;
+}
+
+.format-selfstudy-escapeguide-source {
+    font-size: .85rem;
+    color: #64748b;
+}
+
+.format-selfstudy-escapeguide-formlink {
+    margin-top: .5rem;
+}
+
+/* Learning-Nuggets experience (feed mode). */
+.format-selfstudy-nuggets {
+    --format-selfstudy-nuggets-accent: #6f1ab1;
+    display: grid;
+    gap: 1.25rem;
+    max-width: 52rem;
+    margin: 0 auto;
+}
+
+.format-selfstudy-nuggets-progressheader {
+    position: sticky;
+    top: 60px;
+    z-index: 10;
+    display: grid;
+    gap: .5rem;
+    padding: .85rem 1.1rem;
+    border: 1px solid #d7dfe8;
+    border-radius: .9rem;
+    background: #ffffff;
+    box-shadow: 0 6px 18px rgba(15, 23, 42, .08);
+}
+
+.format-selfstudy-nuggets-progresstext {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: .35rem .75rem;
+}
+
+.format-selfstudy-nuggets-progresscount {
+    font-weight: 600;
+    color: #111827;
+}
+
+.format-selfstudy-nuggets-progressmeta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .35rem .9rem;
+    font-size: .85rem;
+    color: #4b5563;
+}
+
+.format-selfstudy-nuggets-jumplink {
+    font-weight: 600;
+}
+
+.format-selfstudy-nuggets-progressbar {
+    height: .5rem;
+    border-radius: 999px;
+    background: #e5e7eb;
+    overflow: hidden;
+}
+
+.format-selfstudy-nuggets-progressfill {
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, var(--format-selfstudy-nuggets-accent), color-mix(in srgb, var(--format-selfstudy-nuggets-accent) 55%, #38bdf8));
+    transition: width .3s ease;
+}
+
+.format-selfstudy-nuggets-feed {
+    display: grid;
+    gap: 1rem;
+}
+
+.format-selfstudy-nuggets-chapter {
+    margin-top: .75rem;
+    padding-bottom: .25rem;
+    border-bottom: 2px solid color-mix(in srgb, var(--format-selfstudy-nuggets-accent) 35%, #e5e7eb);
+}
+
+.format-selfstudy-nuggets-chaptertitle {
+    margin: 0;
+    font-size: 1.05rem;
+    letter-spacing: .02em;
+    text-transform: uppercase;
+    color: #374151;
+}
+
+.format-selfstudy-nuggets-card {
+    display: flex;
+    gap: 1rem;
+    padding: 1.1rem 1.25rem;
+    border: 1px solid #d7dfe8;
+    border-radius: .9rem;
+    background: #ffffff;
+    scroll-margin-top: 130px;
+    transition: border-color .2s ease, box-shadow .2s ease;
+}
+
+.format-selfstudy-nuggets-card-current {
+    border-color: var(--format-selfstudy-nuggets-accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--format-selfstudy-nuggets-accent) 20%, transparent);
+}
+
+.format-selfstudy-nuggets-card-inview {
+    border-color: color-mix(in srgb, var(--format-selfstudy-nuggets-accent) 55%, #d7dfe8);
+}
+
+.format-selfstudy-nuggets-status-complete {
+    background: #f6fdf8;
+}
+
+.format-selfstudy-nuggets-status-locked,
+.format-selfstudy-nuggets-status-missing {
+    background: #f8fafc;
+    color: #6b7280;
+}
+
+.format-selfstudy-nuggets-card-label {
+    border: 0;
+    background: transparent;
+    padding: .25rem 0;
+}
+
+.format-selfstudy-nuggets-cardmedia {
+    flex: 0 0 5.5rem;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+}
+
+.format-selfstudy-nuggets-cardmedia img {
+    width: 5.5rem;
+    height: 5.5rem;
+    object-fit: cover;
+    border-radius: .6rem;
+}
+
+.format-selfstudy-nuggets-cardmedia-fallback img.format-selfstudy-nuggets-icon {
+    width: 2.25rem;
+    height: 2.25rem;
+    object-fit: contain;
+    margin-top: .35rem;
+}
+
+.format-selfstudy-nuggets-cardbody {
+    flex: 1 1 auto;
+    display: grid;
+    gap: .45rem;
+    min-width: 0;
+}
+
+.format-selfstudy-nuggets-cardmeta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .35rem;
+}
+
+.format-selfstudy-nuggets-chip {
+    font-size: .75rem;
+    font-weight: 600;
+    padding: .1rem .55rem;
+    border-radius: 999px;
+    background: #eef2f7;
+    color: #374151;
+}
+
+.format-selfstudy-nuggets-chip-kind {
+    background: color-mix(in srgb, var(--format-selfstudy-nuggets-accent) 12%, #ffffff);
+    color: var(--format-selfstudy-nuggets-accent);
+}
+
+.format-selfstudy-nuggets-card-optional .format-selfstudy-nuggets-chip-kind {
+    background: #fef9c3;
+    color: #854d0e;
+}
+
+.format-selfstudy-nuggets-status-complete .format-selfstudy-nuggets-chip-status {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.format-selfstudy-nuggets-cardtitle {
+    margin: 0;
+    font-size: 1.1rem;
+    color: #111827;
+}
+
+.format-selfstudy-nuggets-goal {
+    font-size: .9rem;
+    color: #4b5563;
+}
+
+.format-selfstudy-nuggets-description {
+    font-size: .95rem;
+    color: #374151;
+}
+
+.format-selfstudy-nuggets-lockhint {
+    display: flex;
+    gap: .45rem;
+    align-items: baseline;
+    font-size: .9rem;
+    color: #6b7280;
+}
+
+.format-selfstudy-nuggets-reduced {
+    display: flex;
+    gap: .5rem;
+    align-items: center;
+    color: #6b7280;
+}
+
+.format-selfstudy-nuggets-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    align-items: center;
+    margin-top: .25rem;
+}
+
+.format-selfstudy-nuggets-completionform {
+    display: inline;
+    margin: 0;
+}
+
+.format-selfstudy-nuggets-feedendnote {
+    padding: 1rem 1.25rem;
+    border: 1px dashed #cbd5e1;
+    border-radius: .9rem;
+    text-align: center;
+    color: #4b5563;
+}
+
+.format-selfstudy-nuggets-finish {
+    padding: 1.5rem 1.75rem;
+    border: 1px solid #bbf7d0;
+    border-radius: .9rem;
+    background: #f0fdf4;
+}
+
+.format-selfstudy-nuggets-finish h3 {
+    margin-top: 0;
+    color: #166534;
+}
+
+.format-selfstudy-nuggets-finishlist {
+    margin: .5rem 0 0;
+    padding-left: 1.25rem;
+    columns: 2;
+    column-gap: 2rem;
+    font-size: .9rem;
+    color: #374151;
+}
+
+@media (max-width: 640px) {
+    .format-selfstudy-nuggets-card {
+        flex-direction: column;
+    }
+
+    .format-selfstudy-nuggets-cardmedia {
+        flex-basis: auto;
+    }
+
+    .format-selfstudy-nuggets-finishlist {
+        columns: 1;
+    }
+}
+
+/* Learning path hub */
+.format-selfstudy-hub-hero {
+    --format-selfstudy-path-color: #6f1ab1;
+    border: 1px solid #d7dfe8;
+    border-radius: .9rem;
+    padding: 1.5rem 1.75rem;
+    background: #fff;
+    border-left: 6px solid var(--format-selfstudy-path-color);
+    margin-bottom: 1.25rem;
+}
+
+.format-selfstudy-hub-eyebrow {
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    font-size: .72rem;
+    font-weight: 700;
+    color: var(--format-selfstudy-path-color);
+}
+
+.format-selfstudy-hub-title {
+    margin: .15rem 0 .4rem;
+}
+
+.format-selfstudy-hub-intro {
+    color: #475569;
+    max-width: 60ch;
+    margin-bottom: .75rem;
+}
+
+.format-selfstudy-hub-progresslabel {
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: .25rem;
+}
+
+.format-selfstudy-hub-progressbar {
+    overflow: hidden;
+    width: 100%;
+    max-width: 30rem;
+    height: .6rem;
+    border-radius: 999px;
+    background: #e2e8f0;
+    margin-bottom: 1rem;
+}
+
+.format-selfstudy-hub-progressfill {
+    height: 100%;
+    background: var(--format-selfstudy-path-color);
+}
+
+.format-selfstudy-hub-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+}
+
+.format-selfstudy-hub-box {
+    display: none;
+    border: 1px solid #d7dfe8;
+    border-radius: .75rem;
+    padding: 1.25rem 1.5rem;
+    background: #fff;
+    margin-bottom: 1.25rem;
+    scroll-margin-top: 5rem;
+}
+
+.format-selfstudy-hub-box:target {
+    display: block;
+}
+
+.format-selfstudy-hub-box > h3 {
+    margin-top: 0;
+}
+
+.format-selfstudy-hub-completedlist {
+    list-style: none;
+    margin: 0 0 .75rem;
+    padding: 0;
+    display: grid;
+    gap: .35rem;
+}
+
+.format-selfstudy-hub-completeddot {
+    color: #15803d;
+    font-weight: 700;
+}
+
+.format-selfstudy-hub-details > summary.format-selfstudy-hub-showmore {
+    cursor: pointer;
+    font-weight: 600;
+    color: #475569;
+    margin: .5rem 0;
+}
+
+.format-selfstudy-hub-picker {
+    display: grid;
+    gap: .6rem;
+    margin-top: .75rem;
+}
+
+.format-selfstudy-hub-pickercard {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .75rem;
+    flex-wrap: wrap;
+    border: 1px solid #e2e8f0;
+    border-radius: .6rem;
+    padding: .75rem 1rem;
+    background: #f8fafc;
+}
+
+.format-selfstudy-hub-pickercard-active {
+    border-color: var(--format-selfstudy-path-color, #6f1ab1);
+    background: #fff;
+}
+
+.format-selfstudy-hub-pickerhead {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    flex-wrap: wrap;
+}
+
+.format-selfstudy-hub-pickername {
+    font-weight: 700;
+    color: #1f2937;
+}
+
+.format-selfstudy-hub-pickerbadge {
+    font-size: .72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    padding: .15rem .5rem;
+    border-radius: 999px;
+    background: #e2e8f0;
+    color: #475569;
+}
+
+.format-selfstudy-hub-pickerbadge-active {
+    background: var(--format-selfstudy-path-color, #6f1ab1);
+    color: #fff;
+}
+
+.format-selfstudy-hub-pickerform {
+    margin: 0;
+}
+
+/* Inline embeds inside nugget cards. */
+.format-selfstudy-nuggets-embed {
+    margin-top: .35rem;
+    min-width: 0;
+}
+
+.format-selfstudy-nuggets-embed-page {
+    font-size: .98rem;
+    color: #1f2937;
+    line-height: 1.55;
+}
+
+.format-selfstudy-nuggets-embed-page img,
+.format-selfstudy-nuggets-embed-page video {
+    max-width: 100%;
+    height: auto;
+    border-radius: .5rem;
+}
+
+.format-selfstudy-nuggets-embed-h5p {
+    border-radius: .6rem;
+    overflow: hidden;
+    background: #f8fafc;
+}
+
+.format-selfstudy-nuggets-embed-h5p iframe {
+    display: block;
+    width: 100%;
+    border: 0;
+    min-height: 14rem;
+}
+
+.format-selfstudy-nuggets-embed-h5p .h5p-actions,
+.format-selfstudy-nuggets-embed-h5p .attempts-actions {
+    padding: 0 .5rem;
+}
+
+.format-selfstudy-nuggets-activitylink {
+    font-size: .85rem;
+    color: #6b7280;
+    text-decoration: underline;
+}
+
+/* Cards with embedded content stack media on top instead of beside. */
+.format-selfstudy-nuggets-card:has(.format-selfstudy-nuggets-embed) {
+    flex-direction: column;
+}
+
+.format-selfstudy-nuggets-card:has(.format-selfstudy-nuggets-embed) .format-selfstudy-nuggets-cardmedia {
+    display: none;
+}
+
+/* Previous/next scroll navigation below each nugget. */
+.format-selfstudy-nuggets-neighbournav {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: .5rem;
+    padding-top: .5rem;
+    border-top: 1px solid #eef2f7;
+}
+
+.format-selfstudy-nuggets-navlink {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    font-size: .85rem;
+    font-weight: 600;
+    color: #4b5563;
+    text-decoration: none;
+}
+
+.format-selfstudy-nuggets-navlink:hover {
+    color: var(--format-selfstudy-nuggets-accent);
+    text-decoration: none;
+}
+
+.format-selfstudy-nuggets-navlink-next {
+    margin-left: auto;
+}
+
+.format-selfstudy-nuggets-card-label .format-selfstudy-nuggets-neighbournav {
+    border-top: 0;
+}
+
+/* Learning-Nuggets course start hero: light snack-bar look with a segment
+   strip — one bite per nugget. Deliberately airy, in contrast to the dark
+   escape hero and the learning-map adventure start. */
+.format-selfstudy-nuggets-hero {
+    display: grid;
+    gap: .85rem;
+    justify-items: start;
+    padding: 2rem 2.25rem;
+    border: 1px solid color-mix(in srgb, var(--format-selfstudy-nuggets-accent) 22%, #e5e7eb);
+    border-radius: 1.1rem;
+    background:
+        radial-gradient(130% 160% at 0% 0%, color-mix(in srgb, var(--format-selfstudy-nuggets-accent) 14%, transparent), transparent 55%),
+        radial-gradient(120% 140% at 100% 100%, color-mix(in srgb, #38bdf8 14%, transparent), transparent 55%),
+        #ffffff;
+}
+
+.format-selfstudy-nuggets-heroeyebrow {
+    font-size: .78rem;
+    font-weight: 700;
+    letter-spacing: .09em;
+    text-transform: uppercase;
+    color: var(--format-selfstudy-nuggets-accent);
+    padding: .2rem .7rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--format-selfstudy-nuggets-accent) 10%, #ffffff);
+}
+
+.format-selfstudy-nuggets-herotitle {
+    margin: 0;
+    font-size: 1.7rem;
+    line-height: 1.2;
+    color: #111827;
+}
+
+.format-selfstudy-nuggets-herointro {
+    max-width: 40rem;
+    color: #4b5563;
+    line-height: 1.55;
+}
+
+.format-selfstudy-nuggets-herostats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+}
+
+.format-selfstudy-nuggets-herostat {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    font-size: .85rem;
+    font-weight: 600;
+    color: #374151;
+    padding: .3rem .8rem;
+    border-radius: 999px;
+    border: 1px solid #e5e7eb;
+    background: rgba(255, 255, 255, .8);
+}
+
+.format-selfstudy-nuggets-statemoji {
+    font-size: 1rem;
+}
+
+.format-selfstudy-nuggets-segmentstrip {
+    display: flex;
+    gap: .3rem;
+    align-self: stretch;
+    justify-self: stretch;
+    margin-top: .25rem;
+}
+
+.format-selfstudy-nuggets-segment {
+    flex: 1 1 0;
+    height: .55rem;
+    border-radius: 999px;
+    background: #e5e7eb;
+    min-width: .55rem;
+}
+
+.format-selfstudy-nuggets-segment-complete {
+    background: linear-gradient(90deg, var(--format-selfstudy-nuggets-accent), color-mix(in srgb, var(--format-selfstudy-nuggets-accent) 55%, #38bdf8));
+}
+
+.format-selfstudy-nuggets-segment-locked {
+    background: repeating-linear-gradient(45deg, #e5e7eb 0, #e5e7eb 4px, #f3f4f6 4px, #f3f4f6 8px);
+}
+
+.format-selfstudy-nuggets-segment-optional {
+    height: .35rem;
+    align-self: center;
+}
+
+.format-selfstudy-nuggets-heroactions {
+    margin-top: .35rem;
+}
+
+.format-selfstudy-nuggets-herobutton {
+    padding: .55rem 1.6rem;
+    border-radius: 999px;
+    font-weight: 600;
+}
+
+.format-selfstudy-nuggets-herodone {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    margin-top: .35rem;
+    padding: .45rem 1.1rem;
+    border-radius: 999px;
+    font-weight: 600;
+    color: #166534;
+    background: #dcfce7;
+}
+
+@media (max-width: 640px) {
+    .format-selfstudy-nuggets-hero {
+        padding: 1.4rem 1.25rem;
+    }
+
+    .format-selfstudy-nuggets-herotitle {
+        font-size: 1.35rem;
+    }
+}
+
+.format-selfstudy-nuggets-herolocknote {
+    display: inline-flex;
+    align-items: baseline;
+    gap: .5rem;
+    margin-top: .35rem;
+    padding: .45rem 1.1rem;
+    border-radius: .7rem;
+    font-size: .9rem;
+    color: #6b7280;
+    background: #f3f4f6;
+}
+
+/* Focus mode ("smart scrolling", modelled on social feed readers): cards
+   keep their natural, responsive height. The focus feeling comes from soft
+   scroll snapping per card and from highlighting the card in view while its
+   neighbours dim slightly. */
+.format-selfstudy-nuggets-slide {
+    scroll-margin-top: 120px;
+    display: grid;
+    align-content: start;
+    gap: .75rem;
+}
+
+/* Gentle snapping on the page scroller whenever the focus feed is present.
+   "proximity" keeps long cards freely scrollable; browsers without :has()
+   simply skip the snapping. */
+html:has(.format-selfstudy-nuggets-focus) {
+    scroll-snap-type: y proximity;
+}
+
+.format-selfstudy-nuggets-focus .format-selfstudy-nuggets-slide {
+    scroll-snap-align: start;
+}
+
+.format-selfstudy-nuggets-focus .format-selfstudy-nuggets-feed {
+    gap: 1.75rem;
+}
+
+.format-selfstudy-nuggets-focus .format-selfstudy-nuggets-chapter {
+    margin-top: 0;
+}
+
+/* A clear frame around the activity; the card in view carries the accent. */
+.format-selfstudy-nuggets-focus .format-selfstudy-nuggets-card {
+    border-width: 2px;
+    border-color: color-mix(in srgb, var(--format-selfstudy-nuggets-accent) 22%, #d7dfe8);
+    box-shadow: 0 10px 28px rgba(15, 23, 42, .07);
+    transition: opacity .25s ease, border-color .25s ease, box-shadow .25s ease;
+}
+
+/* Dimming only kicks in once the AMD module runs (it stamps -enhanced), so
+   the feed never fades without the in-view tracking that undims it. */
+.format-selfstudy-nuggets-enhanced.format-selfstudy-nuggets-focus .format-selfstudy-nuggets-card {
+    opacity: .45;
+}
+
+.format-selfstudy-nuggets-enhanced.format-selfstudy-nuggets-focus .format-selfstudy-nuggets-card-inview,
+.format-selfstudy-nuggets-enhanced.format-selfstudy-nuggets-focus .format-selfstudy-nuggets-card:hover,
+.format-selfstudy-nuggets-enhanced.format-selfstudy-nuggets-focus .format-selfstudy-nuggets-card:focus-within {
+    opacity: 1;
+}
+
+.format-selfstudy-nuggets-focus .format-selfstudy-nuggets-card-inview,
+.format-selfstudy-nuggets-focus .format-selfstudy-nuggets-card:hover,
+.format-selfstudy-nuggets-focus .format-selfstudy-nuggets-card:focus-within {
+    border-color: color-mix(in srgb, var(--format-selfstudy-nuggets-accent) 55%, #d7dfe8);
+    box-shadow: 0 14px 34px rgba(15, 23, 42, .11);
+}
+
+.format-selfstudy-nuggets-focus .format-selfstudy-nuggets-card-current {
+    border-color: var(--format-selfstudy-nuggets-accent);
+}
+
+.format-selfstudy-nuggets-focus .format-selfstudy-nuggets-card-label {
+    border-width: 0;
+    box-shadow: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .format-selfstudy-nuggets-focus .format-selfstudy-nuggets-card {
+        transition: none;
+    }
+}
+
+/* ==========================================================================
+   Lern-Nuggets full-screen app (IG Metall design handoff).
+   Mobile-first, corporate design: border-radius 0, uppercase condensed
+   headlines, IG Metall red. Prefix: nq-.
+   ========================================================================== */
+body.format-selfstudy-nq-body {
+    margin: 0;
+    overflow: hidden;
+    background: #ffffff;
+}
+
+.nq-app {
+    --nq-red: #E3051B;
+    --nq-red-dark: #B80416;
+    --nq-red-tint: #FCE6E8;
+    --nq-deepred: #882A30;
+    --nq-blue: #2F80AB;
+    --nq-yellow: #EAB500;
+    --nq-green: #5B9945;
+    --nq-anthracite: #3C3C3C;
+    --nq-grey: #646464;
+    --nq-hairline: #DADADA;
+    --nq-greytint: #F2F2F2;
+    --nq-sunrise: linear-gradient(110deg, #882A30 0%, #E3051B 50%, #EAB500 100%);
+    --nq-cond: 'Meta Head IGM Cond', 'Roboto Condensed', 'Arial Narrow', 'Oswald', 'Segoe UI', sans-serif;
+    --nq-body: 'Meta IGM', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+    position: fixed;
+    inset: 0;
+    background: #ffffff;
+    overflow: hidden;
+    font-family: var(--nq-body);
+    color: var(--nq-anthracite);
+    -webkit-font-smoothing: antialiased;
+}
+
+.nq-app *,
+.nq-app *::before,
+.nq-app *::after {
+    box-sizing: border-box;
+}
+
+@media (min-width: 481px) {
+    body.format-selfstudy-nq-body {
+        background: #1c1c1c;
+    }
+    .nq-app {
+        inset: 0 auto;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 390px;
+        max-width: 100vw;
+        box-shadow: 0 0 42px rgba(0, 0, 0, .5);
+    }
+}
+
+/* Condensed / body typography helpers. */
+.nq-wordmark, .nq-greeting, .nq-section-label, .nq-hero-title, .nq-topic-title,
+.nq-tab-label, .nq-streak-label, .nq-card-h, .nq-chrome-title, .nq-chrome-count,
+.nq-badge, .nq-btn, .nq-step-n, .nq-figure, .nq-stoerer-l2, .nq-outro-streak-text,
+.nq-swipe-text {
+    font-family: var(--nq-cond);
+    font-weight: 900;
+    letter-spacing: .03em;
+}
+.nq-overline, .nq-stoerer-l1 {
+    font-family: var(--nq-cond);
+    font-weight: 300;
+    letter-spacing: .03em;
+}
+
+/* Masked brand icons (recoloured via mask, inheriting currentColor). */
+.nq-icon {
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    -webkit-mask: var(--nq-mask) no-repeat center / contain;
+    mask: var(--nq-mask) no-repeat center / contain;
+    background-color: currentColor;
+}
+
+/* --- Home ---------------------------------------------------------------- */
+.nq-home {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    background: #ffffff;
+}
+.nq-home-header {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 34px 22px 10px;
+}
+.nq-wordmark {
+    font-size: 14px;
+    text-transform: uppercase;
+    color: var(--nq-grey);
+}
+.nq-logo {
+    height: 28px;
+    width: auto;
+    display: block;
+}
+.nq-home-scroll {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 0 22px 120px;
+}
+.nq-greeting {
+    font-size: 38px;
+    line-height: 1.02;
+    text-transform: uppercase;
+    color: var(--nq-red);
+    margin: 4px 0 6px;
+}
+.nq-subline {
+    font-size: 17px;
+    line-height: 1.4;
+    color: var(--nq-anthracite);
+    margin: 0 0 20px;
+}
+
+/* Streak band. */
+.nq-streak {
+    background: var(--nq-anthracite);
+    padding: 16px 18px;
+}
+.nq-streak-row1 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.nq-streak-icon {
+    width: 30px;
+    height: 30px;
+    color: var(--nq-yellow);
+    flex: 0 0 auto;
+}
+.nq-streak-label {
+    font-size: 20px;
+    text-transform: uppercase;
+    color: #ffffff;
+    flex: 1 1 auto;
+}
+.nq-streak-count {
+    font-size: 13px;
+    color: rgba(255, 255, 255, .7);
+}
+.nq-streak-week {
+    display: flex;
+    gap: 6px;
+    margin-top: 12px;
+}
+.nq-streak-bar {
+    flex: 1 1 0;
+    height: 6px;
+    background: rgba(255, 255, 255, .25);
+}
+.nq-streak-bar-on {
+    background: var(--nq-yellow);
+}
+
+/* Section title with 4px accent rule. */
+.nq-section-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 22px 0 12px;
+}
+.nq-section-label {
+    font-size: 19px;
+    text-transform: uppercase;
+    color: var(--nq-anthracite);
+}
+.nq-section-rule {
+    flex: 1 1 auto;
+    height: 4px;
+    background: var(--nq-red);
+}
+
+/* Hero tile. */
+.nq-hero {
+    display: block;
+    border: 1px solid var(--nq-hairline);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, .08);
+    background: #ffffff;
+}
+.nq-hero-media {
+    position: relative;
+    height: 168px;
+    background-position: center;
+    background-size: cover;
+}
+.nq-hero-triangle {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 0;
+    height: 0;
+    border-left: 96px solid var(--nq-red);
+    border-top: 96px solid transparent;
+}
+.nq-hero-badge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+}
+.nq-hero-body {
+    padding: 16px 18px 18px;
+}
+.nq-hero-title {
+    font-size: 24px;
+    line-height: 1.05;
+    text-transform: uppercase;
+    color: var(--nq-red);
+    margin: 0 0 6px;
+}
+.nq-hero-meta {
+    font-size: 15px;
+    color: var(--nq-grey);
+    margin: 0 0 14px;
+}
+
+/* Topic tiles. */
+.nq-topics {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.nq-topic {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-height: 76px;
+    padding: 14px 16px;
+    border: 1px solid var(--nq-hairline);
+    background: #ffffff;
+    text-align: left;
+    width: 100%;
+    cursor: pointer;
+}
+.nq-topic-icon {
+    flex: 0 0 auto;
+    width: 52px;
+    height: 52px;
+    background: var(--nq-red-tint);
+    display: grid;
+    place-items: center;
+}
+.nq-topic-glyph {
+    width: 30px;
+    height: 30px;
+    color: var(--nq-red);
+}
+.nq-topic-main {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+.nq-topic-title {
+    font-size: 18px;
+    text-transform: uppercase;
+    color: var(--nq-anthracite);
+}
+.nq-topic-status {
+    font-size: 13px;
+    color: var(--nq-grey);
+}
+.nq-topic-track {
+    height: 4px;
+    background: var(--nq-hairline);
+    margin-top: 2px;
+}
+.nq-topic-fill {
+    display: block;
+    height: 4px;
+    background: var(--nq-red);
+}
+
+/* Tab bar. */
+.nq-tabbar {
+    flex: 0 0 74px;
+    display: flex;
+    border-top: 1px solid var(--nq-hairline);
+    background: #ffffff;
+}
+.nq-tab {
+    flex: 1 1 0;
+    min-height: 44px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    border: none;
+    background: none;
+    color: var(--nq-grey);
+    cursor: pointer;
+}
+.nq-tab-active {
+    color: var(--nq-red);
+}
+.nq-tab-glyph {
+    width: 24px;
+    height: 24px;
+}
+.nq-tab-label {
+    font-size: 11px;
+    text-transform: uppercase;
+}
+
+/* --- Player -------------------------------------------------------------- */
+.nq-player {
+    position: absolute;
+    inset: 0;
+    background: #ffffff;
+}
+.nq-cards {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    scrollbar-width: none;
+}
+.nq-cards::-webkit-scrollbar {
+    display: none;
+}
+.nq-app[data-navmodel="snap"] .nq-cards {
+    overflow-y: auto;
+    scroll-snap-type: y mandatory;
+}
+.nq-app[data-navmodel="story"] .nq-cards {
+    overflow: hidden;
+}
+
+.nq-card {
+    flex: 0 0 100%;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+    scroll-snap-align: start;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 104px 26px 90px;
+}
+.nq-card-cover,
+.nq-card-video {
+    justify-content: flex-end;
+}
+.nq-card-inner {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+}
+
+.nq-bg-light { background: #ffffff; color: var(--nq-anthracite); }
+.nq-bg-red { background: var(--nq-red); color: #ffffff; }
+.nq-bg-anthracite { background: var(--nq-anthracite); color: #ffffff; }
+.nq-bg-dark { background: #000000; color: #ffffff; }
+.nq-bg-sunrise { background: var(--nq-sunrise); color: #ffffff; }
+
+.nq-card-h {
+    text-transform: uppercase;
+    line-height: 1.05;
+    margin: 0;
+}
+.nq-card-body {
+    font-size: 19px;
+    line-height: 1.5;
+    margin: 14px 0 0;
+}
+.nq-overline {
+    display: block;
+    font-size: 15px;
+    text-transform: uppercase;
+    opacity: .85;
+    margin-bottom: 10px;
+}
+.nq-bg-light .nq-overline {
+    color: var(--nq-grey);
+    opacity: 1;
+}
+
+/* Badges. */
+.nq-badge {
+    display: inline-block;
+    font-size: 11px;
+    text-transform: uppercase;
+    padding: 4px 8px;
+}
+.nq-badge-red { background: var(--nq-red); color: #ffffff; }
+.nq-badge-yellow { background: var(--nq-yellow); color: var(--nq-anthracite); }
+
+/* Buttons. */
+.nq-btn {
+    font-size: 16px;
+    text-transform: uppercase;
+    padding: 12px 20px;
+    border: 2px solid transparent;
+    cursor: pointer;
+    display: inline-block;
+}
+.nq-btn-red { background: var(--nq-red); color: #ffffff; }
+.nq-btn-red:hover { background: var(--nq-red-dark); }
+.nq-btn-dark { background: var(--nq-anthracite); color: #ffffff; }
+.nq-btn-outline { background: transparent; border-color: currentColor; color: inherit; }
+.nq-btn-outline-light { background: transparent; border: 2px solid #ffffff; color: #ffffff; }
+
+/* Chrome overlay. */
+.nq-chrome {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 8;
+    padding-top: 16px;
+    color: #ffffff;
+    transition: color 160ms ease;
+}
+.nq-chrome-row1 {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 18px 10px;
+}
+.nq-close {
+    min-width: 44px;
+    min-height: 44px;
+    margin: -10px 0 -10px -10px;
+    border: none;
+    background: none;
+    color: inherit;
+    font-size: 26px;
+    line-height: 1;
+    cursor: pointer;
+}
+.nq-chrome-title {
+    flex: 1 1 auto;
+    font-size: 13px;
+    text-transform: uppercase;
+    opacity: .9;
+}
+.nq-chrome-count {
+    font-size: 13px;
+}
+.nq-chrome-segments {
+    display: flex;
+    gap: 3px;
+    padding: 0 18px;
+}
+.nq-seg {
+    flex: 1 1 0;
+    height: 3px;
+    background: currentColor;
+    opacity: .3;
+    transition: opacity 180ms ease;
+}
+.nq-seg-on { opacity: 1; }
+
+/* Cover card. */
+.nq-card-logo {
+    position: absolute;
+    top: 58px;
+    right: 26px;
+    height: 30px;
+    z-index: 3;
+}
+.nq-cover-triangle {
+    position: absolute;
+    right: 0;
+    top: 52%;
+    width: 0;
+    height: 0;
+    border-top: 86px solid transparent;
+    border-bottom: 86px solid transparent;
+    border-left: 150px solid rgba(255, 255, 255, .16);
+}
+.nq-cover-h {
+    font-size: 52px;
+    line-height: 1.0;
+    color: #ffffff;
+}
+.nq-cover-inner .nq-card-body {
+    max-width: 300px;
+    font-size: 19px;
+    line-height: 1.45;
+    color: #ffffff;
+}
+.nq-swipe-hint {
+    position: absolute;
+    bottom: 26px;
+    left: 0;
+    right: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    z-index: 4;
+    color: #ffffff;
+    opacity: .85;
+}
+.nq-swipe-chevron {
+    font-size: 20px;
+    animation: nq-bounce 1.8s ease-in-out infinite;
+}
+.nq-swipe-text {
+    font-size: 13px;
+    text-transform: uppercase;
+}
+@keyframes nq-bounce {
+    0%, 100% { transform: translateY(-7px); opacity: .65; }
+    50% { transform: translateY(0); opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .nq-swipe-chevron { animation: none; }
+}
+
+/* Statement card. */
+.nq-statement-icon {
+    display: block;
+}
+.nq-statement-glyph {
+    width: 52px;
+    height: 52px;
+    color: var(--nq-red);
+}
+.nq-redline {
+    display: block;
+    width: 64px;
+    height: 4px;
+    background: var(--nq-red);
+    margin: 14px 0 16px;
+}
+.nq-statement-h {
+    font-size: 38px;
+    color: var(--nq-red);
+}
+
+/* Figure card. */
+.nq-figure-icon {
+    display: block;
+    margin-bottom: 16px;
+}
+.nq-figure-glyph {
+    width: 44px;
+    height: 44px;
+}
+.nq-bg-light .nq-figure-glyph {
+    color: var(--nq-red);
+}
+.nq-figure {
+    display: block;
+    font-size: clamp(84px, 24vw, 104px);
+    line-height: .92;
+}
+.nq-bg-light .nq-figure {
+    color: var(--nq-red);
+}
+.nq-figure-source {
+    display: block;
+    font-size: 13px;
+    opacity: .8;
+    margin-top: 16px;
+}
+.nq-figure-footer {
+    border-top: 1px solid var(--nq-hairline);
+    margin-top: 20px;
+    padding-top: 12px;
+    font-size: 15px;
+    color: var(--nq-grey);
+}
+
+/* Steps card. */
+.nq-steps {
+    list-style: none;
+    margin: 18px 0 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+.nq-step {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+}
+.nq-step-n {
+    flex: 0 0 auto;
+    width: 34px;
+    height: 34px;
+    background: var(--nq-red);
+    color: #ffffff;
+    font-size: 19px;
+    display: grid;
+    place-items: center;
+}
+.nq-step-lead {
+    display: block;
+    font-weight: 700;
+    font-size: 17px;
+    color: var(--nq-anthracite);
+}
+.nq-step-text {
+    display: block;
+    font-size: 16px;
+    line-height: 1.45;
+    color: var(--nq-grey);
+    margin-top: 2px;
+}
+
+/* Video card. */
+.nq-video-bg {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background-position: center;
+    background-size: cover;
+}
+.nq-card-video::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: linear-gradient(to top, rgba(0, 0, 0, .86), rgba(0, 0, 0, .35) 55%, rgba(0, 0, 0, .25));
+}
+.nq-play {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -60%);
+    width: 84px;
+    height: 84px;
+    border-radius: 50%;
+    background: var(--nq-red);
+    border: none;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, .45);
+    display: grid;
+    place-items: center;
+    z-index: 3;
+    cursor: pointer;
+}
+.nq-play-glyph {
+    width: 34px;
+    height: 34px;
+    color: #ffffff;
+}
+.nq-play-active .nq-play-glyph {
+    -webkit-mask: none;
+    mask: none;
+    background: #ffffff;
+    width: 26px;
+    height: 26px;
+}
+.nq-video-inner .nq-card-h {
+    font-size: 36px;
+    color: #ffffff;
+    margin-top: 8px;
+}
+.nq-video-inner .nq-card-body {
+    font-size: 17px;
+    color: rgba(255, 255, 255, .9);
+}
+.nq-video-track {
+    height: 4px;
+    background: rgba(255, 255, 255, .3);
+    margin-top: 14px;
+}
+.nq-video-fill {
+    display: block;
+    height: 4px;
+    width: 0;
+    background: var(--nq-red);
+}
+
+/* Quiz card. */
+.nq-quiz-q {
+    font-size: 30px;
+    line-height: 1.1;
+    color: #ffffff;
+    margin-bottom: 20px;
+}
+.nq-quiz-options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.nq-quiz-option {
+    min-height: 48px;
+    padding: 14px 16px;
+    text-align: left;
+    font-family: var(--nq-body);
+    font-size: 17px;
+    line-height: 1.35;
+    color: #ffffff;
+    background: transparent;
+    border: 2px solid rgba(255, 255, 255, .4);
+    cursor: pointer;
+    transition: background 160ms ease, border-color 160ms ease, opacity 160ms ease;
+}
+.nq-quiz-correct {
+    border-color: var(--nq-green);
+    background: rgba(91, 153, 69, .35);
+}
+.nq-quiz-wrong {
+    border-color: var(--nq-red);
+    background: rgba(227, 5, 27, .3);
+}
+.nq-quiz-dim {
+    opacity: .45;
+}
+.nq-quiz-feedback {
+    margin-top: 20px;
+    border-left: 4px solid var(--nq-green);
+    padding-left: 14px;
+    font-size: 17px;
+    line-height: 1.45;
+    color: #ffffff;
+}
+.nq-quiz-feedback-wrong {
+    border-left-color: var(--nq-yellow);
+}
+.nq-quiz-weiter {
+    margin-top: 20px;
+    align-self: flex-start;
+}
+
+/* Memo card. */
+.nq-memo-box {
+    background: var(--nq-greytint);
+    padding: 20px 18px;
+    margin-top: 4px;
+}
+.nq-memo-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.nq-memo-item {
+    display: flex;
+    gap: 10px;
+    font-size: 18px;
+    line-height: 1.5;
+}
+.nq-memo-marker {
+    color: var(--nq-red);
+    font-weight: 900;
+}
+.nq-memo-toggle {
+    margin-top: 18px;
+}
+.nq-memo-on {
+    background: var(--nq-red);
+    color: #ffffff;
+    border-color: var(--nq-red);
+}
+
+/* Outro card. */
+.nq-card-outro .nq-card-h {
+    font-size: 42px;
+    color: #ffffff;
+}
+.nq-outro-streak {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(0, 0, 0, .22);
+    padding: 14px 16px;
+    margin: 18px 0;
+}
+.nq-outro-streak-icon {
+    width: 26px;
+    height: 26px;
+    color: var(--nq-yellow);
+    flex: 0 0 auto;
+}
+.nq-outro-streak-text {
+    font-size: 16px;
+    text-transform: uppercase;
+    color: #ffffff;
+}
+.nq-outro-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* Störer. */
+.nq-stoerer {
+    position: absolute;
+    top: 92px;
+    right: 14px;
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    background: var(--nq-stoerer-color, var(--nq-blue));
+    color: #ffffff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    transform: rotate(-8deg);
+    z-index: 5;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, .25);
+}
+.nq-card-outro .nq-stoerer {
+    width: 130px;
+    height: 130px;
+    top: 88px;
+    right: 18px;
+}
+.nq-stoerer-l1 {
+    font-size: 14px;
+}
+.nq-stoerer-l2 {
+    font-size: 22px;
+    line-height: 1;
+    text-transform: uppercase;
+}
+
+/* Story-tap navigation zones. */
+.nq-tap {
+    position: absolute;
+    top: 90px;
+    bottom: 0;
+    width: 22%;
+    z-index: 6;
+}
+.nq-tap-prev { left: 0; }
+.nq-tap-next { right: 0; }
+.nq-app[data-navmodel="snap"] .nq-tap { display: none; }
+.nq-app[data-navmodel="story"] .nq-tap { display: block; }
+
+/* Nuggets course-page launch card (opens the full-screen app). */
+.format-selfstudy-nqlaunch {
+    display: grid;
+    gap: .6rem;
+    justify-items: start;
+    max-width: 40rem;
+    padding: 1.75rem 2rem;
+    border: 1px solid #DADADA;
+    border-left: 6px solid #E3051B;
+    background:
+        radial-gradient(120% 150% at 0% 0%, rgba(227, 5, 27, .06), transparent 55%),
+        #ffffff;
+}
+.format-selfstudy-nqlaunch-eyebrow {
+    font-size: .78rem;
+    font-weight: 700;
+    letter-spacing: .09em;
+    text-transform: uppercase;
+    color: #E3051B;
+}
+.format-selfstudy-nqlaunch-title {
+    margin: 0;
+    font-size: 1.5rem;
+    text-transform: uppercase;
+    color: #111827;
+}
+.format-selfstudy-nqlaunch-intro {
+    margin: 0;
+    max-width: 32rem;
+    color: #4b5563;
+}
+.format-selfstudy-nqlaunch-button {
+    margin-top: .35rem;
+    background: #E3051B;
+    border-color: #E3051B;
+    font-weight: 600;
+}
+.format-selfstudy-nqlaunch-button:hover {
+    background: #B80416;
+    border-color: #B80416;
+}
+
+/* Derived content cards: activity HTML styled per card type. */
+.nq-hero-media-fallback {
+    background: var(--nq-sunrise);
+}
+.nq-card-statement,
+.nq-card-figure,
+.nq-card-steps,
+.nq-card-memo,
+.nq-card-interactive {
+    overflow-y: auto;
+}
+.nq-content {
+    font-size: 19px;
+    line-height: 1.5;
+}
+.nq-content > *:first-child {
+    margin-top: 0;
+}
+.nq-content h1, .nq-content h2, .nq-content h3 {
+    font-family: var(--nq-cond);
+    font-weight: 900;
+    letter-spacing: .03em;
+    text-transform: uppercase;
+    line-height: 1.05;
+    margin: 0 0 .4em;
+}
+.nq-content img, .nq-content video, .nq-content iframe {
+    max-width: 100%;
+    height: auto;
+}
+.nq-content a {
+    color: inherit;
+}
+
+/* Statement (light): red headline, anthracite body. */
+.nq-card-statement .nq-content h1,
+.nq-card-statement .nq-content h2,
+.nq-card-statement .nq-content h3 {
+    color: var(--nq-red);
+    font-size: 34px;
+}
+
+/* Figure (red): white big number + body. */
+.nq-card-figure .nq-content {
+    color: #ffffff;
+}
+.nq-card-figure .nq-content h1,
+.nq-card-figure .nq-content h2 {
+    color: #ffffff;
+    font-size: clamp(72px, 22vw, 104px);
+    line-height: .92;
+}
+.nq-card-figure .nq-content h3 {
+    color: #ffffff;
+    font-size: 28px;
+}
+
+/* Steps (light): headline red + numbered red squares from an <ol>. */
+.nq-card-steps .nq-content h1,
+.nq-card-steps .nq-content h2 {
+    color: var(--nq-red);
+    font-size: 30px;
+}
+.nq-card-steps .nq-content ol {
+    list-style: none;
+    counter-reset: nqstep;
+    margin: 18px 0 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+.nq-card-steps .nq-content ol li {
+    counter-increment: nqstep;
+    position: relative;
+    padding-left: 48px;
+    min-height: 34px;
+    font-size: 16px;
+    line-height: 1.45;
+    color: var(--nq-anthracite);
+}
+.nq-card-steps .nq-content ol li::before {
+    content: counter(nqstep);
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 34px;
+    height: 34px;
+    background: var(--nq-red);
+    color: #ffffff;
+    font-family: var(--nq-cond);
+    font-weight: 900;
+    font-size: 19px;
+    display: grid;
+    place-items: center;
+}
+
+/* Memo (light): grey box, bullets with red triangle markers. */
+.nq-card-memo .nq-content h1,
+.nq-card-memo .nq-content h2 {
+    color: var(--nq-red);
+    font-size: 30px;
+}
+.nq-memo-box .nq-content ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.nq-memo-box .nq-content ul li {
+    position: relative;
+    padding-left: 22px;
+    font-size: 18px;
+    line-height: 1.5;
+    color: var(--nq-anthracite);
+}
+.nq-memo-box .nq-content ul li::before {
+    content: "\25B8";
+    position: absolute;
+    left: 0;
+    top: 0;
+    color: var(--nq-red);
+    font-weight: 900;
+}
+
+/* Interactive (H5P embed). */
+.nq-interactive-inner {
+    justify-content: flex-start;
+    padding-top: 104px;
+}
+.nq-interactive-h {
+    font-size: 24px;
+    color: var(--nq-anthracite);
+    margin: 8px 0 12px;
+}
+.nq-interactive-content {
+    width: 100%;
+}
+.nq-interactive-content iframe {
+    width: 100%;
+    min-height: 320px;
+    border: 0;
+}
+
+.nq-activity-link {
+    display: inline-block;
+    margin-top: 16px;
+    font-size: .85rem;
+    text-decoration: underline;
+    opacity: .7;
+    color: inherit;
+}
+.nq-card-actions {
+    margin-top: 20px;
 }

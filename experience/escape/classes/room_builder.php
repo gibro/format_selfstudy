@@ -27,14 +27,27 @@ class room_builder {
      */
     public function build(\stdClass $course, \stdClass $baseview, \stdClass $config): \stdClass {
         $outline = is_array($baseview->outline ?? null) ? $baseview->outline : [];
-        $rooms = $this->build_rooms($outline);
+        $rooms = $this->build_rooms($outline, $this->get_modinfo($course));
 
         $progress = $baseview->progress ?? (object)['complete' => 0, 'total' => 0, 'percentage' => 0];
         $keycount = 0;
         $hotspottotal = 0;
+        $itemcount = 0;
+        $itemtotal = 0;
+        $riddlesolved = 0;
+        $riddletotal = 0;
         foreach ($rooms as $room) {
             $keycount += $room->keycount;
             $hotspottotal += $room->hotspotcount;
+            foreach ($room->hotspots as $hotspot) {
+                if ($hotspot->role === 'item') {
+                    $itemtotal++;
+                    $itemcount += $hotspot->iscomplete ? 1 : 0;
+                } else if ($hotspot->role === 'riddle') {
+                    $riddletotal++;
+                    $riddlesolved += $hotspot->iscomplete ? 1 : 0;
+                }
+            }
         }
 
         $theme = (string)($config->theme ?? 'dungeon');
@@ -69,6 +82,10 @@ class room_builder {
             'lockhint' => $starturl === '' && !$iscomplete ? $this->first_lock_hint($rooms) : '',
             'keycount' => $keycount,
             'hotspottotal' => $hotspottotal,
+            'itemcount' => $itemcount,
+            'itemtotal' => $itemtotal,
+            'riddlesolved' => $riddlesolved,
+            'riddletotal' => $riddletotal,
             'roomcount' => count($rooms),
             'rooms' => $rooms,
         ];
@@ -83,7 +100,7 @@ class room_builder {
      * @param \stdClass[] $outline
      * @return \stdClass[]
      */
-    private function build_rooms(array $outline): array {
+    private function build_rooms(array $outline, ?\course_modinfo $modinfo): array {
         $rooms = [];
         $current = null;
 
@@ -102,7 +119,7 @@ class room_builder {
                 $current = $this->new_room('');
                 $rooms[] = $current;
             }
-            $current->hotspots[] = $this->build_hotspot($entry);
+            $current->hotspots[] = $this->build_hotspot($entry, $modinfo);
         }
 
         foreach ($rooms as $index => $room) {
@@ -141,7 +158,7 @@ class room_builder {
      * @param \stdClass $entry
      * @return \stdClass
      */
-    private function build_hotspot(\stdClass $entry): \stdClass {
+    private function build_hotspot(\stdClass $entry, ?\course_modinfo $modinfo): \stdClass {
         $status = (string)($entry->status ?? 'open');
 
         return (object)[
@@ -151,7 +168,67 @@ class room_builder {
             'islocked' => in_array($status, ['locked', 'missing'], true),
             'url' => !empty($entry->url) ? (string)$entry->url : null,
             'availableinfo' => trim((string)($entry->availableinfo ?? '')),
+            'role' => $this->resolve_role((int)($entry->cmid ?? 0), $modinfo),
         ];
+    }
+
+    /**
+     * Derives the escape role of a station from its completion settings.
+     *
+     * A station with an automatic, graded (or otherwise conditional) completion
+     * plays as a riddle: something has to be solved. A station that only needs
+     * to be viewed plays as a collectable item. Everything else stays a plain
+     * key station, which keeps existing courses unchanged.
+     *
+     * @param int $cmid
+     * @param \course_modinfo|null $modinfo
+     * @return string riddle|item|key
+     */
+    private function resolve_role(int $cmid, ?\course_modinfo $modinfo): string {
+        if (!$cmid || !$modinfo) {
+            return 'key';
+        }
+
+        try {
+            $cm = $modinfo->get_cm($cmid);
+        } catch (\Throwable $exception) {
+            return 'key';
+        }
+
+        if ((int)$cm->completion !== COMPLETION_TRACKING_AUTOMATIC) {
+            return 'key';
+        }
+
+        if ($cm->completiongradeitemnumber !== null || !empty($cm->completionpassgrade)) {
+            return 'riddle';
+        }
+
+        $customdata = (array)$cm->get_custom_data();
+        foreach ((array)($customdata['customcompletionrules'] ?? []) as $enabled) {
+            if (!empty($enabled)) {
+                return 'riddle';
+            }
+        }
+
+        if ((int)$cm->completionview === COMPLETION_VIEW_REQUIRED) {
+            return 'item';
+        }
+
+        return 'key';
+    }
+
+    /**
+     * Returns the course module info, or null when unavailable.
+     *
+     * @param \stdClass $course
+     * @return \course_modinfo|null
+     */
+    private function get_modinfo(\stdClass $course): ?\course_modinfo {
+        try {
+            return get_fast_modinfo($course);
+        } catch (\Throwable $exception) {
+            return null;
+        }
     }
 
     /**

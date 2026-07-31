@@ -59,8 +59,15 @@ class config_form {
      * @return string
      */
     public static function get_form_notes(\stdClass $course, \stdClass $config): string {
+        $guideurl = new \moodle_url('/course/format/selfstudy/escape_guide.php', ['id' => (int)$course->id]);
+
         return \html_writer::div(get_string('escapeexperience_roomsnote', 'format_selfstudy'),
-            'format-selfstudy-patheditor-activitysettingsnotice');
+            'format-selfstudy-patheditor-activitysettingsnotice') .
+            \html_writer::div(
+                \html_writer::link($guideurl, get_string('escapeguide_title', 'format_selfstudy'),
+                    ['class' => 'btn btn-secondary']),
+                'format-selfstudy-escapeguide-formlink'
+            );
     }
 
     /**

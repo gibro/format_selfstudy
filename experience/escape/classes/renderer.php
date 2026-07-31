@@ -173,16 +173,35 @@ class renderer implements experience_renderer_interface {
      * @return string
      */
     private function render_inventory(\stdClass $model): string {
-        $label = get_string('escapeexperience_inventory', 'format_selfstudy', (object)[
-            'keys' => (int)$model->keycount,
-            'total' => (int)$model->hotspottotal,
-        ]);
+        $parts = [];
+        if ((int)($model->itemtotal ?? 0) > 0) {
+            $parts[] = \html_writer::span('📦', 'format-selfstudy-escape-inventoryicon', ['aria-hidden' => 'true']) .
+                \html_writer::span(\s(get_string('escapeexperience_inventoryitems', 'format_selfstudy', (object)[
+                    'items' => (int)$model->itemcount,
+                    'total' => (int)$model->itemtotal,
+                ])), 'format-selfstudy-escape-inventorylabel');
+        }
+        if ((int)($model->riddletotal ?? 0) > 0) {
+            $parts[] = \html_writer::span('🧩', 'format-selfstudy-escape-inventoryicon', ['aria-hidden' => 'true']) .
+                \html_writer::span(\s(get_string('escapeexperience_inventoryriddles', 'format_selfstudy', (object)[
+                    'solved' => (int)$model->riddlesolved,
+                    'total' => (int)$model->riddletotal,
+                ])), 'format-selfstudy-escape-inventorylabel');
+        }
+        if (!$parts) {
+            $parts[] = \html_writer::span('🔑', 'format-selfstudy-escape-inventoryicon', ['aria-hidden' => 'true']) .
+                \html_writer::span(\s(get_string('escapeexperience_inventory', 'format_selfstudy', (object)[
+                    'keys' => (int)$model->keycount,
+                    'total' => (int)$model->hotspottotal,
+                ])), 'format-selfstudy-escape-inventorylabel');
+        }
 
-        return \html_writer::div(
-            \html_writer::span('🔑', 'format-selfstudy-escape-inventoryicon', ['aria-hidden' => 'true']) .
-            \html_writer::span(\s($label), 'format-selfstudy-escape-inventorylabel'),
-            'format-selfstudy-escape-inventory'
-        );
+        $output = '';
+        foreach ($parts as $part) {
+            $output .= \html_writer::div($part, 'format-selfstudy-escape-inventory');
+        }
+
+        return \html_writer::div($output, 'format-selfstudy-escape-inventoryrow');
     }
 
     /**
@@ -229,7 +248,9 @@ class renderer implements experience_renderer_interface {
 
         $items = '';
         foreach ($room->hotspots as $hotspot) {
-            $icon = $hotspot->iscomplete ? '✓' : ($hotspot->islocked ? '🔒' : '•');
+            $roleicons = ['riddle' => '🧩', 'item' => '📦', 'key' => '•'];
+            $openicon = $roleicons[(string)($hotspot->role ?? 'key')] ?? '•';
+            $icon = $hotspot->iscomplete ? '✓' : ($hotspot->islocked ? '🔒' : $openicon);
             $label = \html_writer::span($icon, 'format-selfstudy-escape-hotspoticon', ['aria-hidden' => 'true']) .
                 \html_writer::span(\s($hotspot->title), 'format-selfstudy-escape-hotspottitle');
 

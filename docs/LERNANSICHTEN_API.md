@@ -436,13 +436,12 @@ Technische Begriffe wie `Experience` oder `selfstudyexperience_*` bleiben techni
 
 ## Checkliste für neue Lernansichten
 
-1. Verzeichnis `experience/{name}` anlegen.
-2. `version.php` mit `selfstudyexperience_{name}` erstellen.
-3. `classes/experience.php` mit `get_metadata()` erstellen.
-4. `classes/renderer.php` erstellen und `experience_renderer_interface` implementieren.
-5. Sprachstrings in `lang/de` und `lang/en` ergänzen.
-6. Konfigurationsschema definieren und `schema` setzen.
-7. Keine harte Freischaltlogik in der Lernansicht implementieren.
-8. Leere Ausgabe oder `null` zurückgeben, wenn Daten fehlen.
-9. Tests für Registry, Rendering-Fallback und Navigation ergänzen.
-10. Browser-Smoke: Kursseite, Lernansichten-Seite und Aktivitätsseite prüfen.
+1. Verzeichnis `experience/{name}` anlegen (keine eigene `version.php` — Lernansichten sind paketintern, siehe Verzeichnisstruktur; die `version.php` des Kursformats hochzählen).
+2. `classes/experience.php` mit `get_metadata()` erstellen (Komponente `selfstudyexperience_{name}` passend zum Verzeichnisnamen).
+3. `classes/renderer.php` erstellen und `experience_renderer_interface` implementieren.
+4. Sprachstrings in `lang/de` und `lang/en` ergänzen.
+5. Konfigurationsschema definieren und `schema` setzen.
+6. Keine harte Freischaltlogik in der Lernansicht implementieren.
+7. Leere Ausgabe oder `null` zurückgeben, wenn Daten fehlen.
+8. Tests für Registry, Rendering-Fallback und Navigation ergänzen.
+9. Browser-Smoke: Kursseite, Lernansichten-Seite und Aktivitätsseite prüfen.
