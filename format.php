@@ -10,68 +10,7 @@ global $OUTPUT, $USER;
 $format = course_get_format($course);
 $formatoptions = $format->get_format_options();
 $course = $format->get_course();
-if ($PAGE->user_is_editing()) {
-    course_create_sections_if_missing($course, 0);
-    $renderer = $PAGE->get_renderer('format_selfstudy');
-    $pathrepository = new \local_selfstudy\path_repository();
-    $authoringstate = (new \local_selfstudy\authoring_workflow($pathrepository))->get_state($course);
-    $authoringrenderer = new \local_selfstudy\authoring_renderer();
-    echo html_writer::start_div('format-selfstudy-editing-workflow');
-    echo $authoringrenderer->workflow($authoringstate);
-    echo html_writer::end_div();
-    echo \local_selfstudy\helper::render_pending_notice();
-
-    if (optional_param('selfstudyactivitysettings', 0, PARAM_BOOL)) {
-        $LOCAL_SELFSTUDY_PATH_EDITOR_FUNCTIONS_ONLY = true;
-        require_once($CFG->dirroot . '/local/selfstudy/path_editor.php');
-        $activities = local_selfstudy_path_editor_get_activities($course);
-        // Normally already handled before the page header, see local_selfstudy\hook_callbacks.
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            local_selfstudy_path_editor_handle_activity_settings_post($course, new moodle_url('/course/view.php', [
-                'id' => $course->id,
-                'selfstudyactivitysettings' => 1,
-            ]));
-        }
-
-        echo html_writer::start_tag('form', [
-            'method' => 'post',
-            'action' => (new moodle_url('/course/view.php', [
-                'id' => $course->id,
-                'selfstudyactivitysettings' => 1,
-            ]))->out(false),
-            'class' => 'format-selfstudy-patheditor-form format-selfstudy-activitysettings-embed',
-        ]);
-        echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'sesskey', 'value' => sesskey()]);
-        echo local_selfstudy_path_editor_render_activity_settings_panel($course, $activities);
-        echo html_writer::div(
-            html_writer::tag('button', get_string('savechanges'), [
-                'type' => 'submit',
-                'name' => 'saveaction',
-                'class' => 'btn btn-primary',
-                'value' => 'draft',
-            ]),
-            'format-selfstudy-patheditor-actions'
-        );
-        echo html_writer::end_tag('form');
-        return;
-    }
-
-    if (optional_param('selfstudypatheditor', 0, PARAM_BOOL)) {
-        $LOCAL_SELFSTUDY_PATH_EDITOR_INLINE = true;
-        require($CFG->dirroot . '/local/selfstudy/path_editor.php');
-        return;
-    }
-
-    if (!optional_param('selfstudycontent', 0, PARAM_BOOL)) {
-        return;
-    }
-
-    if (isset($displaysection) && !is_null($displaysection)) {
-        $format->set_sectionnum($displaysection);
-    }
-    $outputclass = $format->get_output_classname('content');
-    $output = new $outputclass($format);
-    echo $renderer->render($output);
+if (\local_selfstudy\output\editing_page::render($course, $format, $displaysection ?? null)) {
     return;
 }
 $pathpointcolor = \local_selfstudy\helper::normalise_hex_color($formatoptions['pathpointcolor'] ?? '#6f1ab1');

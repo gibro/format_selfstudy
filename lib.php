@@ -15,161 +15,12 @@ class format_selfstudy extends \local_selfstudy\courseformat\base {
     private const MAX_HERO_CONTACTS = 10;
 
     /**
-     * Course level format options.
-     *
-     * @param bool $foreditform
-     * @return array
-     */
-    public function course_format_options($foreditform = false): array {
-        $options = [
-            'defaultview' => [
-                'default' => 'dashboard',
-                'type' => PARAM_ALPHA,
-            ],
-            'enabledashboard' => [
-                'default' => 1,
-                'type' => PARAM_BOOL,
-            ],
-            'enableavatar' => [
-                'default' => 1,
-                'type' => PARAM_BOOL,
-            ],
-            'enableactivitynavigation' => [
-                'default' => 1,
-                'type' => PARAM_BOOL,
-            ],
-            'shownavprevious' => [
-                'default' => 1,
-                'type' => PARAM_BOOL,
-            ],
-            'shownavmap' => [
-                'default' => 1,
-                'type' => PARAM_BOOL,
-            ],
-            'shownavnext' => [
-                'default' => 1,
-                'type' => PARAM_BOOL,
-            ],
-            'showactivitystatus' => [
-                'default' => 1,
-                'type' => PARAM_BOOL,
-            ],
-            'useactivitymetadata' => [
-                'default' => 1,
-                'type' => PARAM_BOOL,
-            ],
-            'showlockedactivities' => [
-                'default' => 1,
-                'type' => PARAM_BOOL,
-            ],
-            'allowpersonalpaths' => [
-                'default' => 0,
-                'type' => PARAM_BOOL,
-            ],
-            'pathpointcolor' => [
-                'default' => '#6f1ab1',
-                'type' => PARAM_TEXT,
-            ],
-            'nextbuttoncolor' => [
-                'default' => '#6f1ab1',
-                'type' => PARAM_TEXT,
-            ],
-            'previousbuttonlabel' => [
-                'default' => get_string('previousbuttonlabel_default', 'format_selfstudy'),
-                'type' => PARAM_TEXT,
-            ],
-            'mapbuttonlabel' => [
-                'default' => get_string('mapbuttonlabel_default', 'format_selfstudy'),
-                'type' => PARAM_TEXT,
-            ],
-            'nextbuttonlabel' => [
-                'default' => get_string('nextbuttonlabel_default', 'format_selfstudy'),
-                'type' => PARAM_TEXT,
-            ],
-            'customnavbuttonlabel' => [
-                'default' => '',
-                'type' => PARAM_TEXT,
-            ],
-            'customnavbuttonurl' => [
-                'default' => '',
-                'type' => PARAM_URL,
-            ],
-        ];
-
-        if ($foreditform) {
-            unset($options['allowpersonalpaths']);
-            unset($options['enableavatar']);
-            unset($options['defaultview']);
-            unset($options['enabledashboard']);
-            unset($options['shownavmap']);
-            unset($options['shownavnext']);
-            unset($options['mapbuttonlabel']);
-
-            $options['enableactivitynavigation']['label'] = get_string('enableactivitynavigation', 'format_selfstudy');
-            $options['enableactivitynavigation']['help'] = 'enableactivitynavigation';
-            $options['enableactivitynavigation']['help_component'] = 'format_selfstudy';
-            $options['enableactivitynavigation']['element_type'] = 'advcheckbox';
-
-            $options['shownavprevious']['label'] = get_string('shownavprevious', 'format_selfstudy');
-            $options['shownavprevious']['element_type'] = 'advcheckbox';
-
-            $options['showactivitystatus']['label'] = get_string('showactivitystatus', 'format_selfstudy');
-            $options['showactivitystatus']['help'] = 'showactivitystatus';
-            $options['showactivitystatus']['help_component'] = 'format_selfstudy';
-            $options['showactivitystatus']['element_type'] = 'advcheckbox';
-
-            $options['useactivitymetadata']['label'] = get_string('useactivitymetadata', 'format_selfstudy');
-            $options['useactivitymetadata']['help'] = 'useactivitymetadata';
-            $options['useactivitymetadata']['help_component'] = 'format_selfstudy';
-            $options['useactivitymetadata']['element_type'] = 'advcheckbox';
-
-            $options['showlockedactivities']['label'] = get_string('showlockedactivities', 'format_selfstudy');
-            $options['showlockedactivities']['help'] = 'showlockedactivities';
-            $options['showlockedactivities']['help_component'] = 'format_selfstudy';
-            $options['showlockedactivities']['element_type'] = 'advcheckbox';
-
-            $options['pathpointcolor']['label'] = get_string('pathpointcolor', 'format_selfstudy');
-            $options['pathpointcolor']['help'] = 'pathpointcolor';
-            $options['pathpointcolor']['help_component'] = 'format_selfstudy';
-            $options['pathpointcolor']['element_type'] = 'text';
-            $options['pathpointcolor']['element_attributes'] = [[
-                'maxlength' => 7,
-                'pattern' => '#[0-9a-fA-F]{6}',
-                'placeholder' => '#6f1ab1',
-                'class' => 'format-selfstudy-colorpicker',
-                'style' => 'display:inline-block;width:3.5rem;height:2.35rem;padding:.15rem;cursor:pointer;vertical-align:middle;',
-            ]];
-
-            $options['nextbuttoncolor']['label'] = get_string('nextbuttoncolor', 'format_selfstudy');
-            $options['nextbuttoncolor']['help'] = 'nextbuttoncolor';
-            $options['nextbuttoncolor']['help_component'] = 'format_selfstudy';
-            $options['nextbuttoncolor']['element_type'] = 'text';
-            $options['nextbuttoncolor']['element_attributes'] = [[
-                'maxlength' => 7,
-                'pattern' => '#[0-9a-fA-F]{6}',
-                'placeholder' => '#6f1ab1',
-                'class' => 'format-selfstudy-colorpicker',
-                'style' => 'display:inline-block;width:3.5rem;height:2.35rem;padding:.15rem;cursor:pointer;vertical-align:middle;',
-            ]];
-
-            $options['previousbuttonlabel']['label'] = get_string('previousbuttonlabel', 'format_selfstudy');
-            $options['previousbuttonlabel']['element_type'] = 'text';
-
-            $options['nextbuttonlabel']['label'] = get_string('nextbuttonlabel', 'format_selfstudy');
-            $options['nextbuttonlabel']['element_type'] = 'text';
-
-            $options['customnavbuttonlabel']['label'] = get_string('customnavbuttonlabel', 'format_selfstudy');
-            $options['customnavbuttonlabel']['element_type'] = 'text';
-
-            $options['customnavbuttonurl']['label'] = get_string('customnavbuttonurl', 'format_selfstudy');
-            $options['customnavbuttonurl']['element_type'] = 'text';
-        }
-
-        return $options;
-    }
-
-    /**
      * Adds format options elements to the course/section edit form.
+     *
+     * All course format options of this format are shared ones, so the headers
+     * and the colour picker enhancement come from the shared base class. Only
+     * the elements that belong to this format alone - course start page with
+     * hero image, course contacts and section images - are built here.
      *
      * @param MoodleQuickForm $mform
      * @param bool $forsection
@@ -244,61 +95,14 @@ class format_selfstudy extends \local_selfstudy\courseformat\base {
             $mform->setDefault('selfstudycontactsupport', $supportids);
             $contactelements[] = $supportfield;
 
-            $generalheader = $mform->addElement('header', 'selfstudycourseformatgeneral',
-                get_string('courseformatsettingsgeneral', 'format_selfstudy'));
-            $mform->setExpanded('selfstudycourseformatgeneral', false);
-            $generalintro = $mform->addElement('static', 'selfstudycourseformatgeneral_intro', '',
-                get_string('courseformatsettingsgeneral_desc', 'format_selfstudy'));
-            $colorsheader = $mform->addElement('header', 'selfstudycourseformatdesigncolors',
-                get_string('courseformatsettingsdesigncolors', 'format_selfstudy'));
-            $mform->setExpanded('selfstudycourseformatdesigncolors', false);
-            $designcolorsintro = $mform->addElement('static', 'selfstudycourseformatdesign_colors', '',
-                html_writer::tag('style',
-                    '.format-selfstudy-colorpicker::-webkit-color-swatch-wrapper{padding:0;}' .
-                    '.format-selfstudy-colorpicker::-webkit-color-swatch{border:0;border-radius:.2rem;}' .
-                    '.format-selfstudy-colorpicker::-moz-color-swatch{border:0;border-radius:.2rem;}'
-                ) .
-                html_writer::tag('script',
-                    'document.addEventListener("DOMContentLoaded",function(){' .
-                    '["pathpointcolor","nextbuttoncolor"].forEach(function(name){' .
-                    'var input=document.querySelector("[name="+JSON.stringify(name)+"]");' .
-                    'if(!input){return;}' .
-                    'input.setAttribute("type","color");' .
-                    'input.className="format-selfstudy-colorpicker";' .
-                    'input.style.cssText="display:inline-block;width:3.5rem;height:2.35rem;padding:.15rem;cursor:pointer;vertical-align:middle;";' .
-                    'var row=input.closest(".fitem");' .
-                    'if(!row){return;}' .
-                    'row.classList.add("row","mb-3");' .
-                    'row.classList.remove("fitem_fcolor");' .
-                    'var label=row.querySelector(".col-form-label,.fitemtitle");' .
-                    'var element=row.querySelector(".felement");' .
-                    'if(label){label.classList.add("col-md-3","col-form-label","d-flex","pb-0","pe-md-0");}' .
-                    'if(element){element.classList.add("col-md-9","d-flex","flex-wrap","align-items-start");element.classList.remove("col-md-3");}' .
-                    '});' .
-                    '});'
-                ) .
-                html_writer::div(get_string('courseformatsettingsdesigncolors_desc', 'format_selfstudy'),
-                    'format-selfstudy-settings-help'));
-            $navheader = $mform->addElement('header', 'selfstudycourseformatnavigation',
-                get_string('courseformatsettingsdesignnavigation', 'format_selfstudy'));
-            $mform->setExpanded('selfstudycourseformatnavigation', false);
-            $designnavigationintro = $mform->addElement('static', 'selfstudycourseformatdesign_navigation', '',
-                html_writer::div(get_string('courseformatsettingsdesignnavigation_desc', 'format_selfstudy'),
-                    'format-selfstudy-settings-help'));
+            $sharedelements = $this->get_shared_edit_form_elements($mform);
 
             $designcolorelements = [];
             $designnavigationelements = [];
             $generalelements = [];
-            $designcolornames = [
-                'pathpointcolor',
-                'nextbuttoncolor',
-            ];
-            $designnavigationnames = [
-                'previousbuttonlabel',
-                'nextbuttonlabel',
-                'customnavbuttonlabel',
-                'customnavbuttonurl',
-            ];
+            $shareddesignnames = $this->get_shared_design_element_names();
+            $designcolornames = $shareddesignnames['colors'];
+            $designnavigationnames = $shareddesignnames['navigation'];
             foreach ($elements as $element) {
                 if (in_array($element->getName(), $designcolornames, true)) {
                     $designcolorelements[] = $element;
@@ -312,32 +116,17 @@ class format_selfstudy extends \local_selfstudy\courseformat\base {
             $elements = array_merge(
                 [$startheader, $startintro, $heroimage, $heroimagehint],
                 $contactelements,
-                [$generalheader, $generalintro],
+                [$sharedelements['generalheader'], $sharedelements['generalintro']],
                 $generalelements,
-                [$colorsheader, $designcolorsintro],
+                [$sharedelements['colorsheader'], $sharedelements['colorsintro']],
                 $designcolorelements,
-                [$navheader, $designnavigationintro],
+                [$sharedelements['navigationheader'], $sharedelements['navigationintro']],
                 $designnavigationelements
             );
         }
 
-        if (!$forsection && $mform->elementExists('pathpointcolor')) {
-            $element = $mform->getElement('pathpointcolor');
-            $element->updateAttributes([
-                'type' => 'color',
-                'class' => 'format-selfstudy-colorpicker',
-                'style' => 'display:inline-block;width:3.5rem;height:2.35rem;padding:.15rem;cursor:pointer;vertical-align:middle;',
-                'title' => get_string('pathpointcolor', 'format_selfstudy'),
-            ]);
-        }
-        if (!$forsection && $mform->elementExists('nextbuttoncolor')) {
-            $element = $mform->getElement('nextbuttoncolor');
-            $element->updateAttributes([
-                'type' => 'color',
-                'class' => 'format-selfstudy-colorpicker',
-                'style' => 'display:inline-block;width:3.5rem;height:2.35rem;padding:.15rem;cursor:pointer;vertical-align:middle;',
-                'title' => get_string('nextbuttoncolor', 'format_selfstudy'),
-            ]);
+        if (!$forsection) {
+            $this->apply_shared_color_picker_attributes($mform);
         }
 
         return $elements;
@@ -509,69 +298,6 @@ class format_selfstudy extends \local_selfstudy\courseformat\base {
         }
     }
 
-    /**
-     * Validates format options for the course.
-     *
-     * @param array $data
-     * @return array
-     */
-    public function validate_course_format_options(array $data): array {
-        $data = parent::validate_course_format_options($data);
-        if (($data['defaultview'] ?? '') === 'map') {
-            $data['defaultview'] = 'dashboard';
-        }
-        if (($data['defaultview'] ?? '') === 'list') {
-            $data['defaultview'] = 'dashboard';
-        }
-        if (isset($data['pathpointcolor'])) {
-            $data['pathpointcolor'] = \local_selfstudy\helper::normalise_hex_color((string)$data['pathpointcolor']);
-        }
-        if (isset($data['nextbuttoncolor'])) {
-            $fallback = \local_selfstudy\helper::normalise_hex_color((string)($data['pathpointcolor'] ?? '#6f1ab1'));
-            $data['nextbuttoncolor'] = \local_selfstudy\helper::normalise_hex_color((string)$data['nextbuttoncolor'],
-                $fallback);
-        }
-
-        return $data;
-    }
-
-    /**
-     * Section level format options.
-     *
-     * @param bool $foreditform
-     * @return array
-     */
-    public function section_format_options($foreditform = false): array {
-        $options = [
-            'learninggoal' => [
-                'default' => '',
-                'type' => PARAM_TEXT,
-            ],
-            'pathkind' => [
-                'default' => 'required',
-                'type' => PARAM_ALPHA,
-            ],
-        ];
-
-        if ($foreditform) {
-            $options['learninggoal']['label'] = get_string('learninggoal', 'format_selfstudy');
-            $options['learninggoal']['help'] = 'learninggoal';
-            $options['learninggoal']['help_component'] = 'format_selfstudy';
-            $options['learninggoal']['element_type'] = 'textarea';
-            $options['learninggoal']['element_attributes'] = [['rows' => 3, 'cols' => 60]];
-
-            $options['pathkind']['label'] = get_string('pathkind', 'format_selfstudy');
-            $options['pathkind']['help'] = 'pathkind';
-            $options['pathkind']['help_component'] = 'format_selfstudy';
-            $options['pathkind']['element_type'] = 'select';
-            $options['pathkind']['element_attributes'] = [[
-                'required' => get_string('required', 'format_selfstudy'),
-                'optional' => get_string('optional', 'format_selfstudy'),
-            ]];
-        }
-
-        return $options;
-    }
 }
 
 /**
