@@ -34,7 +34,6 @@ $pathrepository = new \local_selfstudy\path_repository();
 $learningpaths = $pathrepository->get_paths((int)$course->id, true);
 $hasavailablepathchoices = count($learningpaths) > 1 || (!empty($formatoptions['allowpersonalpaths']) &&
     \local_selfstudy\personal_path_service::has_choices($course, $learningpaths, $learningsummaries, $pathrepository));
-$showpathui = !empty($formatoptions['allowpersonalpaths']) || count($learningpaths) > 1;
 $baseview = \local_selfstudy\base_view::create($course, (int)$USER->id);
 $activepath = $baseview->path;
 $activepathprogress = $baseview->progress;
