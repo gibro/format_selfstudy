@@ -130,13 +130,11 @@ echo format_selfstudy_render_coursehero_fact(get_string('courseherorequired', 'f
 echo html_writer::end_div();
 echo html_writer::end_tag('section');
 
-echo format_selfstudy_render_module_entry($course, $learningsummaries, $formatoptions);
+echo format_selfstudy_render_section_overview($course, $learningsummaries, $formatoptions);
 
-echo format_selfstudy_render_section_overview($course, $learningsummaries);
-
-if (!empty($activepath)) {
-    echo \local_selfstudy\output\path_renderer::render_evidence($course, (int)$activepath->id, (int)$USER->id);
-}
+// "Das hast du bisher gelernt" steht auf der eigenen Seite hinter dem Hero-Button
+// "Mein Fortschrittsnachweis" (local/selfstudy/evidence.php). Auf der Kursseite
+// wiederholte es nur, was die Kacheln und die Abschnittskarten schon sagen.
 
 if ($caneditsections) {
     echo html_writer::start_div('format-selfstudy-actions');
@@ -246,25 +244,31 @@ function format_selfstudy_render_coursehero_contacts(stdClass $course, array $co
 }
 
 /**
- * Renders the module entry points.
+ * Renders the sections of the course as one list of cards.
  *
- * With a free module order the course page has to answer one question: where do
- * I start? Every module gets its own way in, and a module left half done says
- * so instead of pretending it has to be finished first.
+ * Es war zweimal dasselbe: Einstiegspunkte und Abschnittsuebersicht zeigten
+ * dieselben Abschnitte mit denselben Zahlen und demselben Ziel. Jetzt eine Liste,
+ * die beide Fragen beantwortet - was steckt drin, und wo gehe ich hinein.
+ *
+ * Bei freier Reihenfolge fuehrt jede Karte in ihren Abschnitt. Bei fester
+ * Reihenfolge nur die, in denen die Lernenden schon waren: die uebrigen sind
+ * ueber die Moodle-Verfuegbarkeit gesperrt, und Moodle schickt einen von dort
+ * kommentarlos auf die Kursseite zurueck.
  *
  * @param stdClass $course
  * @param stdClass[] $summaries
  * @param array $formatoptions
  * @return string
  */
-function format_selfstudy_render_module_entry(stdClass $course, array $summaries, array $formatoptions): string {
-    if ((string)($formatoptions['modulesequence'] ?? 'free') !== 'free') {
-        return '';
-    }
+function format_selfstudy_render_section_overview(stdClass $course, array $summaries,
+        array $formatoptions = []): string {
+    $freeorder = (string)($formatoptions['modulesequence'] ?? 'free') === 'free';
 
-    $rows = [];
+    $cards = [];
     foreach ($summaries as $summary) {
         $section = $summary->section;
+        // Ein Abschnitt ohne Aktivitaeten hat nichts zu zeigen - sonst steht hier
+        // eine Karte, die nichts meldet und nirgendwohin fuehrt.
         if ((int)$section->section === 0 || !$summary->cms) {
             continue;
         }
@@ -273,66 +277,35 @@ function format_selfstudy_render_module_entry(stdClass $course, array $summaries
         $complete = (int)$summary->completioncomplete;
         $isdone = $total > 0 && $complete >= $total;
         $title = \local_selfstudy\output\course_renderer::get_section_title($course, $section);
+        $imageurl = \local_selfstudy\helper::get_section_image_url($course, (int)$section->id);
+        $kindlabel = get_string($summary->pathkind === 'optional' ? 'optional' : 'required', 'local_selfstudy');
+
+        // Gezaehlt wird, was in den Fortschritt zaehlt - dieselbe Grundlage wie die
+        // Kachel "Stationen" im Hero.
         $progress = $total > 0 ? get_string('coursestartmoduleprogress', 'local_selfstudy', (object)[
             'complete' => $complete,
             'total' => $total,
         ]) : '';
 
+        $entryurl = !empty($summary->nextcm) && !empty($summary->nextcm->url) ? $summary->nextcm->url : null;
+        $reachable = $entryurl && ($freeorder || in_array($summary->statuskey, ['complete', 'inprogress'], true));
+
         $action = '';
-        if ($isdone) {
-            $action = html_writer::span(get_string('coursestartmoduledone', 'local_selfstudy'),
-                'format-selfstudy-moduleentry-done');
-        } else if (!empty($summary->nextcm) && !empty($summary->nextcm->url)) {
-            $action = html_writer::link($summary->nextcm->url,
-                get_string($complete > 0 ? 'coursestartmodulecontinue' : 'coursestartmodulebegin', 'local_selfstudy'),
-                ['class' => 'btn btn-secondary']);
+        if ($reachable) {
+            // Ein fertiger Abschnitt bleibt begehbar - wer etwas nachschlagen will,
+            // kommt ueber denselben Einstieg wieder hinein. learning_summary faellt
+            // dafuer auf die erste Lernaktivitaet zurueck, sobald nichts mehr offen ist.
+            // Schluessel ausgeschrieben, damit eine Textsuche sie findet:
+            // coursestartmodulereview, coursestartmodulecontinue, coursestartmodulebegin.
+            $label = 'coursestartmodulereview';
+            if (!$isdone) {
+                $label = $complete > 0 ? 'coursestartmodulecontinue' : 'coursestartmodulebegin';
+            }
+            // Ein span, kein Link: die ganze Karte ist bereits der Link, und ein
+            // <a> im <a> waere ungueltig.
+            $action = html_writer::span(get_string($label, 'local_selfstudy'),
+                'format-selfstudy-sectionoverview-action');
         }
-
-        $rows[] = html_writer::tag('li',
-            html_writer::div(
-                html_writer::span($title, 'format-selfstudy-moduleentry-title') .
-                ($progress !== '' ? html_writer::span($progress, 'format-selfstudy-moduleentry-progress') : ''),
-                'format-selfstudy-moduleentry-text'
-            ) . $action,
-            ['class' => 'format-selfstudy-moduleentry-item' .
-                ($isdone ? ' format-selfstudy-moduleentry-item-done' : '')]
-        );
-    }
-
-    if (!$rows) {
-        return '';
-    }
-
-    return html_writer::tag('section',
-        html_writer::tag('h2', get_string('coursestartmodule', 'local_selfstudy')) .
-        html_writer::div(get_string('coursestartmoduleintro', 'local_selfstudy'),
-            'format-selfstudy-moduleentry-intro') .
-        html_writer::tag('ul', implode('', $rows), ['class' => 'format-selfstudy-moduleentry-list']),
-        ['class' => 'format-selfstudy-moduleentry']
-    );
-}
-
-/**
- * Renders a visual overview of Moodle sections below the course hero.
- *
- * @param stdClass $course
- * @param stdClass[] $summaries
- * @return string
- */
-function format_selfstudy_render_section_overview(stdClass $course, array $summaries): string {
-    $cards = [];
-    foreach ($summaries as $summary) {
-        $section = $summary->section;
-        if ((int)$section->section === 0) {
-            continue;
-        }
-
-        $title = \local_selfstudy\output\course_renderer::get_section_title($course, $section);
-        $imageurl = \local_selfstudy\helper::get_section_image_url($course, (int)$section->id);
-        $activitycount = count(array_filter($summary->cms, static function(cm_info $cm): bool {
-            return \local_selfstudy\completion_state::is_learning_activity($cm);
-        }));
-        $kindlabel = get_string($summary->pathkind === 'optional' ? 'optional' : 'required', 'local_selfstudy');
 
         $media = $imageurl ?
             html_writer::empty_tag('img', [
@@ -343,7 +316,7 @@ function format_selfstudy_render_section_overview(stdClass $course, array $summa
             html_writer::span(substr($title, 0, 1), 'format-selfstudy-sectionoverview-initial',
                 ['aria-hidden' => 'true']);
 
-        $cards[] = html_writer::tag('article',
+        $cardbody =
             html_writer::div($media, 'format-selfstudy-sectionoverview-media' .
                 ($imageurl ? '' : ' format-selfstudy-sectionoverview-media-fallback')) .
             html_writer::div(
@@ -355,24 +328,39 @@ function format_selfstudy_render_section_overview(stdClass $course, array $summa
                 ) .
                 ($summary->learninggoal !== '' ? html_writer::div(format_text($summary->learninggoal, FORMAT_PLAIN),
                     'format-selfstudy-sectionoverview-goal') : '') .
-                html_writer::div(get_string('sectionoverviewactivities', 'format_selfstudy', $activitycount),
-                    'format-selfstudy-sectionoverview-count'),
+                html_writer::div(
+                    ($progress !== '' ? html_writer::span($progress,
+                        'format-selfstudy-sectionoverview-count') : '') . $action,
+                    'format-selfstudy-sectionoverview-foot'
+                ),
                 'format-selfstudy-sectionoverview-body'
-            ),
-            ['class' => 'format-selfstudy-sectionoverview-card']
-        );
+            );
+
+        $cards[] = $reachable ?
+            html_writer::link($entryurl, $cardbody, [
+                'class' => 'format-selfstudy-sectionoverview-card format-selfstudy-sectionoverview-card-link' .
+                    ($isdone ? ' format-selfstudy-sectionoverview-card-done' : ''),
+            ]) :
+            html_writer::tag('article', $cardbody, ['class' => 'format-selfstudy-sectionoverview-card' .
+                ($isdone ? ' format-selfstudy-sectionoverview-card-done' : '')]);
     }
 
     if (!$cards) {
         return '';
     }
 
+    // Bei freier Reihenfolge ist die Ueberschrift eine echte Frage an die Lernenden,
+    // bei fester waere sie eine leere Geste.
+    $heading = $freeorder ? get_string('coursestartmodule', 'local_selfstudy')
+        : get_string('sectionoverview', 'format_selfstudy');
+    $intro = $freeorder ? get_string('coursestartmoduleintro', 'local_selfstudy')
+        : get_string('sectionoverviewintro', 'format_selfstudy');
+
     return html_writer::tag('section',
         html_writer::div(
-            html_writer::tag('h2', get_string('sectionoverview', 'format_selfstudy')) .
+            html_writer::tag('h2', $heading) .
             html_writer::div('', 'format-selfstudy-sectionoverview-accent') .
-            html_writer::div(get_string('sectionoverviewintro', 'format_selfstudy'),
-                'format-selfstudy-sectionoverview-intro'),
+            html_writer::div($intro, 'format-selfstudy-sectionoverview-intro'),
             'format-selfstudy-sectionoverview-head'
         ) .
         html_writer::div(implode('', $cards), 'format-selfstudy-sectionoverview-grid'),
