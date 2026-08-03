@@ -13,9 +13,6 @@ $course = $format->get_course();
 if (\local_selfstudy\output\editing_page::render($course, $format, $displaysection ?? null)) {
     return;
 }
-$pathpointcolor = \local_selfstudy\helper::normalise_hex_color($formatoptions['pathpointcolor'] ?? '#6f1ab1');
-$nextbuttoncolor = \local_selfstudy\helper::normalise_hex_color($formatoptions['nextbuttoncolor'] ?? $pathpointcolor,
-    $pathpointcolor);
 $showlockedactivities = !array_key_exists('showlockedactivities', $formatoptions) ||
     !empty($formatoptions['showlockedactivities']);
 $modinfo = get_fast_modinfo($course);
@@ -27,286 +24,244 @@ $coursecontext = context_course::instance($course->id);
 $canmanagecourse = has_capability('moodle/course:update', $coursecontext);
 $caneditsections = $PAGE->user_is_editing() && $canmanagecourse;
 
-$nextcm = \local_selfstudy\learning_summary::find_next_cm($learningsummaries);
-$requiredopen = \local_selfstudy\learning_summary::count_sections($learningsummaries, 'required', false);
-$requiredcomplete = \local_selfstudy\learning_summary::count_sections($learningsummaries, 'required', true);
 $pathrepository = new \local_selfstudy\path_repository();
 $learningpaths = $pathrepository->get_paths((int)$course->id, true);
 $hasavailablepathchoices = count($learningpaths) > 1 || (!empty($formatoptions['allowpersonalpaths']) &&
     \local_selfstudy\personal_path_service::has_choices($course, $learningpaths, $learningsummaries, $pathrepository));
 $baseview = \local_selfstudy\base_view::create($course, (int)$USER->id);
 $activepath = $baseview->path;
-$activepathprogress = $baseview->progress;
-$activepathoutline = $baseview->outline;
-$visibleactivepathoutline = \local_selfstudy\path_outline::filter_locked($activepathoutline, $showlockedactivities);
-$pathstarted = \local_selfstudy\path_stats::has_started($activepathprogress, $visibleactivepathoutline);
-$pathdurationminutes = \local_selfstudy\path_stats::sum_duration_minutes($visibleactivepathoutline);
-$remainingdurationminutes = \local_selfstudy\path_stats::sum_remaining_duration_minutes($visibleactivepathoutline);
-$pathstationcount = \local_selfstudy\path_stats::count_stations($visibleactivepathoutline);
-$heroimageurl = format_selfstudy_get_hero_image_url($course);
-$coursecontacts = format_selfstudy_get_course_contacts((int)$course->id);
-$continueurl = \local_selfstudy\learning_summary::get_continue_url($course, $activepathprogress, $nextcm);
-$pathcomplete = !empty($activepathprogress->total) && $activepathprogress->complete >= $activepathprogress->total;
-$continuelabel = get_string($pathstarted ? 'startlearning' : 'courseherostart', 'format_selfstudy');
+$visibleactivepathoutline = \local_selfstudy\path_outline::filter_locked($baseview->outline, $showlockedactivities);
 
-echo html_writer::start_div('format-selfstudy-dashboard', [
-    'style' => '--format-selfstudy-path-color: ' . $pathpointcolor .
-        '; --format-selfstudy-next-button-color: ' . $nextbuttoncolor,
-]);
+// Screen „Mein Lernstand": Begrüßung, Fortschritt über alle Kapitel, die eine
+// Empfehlung und der Hinweis, dass die Reihenfolge frei ist.
+// Gezaehlt werden Bausteine, also Stationen der Gliederung. Der Fortschritt aus
+// base_view zaehlt nur Pflichtstationen des Pfads und meldete fuer Kurs 3
+// "1 von 1", wo 14 von 36 Bausteinen erledigt waren.
+$progresstotal = 0;
+$progresscomplete = 0;
+$seenstations = [];
+foreach ($visibleactivepathoutline as $entry) {
+    $entrycmid = (int)($entry->cmid ?? 0);
+    if (!$entrycmid || isset($seenstations[$entrycmid])) {
+        continue;
+    }
+    $seenstations[$entrycmid] = true;
+    $progresstotal++;
+    if (($entry->status ?? '') === 'complete') {
+        $progresscomplete++;
+    }
+}
+$progresspercent = $progresstotal > 0 ? (int)round($progresscomplete / $progresstotal * 100) : 0;
+// Aus demselben Grund zaehlt auch "fertig" hier ueber die Bausteine.
+$pathcomplete = $progresstotal > 0 && $progresscomplete >= $progresstotal;
 
-echo html_writer::start_tag('section', ['class' => 'format-selfstudy-coursehero']);
-echo html_writer::start_div('format-selfstudy-coursehero-main');
-if ($pathcomplete) {
-    $kickerkey = 'courseherokickerdone';
-} else {
-    $kickerkey = $pathstarted ? 'courseherokickerstarted' : 'courseherokickerstart';
-}
-echo html_writer::span(get_string($kickerkey, 'format_selfstudy'), 'format-selfstudy-coursehero-kicker');
-echo html_writer::tag('h2', format_string($course->fullname), ['class' => 'format-selfstudy-coursehero-title']);
-if (!empty($course->summary)) {
-    echo html_writer::div(format_text($course->summary, $course->summaryformat ?? FORMAT_HTML),
-        'format-selfstudy-coursehero-summary');
-}
+echo html_writer::start_div('format-selfstudy-igm format-selfstudy-lernstand');
 
-// A completed path says so instead of offering a way in: "continue" would send
-// learners back to the page they are already standing on.
-if ($pathcomplete) {
-    echo html_writer::div(
-        get_string('courseherocomplete', 'format_selfstudy'),
-        'alert alert-success format-selfstudy-coursehero-complete'
-    );
-}
-
-echo html_writer::start_div('format-selfstudy-actions format-selfstudy-coursehero-actions');
-// Also show this before the first activity: that is exactly when learners need
-// a way in.
-if ($continueurl && !$pathcomplete) {
-    echo html_writer::link(
-        $continueurl,
-        $continuelabel,
-        ['class' => 'btn btn-primary format-selfstudy-coursehero-primary']
-    );
-}
-if ($hasavailablepathchoices) {
-    echo html_writer::link(
-        new moodle_url('/local/selfstudy/personal_path.php', ['id' => $course->id]),
-        get_string('learningpathsavailablebutton', 'format_selfstudy'),
-        ['class' => 'btn btn-secondary']
-    );
-}
-if (!empty($activepath) && $pathstarted) {
-    echo html_writer::link(
-        new moodle_url('/local/selfstudy/evidence.php', ['id' => $course->id]),
-        get_string('evidencebutton', 'local_selfstudy'),
-        ['class' => 'btn btn-secondary']
-    );
-}
+echo html_writer::start_div('format-selfstudy-lernstand-hero');
+echo html_writer::start_div('');
+echo html_writer::div(get_string('lernstandoverline', 'format_selfstudy'), 'format-selfstudy-igm-overline');
+$firstname = trim((string)($USER->firstname ?? ''));
+echo html_writer::tag('h1', $firstname !== '' ?
+    get_string('lernstandgreeting', 'format_selfstudy', format_string($firstname)) :
+    get_string('lernstandgreetinganon', 'format_selfstudy'));
+echo html_writer::div('', 'format-selfstudy-igm-rule');
+echo html_writer::tag('p', $progresstotal > 0 ?
+    get_string('lernstandlead', 'format_selfstudy', (object)[
+        'complete' => $progresscomplete,
+        'total' => $progresstotal,
+    ]) :
+    get_string('lernstandleadempty', 'format_selfstudy'),
+    ['class' => 'format-selfstudy-igm-lead']);
 echo html_writer::end_div();
-echo format_selfstudy_render_coursehero_contacts($course, $coursecontacts);
+echo html_writer::div('', 'format-selfstudy-igm-triangle', ['aria-hidden' => 'true']);
 echo html_writer::end_div();
 
-echo format_selfstudy_render_coursehero_image($heroimageurl, $course);
+echo format_selfstudy_render_progress_panel($course, $learningsummaries, $progresspercent);
 
-echo html_writer::start_div('format-selfstudy-coursehero-facts');
-echo format_selfstudy_render_coursehero_fact(get_string('courseheroduration', 'format_selfstudy'),
-    \local_selfstudy\path_stats::format_duration($pathdurationminutes));
-echo format_selfstudy_render_coursehero_fact(get_string('courseheroremainingduration', 'format_selfstudy'),
-    $pathdurationminutes > 0 && $remainingdurationminutes <= 0 ?
-        get_string('courseherodurationcomplete', 'format_selfstudy') :
-        \local_selfstudy\path_stats::format_duration($remainingdurationminutes));
-echo format_selfstudy_render_coursehero_fact(get_string('courseherostations', 'format_selfstudy'),
-    (string)$pathstationcount);
-echo format_selfstudy_render_coursehero_fact(get_string('courseheroprogress', 'format_selfstudy'),
-    $activepathprogress ? get_string('learningpathprogresscount', 'format_selfstudy', (object)[
-        'complete' => $activepathprogress->complete,
-        'total' => $activepathprogress->total,
-        'percentage' => $activepathprogress->percentage,
-    ]) : get_string('statusnotstarted', 'format_selfstudy'));
-echo format_selfstudy_render_coursehero_fact(get_string('courseherorequired', 'format_selfstudy'),
-    get_string('courseherorequiredvalue', 'format_selfstudy', (object)[
-        'complete' => $requiredcomplete,
-        'open' => $requiredopen,
-    ]));
-echo html_writer::end_div();
-echo html_writer::end_tag('section');
+echo html_writer::tag('h2', get_string('lernstandnexthead', 'format_selfstudy'),
+    ['class' => 'format-selfstudy-igm-sectionhead']);
+echo format_selfstudy_render_next_card($course, $visibleactivepathoutline, $pathcomplete);
 
-echo format_selfstudy_render_section_overview($course, $learningsummaries);
+echo html_writer::div(
+    html_writer::tag('h2', get_string('lernstandinfotitle', 'format_selfstudy')) .
+    html_writer::tag('ul',
+        html_writer::tag('li', get_string('lernstandinfofree', 'format_selfstudy')) .
+        html_writer::tag('li', get_string('lernstandinfotime', 'format_selfstudy')) .
+        html_writer::tag('li', get_string('lernstandinfocheck', 'format_selfstudy')),
+        ['class' => 'format-selfstudy-igm-infobox-list']
+    ),
+    'format-selfstudy-igm-infobox format-selfstudy-lernstand-infobox'
+);
 
 if (!empty($activepath)) {
     echo \local_selfstudy\output\path_renderer::render_evidence($course, (int)$activepath->id, (int)$USER->id);
 }
 
+if ($hasavailablepathchoices) {
+    echo html_writer::div(
+        html_writer::link(
+            new moodle_url('/local/selfstudy/personal_path.php', ['id' => $course->id]),
+            get_string('learningpathsavailablebutton', 'format_selfstudy'),
+            ['class' => 'format-selfstudy-igm-button format-selfstudy-igm-button-secondary']
+        ),
+        'format-selfstudy-lernstand-nextactions'
+    );
+}
+
 if ($caneditsections) {
-    echo html_writer::start_div('format-selfstudy-actions');
-    echo html_writer::link(
-        new moodle_url('/local/selfstudy/teacher_analytics.php', ['id' => $course->id]),
-        get_string('teacheranalytics', 'format_selfstudy'),
-        ['class' => 'btn btn-secondary']
+    echo html_writer::div(
+        html_writer::link(
+            new moodle_url('/local/selfstudy/teacher_analytics.php', ['id' => $course->id]),
+            get_string('teacheranalytics', 'format_selfstudy'),
+            ['class' => 'format-selfstudy-igm-button format-selfstudy-igm-button-secondary']
+        ) .
+        html_writer::link(
+            new moodle_url('/local/selfstudy/path_editor.php', ['id' => $course->id]),
+            get_string('learningpatheditor', 'format_selfstudy'),
+            ['class' => 'format-selfstudy-igm-button format-selfstudy-igm-button-secondary']
+        ),
+        'format-selfstudy-lernstand-nextactions'
     );
-    echo html_writer::link(
-        new moodle_url('/local/selfstudy/path_editor.php', ['id' => $course->id]),
-        get_string('learningpatheditor', 'format_selfstudy'),
-        ['class' => 'btn btn-secondary']
-    );
-    echo html_writer::end_div();
 }
 
 echo html_writer::end_div();
 
 /**
- * Renders one compact course hero fact.
- *
- * @param string $label
- * @param string $value
- * @return string
- */
-function format_selfstudy_render_coursehero_fact(string $label, string $value): string {
-    return html_writer::div(
-        html_writer::div(s($label), 'format-selfstudy-coursehero-factlabel') .
-        html_writer::div(s($value), 'format-selfstudy-coursehero-factvalue'),
-        'format-selfstudy-coursehero-fact'
-    );
-}
-
-/**
- * Renders the course hero image slot.
- *
- * @param moodle_url|null $imageurl
- * @param stdClass $course
- * @return string
- */
-function format_selfstudy_render_coursehero_image(?moodle_url $imageurl, stdClass $course): string {
-    if ($imageurl) {
-        return html_writer::div(
-            html_writer::empty_tag('img', [
-                'src' => $imageurl->out(false),
-                'alt' => '',
-                'loading' => 'lazy',
-            ]),
-            'format-selfstudy-coursehero-image'
-        );
-    }
-
-    return html_writer::div(
-        html_writer::span(format_string($course->shortname ?: $course->fullname)),
-        'format-selfstudy-coursehero-image format-selfstudy-coursehero-image-fallback',
-        ['aria-hidden' => 'true']
-    );
-}
-
-/**
- * Renders configured course contact persons in the hero.
- *
- * @param stdClass $course
- * @param stdClass[] $contacts
- * @return string
- */
-function format_selfstudy_render_coursehero_contacts(stdClass $course, array $contacts): string {
-    global $OUTPUT;
-
-    if (!$contacts) {
-        return '';
-    }
-
-    $rolelabels = format_selfstudy_get_course_contact_role_labels();
-    $items = [];
-    foreach (array_slice($contacts, 0, 10) as $contact) {
-        $roles = array_values(array_filter(array_map('trim', explode(',', (string)$contact->roles))));
-        $badges = [];
-        foreach ($roles as $role) {
-            if (isset($rolelabels[$role])) {
-                $badges[] = html_writer::span($rolelabels[$role], 'format-selfstudy-coursecontact-role');
-            }
-        }
-
-        $profileurl = new moodle_url('/user/view.php', ['id' => (int)$contact->userid, 'course' => (int)$course->id]);
-        $picture = $OUTPUT->user_picture($contact, [
-            'size' => 48,
-            'courseid' => (int)$course->id,
-            'link' => false,
-            'class' => 'format-selfstudy-coursecontact-avatar',
-        ]);
-
-        $items[] = html_writer::link($profileurl,
-            $picture .
-            html_writer::span(fullname($contact), 'format-selfstudy-coursecontact-name') .
-            html_writer::span(implode('', $badges), 'format-selfstudy-coursecontact-roles'),
-            ['class' => 'format-selfstudy-coursecontact']
-        );
-    }
-
-    return html_writer::div(
-        html_writer::div(get_string('coursecontacts', 'format_selfstudy'),
-            'format-selfstudy-coursecontacts-label') .
-        html_writer::div(implode('', $items), 'format-selfstudy-coursecontacts-list'),
-        'format-selfstudy-coursecontacts'
-    );
-}
-
-/**
- * Renders a visual overview of Moodle sections below the course hero.
+ * Renders the dark progress panel with one tile per course chapter.
  *
  * @param stdClass $course
  * @param stdClass[] $summaries
+ * @param int $percent
  * @return string
  */
-function format_selfstudy_render_section_overview(stdClass $course, array $summaries): string {
-    $cards = [];
+function format_selfstudy_render_progress_panel(stdClass $course, array $summaries, int $percent): string {
+    $tiles = [];
     foreach ($summaries as $summary) {
         $section = $summary->section;
-        if ((int)$section->section === 0) {
+        if ((int)$section->section === 0 || !$summary->cms) {
             continue;
         }
 
-        $title = \local_selfstudy\output\course_renderer::get_section_title($course, $section);
-        $imageurl = \local_selfstudy\helper::get_section_image_url($course, (int)$section->id);
-        $activitycount = count(array_filter($summary->cms, static function(cm_info $cm): bool {
-            return \local_selfstudy\completion_state::is_learning_activity($cm);
-        }));
-        $kindlabel = get_string($summary->pathkind === 'optional' ? 'optional' : 'required', 'local_selfstudy');
-
-        $media = $imageurl ?
-            html_writer::empty_tag('img', [
-                'src' => $imageurl->out(false),
-                'alt' => '',
-                'loading' => 'lazy',
-            ]) :
-            html_writer::span(substr($title, 0, 1), 'format-selfstudy-sectionoverview-initial',
-                ['aria-hidden' => 'true']);
-
-        $cards[] = html_writer::tag('article',
-            html_writer::div($media, 'format-selfstudy-sectionoverview-media' .
-                ($imageurl ? '' : ' format-selfstudy-sectionoverview-media-fallback')) .
-            html_writer::div(
-                html_writer::tag('h3', $title) .
-                html_writer::div(
-                    html_writer::span($kindlabel, 'format-selfstudy-sectionoverview-chip') .
-                    html_writer::span($summary->statuslabel, 'format-selfstudy-sectionoverview-status'),
-                    'format-selfstudy-sectionoverview-meta'
-                ) .
-                ($summary->learninggoal !== '' ? html_writer::div(format_text($summary->learninggoal, FORMAT_PLAIN),
-                    'format-selfstudy-sectionoverview-goal') : '') .
-                html_writer::div(get_string('sectionoverviewactivities', 'format_selfstudy', $activitycount),
-                    'format-selfstudy-sectionoverview-count'),
-                'format-selfstudy-sectionoverview-body'
-            ),
-            ['class' => 'format-selfstudy-sectionoverview-card']
+        $total = (int)$summary->completionenabled;
+        $complete = (int)$summary->completioncomplete;
+        $iscomplete = $total > 0 && $complete >= $total;
+        $tiles[] = html_writer::link(
+            new moodle_url('/course/view.php', ['id' => $course->id, 'section' => (int)$section->section]),
+            html_writer::span(\local_selfstudy\output\course_renderer::get_section_title($course, $section),
+                'format-selfstudy-lernstand-chaptername') .
+            html_writer::span(get_string('lernstandchapterprogress', 'format_selfstudy', (object)[
+                'complete' => $complete,
+                'total' => $total,
+            ]), 'format-selfstudy-lernstand-chapterprogress'),
+            ['class' => 'format-selfstudy-lernstand-chapter' .
+                ($iscomplete ? ' format-selfstudy-lernstand-chapter-complete' : '')]
         );
     }
 
-    if (!$cards) {
-        return '';
+    return html_writer::div(
+        html_writer::div(
+            html_writer::tag('h2', get_string('lernstandprogresstitle', 'format_selfstudy')) .
+            html_writer::span($percent . ' %', 'format-selfstudy-lernstand-percent'),
+            'format-selfstudy-lernstand-progresshead'
+        ) .
+        html_writer::div('', 'format-selfstudy-igm-bar', [
+            'style' => '--igm-progress: ' . $percent . '%',
+            'role' => 'progressbar',
+            'aria-valuenow' => $percent,
+            'aria-valuemin' => 0,
+            'aria-valuemax' => 100,
+        ]) .
+        ($tiles ? html_writer::div(implode('', $tiles), 'format-selfstudy-lernstand-chapters') : ''),
+        'format-selfstudy-lernstand-progress'
+    );
+}
+
+/**
+ * Renders the single recommendation: the first step that is neither done nor locked.
+ *
+ * @param stdClass $course
+ * @param array $outline
+ * @param bool $pathcomplete
+ * @return string
+ */
+function format_selfstudy_render_next_card(stdClass $course, array $outline, bool $pathcomplete): string {
+    $next = null;
+    foreach ($outline as $entry) {
+        if (empty($entry->cmid) || empty($entry->url)) {
+            continue;
+        }
+        if (!in_array($entry->status ?? 'open', ['complete', 'locked', 'missing'], true)) {
+            $next = $entry;
+            break;
+        }
     }
 
-    return html_writer::tag('section',
+    // Ohne offenen Baustein sind zwei Faelle zu unterscheiden: fertig - oder
+    // alles Uebrige wartet noch auf eine Voraussetzung. Das eine ist ein
+    // Erfolg, das andere eine Sackgasse, und beide brauchen einen anderen Satz.
+    if ($pathcomplete || !$next) {
+        return html_writer::div(
+            html_writer::span($pathcomplete ? '✓' : '!', 'format-selfstudy-lernstand-nexticon',
+                ['aria-hidden' => 'true']) .
+            html_writer::div(
+                html_writer::tag('h3', get_string($pathcomplete ? 'lernstandalldone' : 'lernstandblocked',
+                    'format_selfstudy')) .
+                ($pathcomplete ? '' : html_writer::tag('p',
+                    get_string('lernstandblockedtext', 'format_selfstudy'),
+                    ['class' => 'format-selfstudy-lernstand-nexttext']) .
+                    html_writer::div(
+                        html_writer::link(
+                            new moodle_url('/course/view.php', ['id' => $course->id, 'selfstudyview' => 'kurs']),
+                            get_string('lernstandchooseother', 'format_selfstudy'),
+                            ['class' => 'format-selfstudy-igm-button format-selfstudy-igm-button-secondary']
+                        ),
+                        'format-selfstudy-lernstand-nextactions'
+                    )),
+                ''
+            ),
+            'format-selfstudy-lernstand-next'
+        );
+    }
+
+    $meta = [];
+    $goal = '';
+    try {
+        $cm = get_fast_modinfo($course)->get_cm((int)$next->cmid);
+        $meta[] = get_section_name($course, $cm->sectionnum);
+        $meta[] = get_string('pluginname', 'mod_' . $cm->modname);
+        $metadata = \local_selfstudy\cm_metadata::get((int)$next->cmid);
+        $goal = trim((string)($metadata->learninggoal ?? ''));
+        if ((int)$metadata->durationminutes > 0) {
+            $meta[] = \local_selfstudy\path_stats::format_duration((int)$metadata->durationminutes);
+        }
+    } catch (Throwable $exception) {
+        $meta = [];
+    }
+
+    return html_writer::div(
+        html_writer::span('▸', 'format-selfstudy-lernstand-nexticon', ['aria-hidden' => 'true']) .
         html_writer::div(
-            html_writer::tag('h2', get_string('sectionoverview', 'format_selfstudy')) .
-            html_writer::div('', 'format-selfstudy-sectionoverview-accent') .
-            html_writer::div(get_string('sectionoverviewintro', 'format_selfstudy'),
-                'format-selfstudy-sectionoverview-intro'),
-            'format-selfstudy-sectionoverview-head'
-        ) .
-        html_writer::div(implode('', $cards), 'format-selfstudy-sectionoverview-grid'),
-        ['class' => 'format-selfstudy-sectionoverview']
+            html_writer::div(
+                html_writer::span(get_string('lernstandrecommended', 'format_selfstudy'),
+                    'format-selfstudy-igm-badge') .
+                ($meta ? html_writer::span(implode(' · ', $meta)) : ''),
+                'format-selfstudy-lernstand-nextmeta'
+            ) .
+            html_writer::tag('h3', format_string($next->title ?? '')) .
+            ($goal !== '' ? html_writer::tag('p', format_text($goal, FORMAT_PLAIN),
+                ['class' => 'format-selfstudy-lernstand-nexttext']) : '') .
+            html_writer::div(
+                html_writer::link($next->url, get_string('lernstandstart', 'format_selfstudy'),
+                    ['class' => 'format-selfstudy-igm-button']) .
+                html_writer::link(
+                    new moodle_url('/course/view.php', ['id' => $course->id, 'selfstudyview' => 'kurs']),
+                    get_string('lernstandchooseother', 'format_selfstudy'),
+                    ['class' => 'format-selfstudy-igm-button format-selfstudy-igm-button-secondary']
+                ),
+                'format-selfstudy-lernstand-nextactions'
+            ),
+            ''
+        ),
+        'format-selfstudy-lernstand-next'
     );
 }
