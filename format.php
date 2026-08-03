@@ -47,7 +47,6 @@ $pathstationcount = \local_selfstudy\path_stats::count_stations($visibleactivepa
 $heroimageurl = format_selfstudy_get_hero_image_url($course);
 $coursecontacts = format_selfstudy_get_course_contacts((int)$course->id);
 $continueurl = \local_selfstudy\learning_summary::get_continue_url($course, $activepathprogress, $nextcm);
-$pathcomplete = !empty($activepathprogress->total) && $activepathprogress->complete >= $activepathprogress->total;
 $continuelabel = get_string($pathstarted ? 'startlearning' : 'courseherostart', 'format_selfstudy');
 
 echo html_writer::start_div('format-selfstudy-dashboard', [
@@ -67,20 +66,25 @@ if (!empty($course->summary)) {
 
 echo html_writer::start_div('format-selfstudy-actions format-selfstudy-coursehero-actions');
 // Also show this before the first activity: that is exactly when learners need
-// a way in. A completed path gets no primary button: the evidence block on
-// this page already says everything, and "back to the overview" would loop
-// onto the page the learner is standing on.
-if ($continueurl && !$pathcomplete) {
+// a way in. The label already distinguishes start, continue and completed.
+if ($continueurl) {
     echo html_writer::link(
         $continueurl,
         $continuelabel,
         ['class' => 'btn btn-primary format-selfstudy-coursehero-primary']
     );
 }
-if ($hasavailablepathchoices || !empty($activepath)) {
+if ($hasavailablepathchoices) {
     echo html_writer::link(
         new moodle_url('/local/selfstudy/personal_path.php', ['id' => $course->id]),
-        get_string('learningpathhub', 'format_selfstudy'),
+        get_string('learningpathsavailablebutton', 'format_selfstudy'),
+        ['class' => 'btn btn-secondary']
+    );
+}
+if (!empty($activepath) && $pathstarted) {
+    echo html_writer::link(
+        new moodle_url('/local/selfstudy/evidence.php', ['id' => $course->id]),
+        get_string('evidencebutton', 'local_selfstudy'),
         ['class' => 'btn btn-secondary']
     );
 }
@@ -246,7 +250,7 @@ function format_selfstudy_render_section_overview(stdClass $course, array $summa
         $activitycount = count(array_filter($summary->cms, static function(cm_info $cm): bool {
             return \local_selfstudy\completion_state::is_learning_activity($cm);
         }));
-        $kindlabel = get_string($summary->pathkind === 'optional' ? 'optional' : 'required', 'format_selfstudy');
+        $kindlabel = get_string($summary->pathkind === 'optional' ? 'optional' : 'required', 'local_selfstudy');
 
         $media = $imageurl ?
             html_writer::empty_tag('img', [
