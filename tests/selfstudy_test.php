@@ -164,6 +164,28 @@ class format_selfstudy_test extends advanced_testcase {
         $this->assertSame(1, $DB->count_records('format_selfstudy_contacts', ['courseid' => $course->id]));
     }
 
+    public function test_a_course_update_without_the_form_fields_keeps_the_contacts(): void {
+        global $DB;
+
+        $this->resetAfterTest();
+        $this->setAdminUser();
+
+        $generator = $this->getDataGenerator();
+        $course = $generator->create_course(['format' => 'selfstudy']);
+        $author = $generator->create_user();
+        $generator->enrol_user($author->id, $course->id, 'editingteacher');
+        course_get_format($course)->update_course_format_options((object)[
+            'selfstudycontactauthors' => [$author->id],
+            'selfstudycontactsupport' => [],
+        ]);
+
+        // update_course() reaches the format with a plain course record. Core
+        // does this during a course restore, and it must not clear the contacts.
+        update_course((object)['id' => $course->id, 'fullname' => 'Neuer Name']);
+
+        $this->assertSame(1, $DB->count_records('format_selfstudy_contacts', ['courseid' => $course->id]));
+    }
+
     public function test_course_contact_role_labels_are_translated(): void {
         $this->resetAfterTest();
         $labels = format_selfstudy_get_course_contact_role_labels();

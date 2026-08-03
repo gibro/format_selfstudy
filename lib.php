@@ -255,6 +255,15 @@ class format_selfstudy extends \local_selfstudy\courseformat\base {
             return;
         }
 
+        // Only data that really carries the contact selectors may change them.
+        // update_course_format_options() is also called with a plain course
+        // record - the course restore does that - and such a call must leave
+        // the stored contacts alone instead of wiping them.
+        if (!property_exists($data, 'selfstudycontactauthors') &&
+                !property_exists($data, 'selfstudycontactsupport')) {
+            return;
+        }
+
         $context = context_course::instance($this->courseid);
         $now = time();
         $records = [];
