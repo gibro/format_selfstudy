@@ -130,6 +130,8 @@ echo format_selfstudy_render_coursehero_fact(get_string('courseherorequired', 'f
 echo html_writer::end_div();
 echo html_writer::end_tag('section');
 
+echo format_selfstudy_render_module_entry($course, $learningsummaries, $formatoptions);
+
 echo format_selfstudy_render_section_overview($course, $learningsummaries);
 
 if (!empty($activepath)) {
@@ -240,6 +242,73 @@ function format_selfstudy_render_coursehero_contacts(stdClass $course, array $co
             'format-selfstudy-coursecontacts-label') .
         html_writer::div(implode('', $items), 'format-selfstudy-coursecontacts-list'),
         'format-selfstudy-coursecontacts'
+    );
+}
+
+/**
+ * Renders the module entry points.
+ *
+ * With a free module order the course page has to answer one question: where do
+ * I start? Every module gets its own way in, and a module left half done says
+ * so instead of pretending it has to be finished first.
+ *
+ * @param stdClass $course
+ * @param stdClass[] $summaries
+ * @param array $formatoptions
+ * @return string
+ */
+function format_selfstudy_render_module_entry(stdClass $course, array $summaries, array $formatoptions): string {
+    if ((string)($formatoptions['modulesequence'] ?? 'free') !== 'free') {
+        return '';
+    }
+
+    $rows = [];
+    foreach ($summaries as $summary) {
+        $section = $summary->section;
+        if ((int)$section->section === 0 || !$summary->cms) {
+            continue;
+        }
+
+        $total = (int)$summary->completionenabled;
+        $complete = (int)$summary->completioncomplete;
+        $isdone = $total > 0 && $complete >= $total;
+        $title = \local_selfstudy\output\course_renderer::get_section_title($course, $section);
+        $progress = $total > 0 ? get_string('coursestartmoduleprogress', 'local_selfstudy', (object)[
+            'complete' => $complete,
+            'total' => $total,
+        ]) : '';
+
+        $action = '';
+        if ($isdone) {
+            $action = html_writer::span(get_string('coursestartmoduledone', 'local_selfstudy'),
+                'format-selfstudy-moduleentry-done');
+        } else if (!empty($summary->nextcm) && !empty($summary->nextcm->url)) {
+            $action = html_writer::link($summary->nextcm->url,
+                get_string($complete > 0 ? 'coursestartmodulecontinue' : 'coursestartmodulebegin', 'local_selfstudy'),
+                ['class' => 'btn btn-secondary']);
+        }
+
+        $rows[] = html_writer::tag('li',
+            html_writer::div(
+                html_writer::span($title, 'format-selfstudy-moduleentry-title') .
+                ($progress !== '' ? html_writer::span($progress, 'format-selfstudy-moduleentry-progress') : ''),
+                'format-selfstudy-moduleentry-text'
+            ) . $action,
+            ['class' => 'format-selfstudy-moduleentry-item' .
+                ($isdone ? ' format-selfstudy-moduleentry-item-done' : '')]
+        );
+    }
+
+    if (!$rows) {
+        return '';
+    }
+
+    return html_writer::tag('section',
+        html_writer::tag('h2', get_string('coursestartmodule', 'local_selfstudy')) .
+        html_writer::div(get_string('coursestartmoduleintro', 'local_selfstudy'),
+            'format-selfstudy-moduleentry-intro') .
+        html_writer::tag('ul', implode('', $rows), ['class' => 'format-selfstudy-moduleentry-list']),
+        ['class' => 'format-selfstudy-moduleentry']
     );
 }
 
