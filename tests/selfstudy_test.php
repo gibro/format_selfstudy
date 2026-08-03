@@ -59,12 +59,19 @@ class format_selfstudy_test extends advanced_testcase {
         $this->assertSame('', $options['learninggoal']['default']);
         $this->assertArrayHasKey('pathkind', $options);
 
-        // They are edited in the "set up the steps" panel now, beside duration,
-        // completion and competencies - so the section form offers neither. An
-        // option without element_type builds no form element.
-        $editoptions = $format->section_format_options(true);
-        $this->assertArrayNotHasKey('element_type', $editoptions['learninggoal']);
-        $this->assertArrayNotHasKey('element_type', $editoptions['pathkind']);
+        // The edit form set has to keep them: core validates incoming data
+        // against it, so an empty set would make them unsavable.
+        $this->assertArrayHasKey('learninggoal', $format->section_format_options(true));
+
+        // They are edited in the "set up the steps" panel, so create_edit_form_elements()
+        // takes the fields core built back out - they carried no label and no
+        // one could tell what belonged in them.
+        $mform = new MoodleQuickForm('test', 'post', '');
+        $format->create_edit_form_elements($mform, true);
+        $this->assertFalse($mform->elementExists('learninggoal'));
+        $this->assertFalse($mform->elementExists('pathkind'));
+        $this->assertTrue($mform->elementExists('selfstudysettingsmoved'),
+            'Instead the form says where the fields went.');
     }
 
     public function test_option_names_never_collide_with_table_columns(): void {
