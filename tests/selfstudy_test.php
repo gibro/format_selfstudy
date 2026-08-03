@@ -48,22 +48,23 @@ class format_selfstudy_test extends advanced_testcase {
         $this->assertSame('text', $editoptions['pathpointcolor']['element_type']);
     }
 
-    public function test_section_format_options_carry_goal_and_kind(): void {
+    public function test_section_options_are_stored_but_no_longer_edited_in_the_section_form(): void {
         $this->resetAfterTest();
         $course = $this->getDataGenerator()->create_course(['format' => 'selfstudy']);
         $format = course_get_format($course);
 
+        // Both values keep their place in course_format_options.
         $options = $format->section_format_options();
         $this->assertArrayHasKey('learninggoal', $options);
         $this->assertSame('', $options['learninggoal']['default']);
         $this->assertArrayHasKey('pathkind', $options);
-        $this->assertSame('required', $options['pathkind']['default']);
 
+        // They are edited in the "set up the steps" panel now, beside duration,
+        // completion and competencies - so the section form offers neither. An
+        // option without element_type builds no form element.
         $editoptions = $format->section_format_options(true);
-        $this->assertSame('textarea', $editoptions['learninggoal']['element_type']);
-        $this->assertSame('select', $editoptions['pathkind']['element_type']);
-        $this->assertSame(['required', 'optional'],
-            array_keys($editoptions['pathkind']['element_attributes'][0]));
+        $this->assertArrayNotHasKey('element_type', $editoptions['learninggoal']);
+        $this->assertArrayNotHasKey('element_type', $editoptions['pathkind']);
     }
 
     public function test_option_names_never_collide_with_table_columns(): void {
