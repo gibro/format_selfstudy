@@ -47,6 +47,7 @@ $pathstationcount = \local_selfstudy\path_stats::count_stations($visibleactivepa
 $heroimageurl = format_selfstudy_get_hero_image_url($course);
 $coursecontacts = format_selfstudy_get_course_contacts((int)$course->id);
 $continueurl = \local_selfstudy\learning_summary::get_continue_url($course, $activepathprogress, $nextcm);
+$pathcomplete = !empty($activepathprogress->total) && $activepathprogress->complete >= $activepathprogress->total;
 $continuelabel = get_string($pathstarted ? 'startlearning' : 'courseherostart', 'format_selfstudy');
 
 echo html_writer::start_div('format-selfstudy-dashboard', [
@@ -56,18 +57,31 @@ echo html_writer::start_div('format-selfstudy-dashboard', [
 
 echo html_writer::start_tag('section', ['class' => 'format-selfstudy-coursehero']);
 echo html_writer::start_div('format-selfstudy-coursehero-main');
-echo html_writer::span(get_string($pathstarted ? 'courseherokickerstarted' : 'courseherokickerstart',
-    'format_selfstudy'), 'format-selfstudy-coursehero-kicker');
+if ($pathcomplete) {
+    $kickerkey = 'courseherokickerdone';
+} else {
+    $kickerkey = $pathstarted ? 'courseherokickerstarted' : 'courseherokickerstart';
+}
+echo html_writer::span(get_string($kickerkey, 'format_selfstudy'), 'format-selfstudy-coursehero-kicker');
 echo html_writer::tag('h2', format_string($course->fullname), ['class' => 'format-selfstudy-coursehero-title']);
 if (!empty($course->summary)) {
     echo html_writer::div(format_text($course->summary, $course->summaryformat ?? FORMAT_HTML),
         'format-selfstudy-coursehero-summary');
 }
 
+// A completed path says so instead of offering a way in: "continue" would send
+// learners back to the page they are already standing on.
+if ($pathcomplete) {
+    echo html_writer::div(
+        get_string('courseherocomplete', 'format_selfstudy'),
+        'alert alert-success format-selfstudy-coursehero-complete'
+    );
+}
+
 echo html_writer::start_div('format-selfstudy-actions format-selfstudy-coursehero-actions');
 // Also show this before the first activity: that is exactly when learners need
-// a way in. The label already distinguishes start, continue and completed.
-if ($continueurl) {
+// a way in.
+if ($continueurl && !$pathcomplete) {
     echo html_writer::link(
         $continueurl,
         $continuelabel,
