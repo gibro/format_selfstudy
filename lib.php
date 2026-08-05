@@ -326,9 +326,11 @@ function format_selfstudy_pluginfile($course, $cm, $context, $filearea, $args, $
     if ($context->contextlevel !== CONTEXT_COURSE || $filearea !== 'heroimage') {
         return false;
     }
-    if (!has_capability('moodle/course:view', $context)) {
-        return false;
-    }
+    // NICHT has_capability('moodle/course:view'): die Berechtigung heisst "Kurse
+    // ansehen, ohne teilzunehmen" und liegt bei Manager/innen. Eingeschriebene
+    // Teilnehmende und Trainer/innen haben sie nicht - fuer sie blieb das Hero-Bild
+    // leer. Der Kern prueft in diesem Zweig von file_pluginfile() gar nichts.
+    require_login($course, false, $cm);
 
     $filename = array_pop($args);
     if (!$filename || $filename === '.') {
@@ -341,6 +343,7 @@ function format_selfstudy_pluginfile($course, $cm, $context, $filearea, $args, $
         return false;
     }
 
+    \core\session\manager::write_close();
     send_stored_file($file, 0, 0, $forcedownload, $options);
 
     return true;
