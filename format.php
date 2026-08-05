@@ -265,12 +265,24 @@ function format_selfstudy_render_section_overview(stdClass $course, array $summa
     $freeorder = (string)($formatoptions['modulesequence'] ?? 'free') === 'free';
 
     $cards = [];
+    $stopafter = false;
     foreach ($summaries as $summary) {
         $section = $summary->section;
         // Ein Abschnitt ohne Aktivitaeten hat nichts zu zeigen - sonst steht hier
         // eine Karte, die nichts meldet und nirgendwohin fuehrt.
         if ((int)$section->section === 0 || !$summary->cms) {
             continue;
+        }
+
+        // Bei fester Reihenfolge reicht die Liste bis dorthin, wo die Lernenden
+        // stehen, und keinen Abschnitt weiter. Sonst entstehen Loecher: wer
+        // irgendwann einmal etwas in Abschnitt 6 abgeschlossen hat, saehe 1, 2, 6 -
+        // eine Reihenfolge, die als Reihenfolge nichts mehr aussagt.
+        if (!$freeorder && $stopafter) {
+            break;
+        }
+        if (!$freeorder && $summary->statuskey !== 'complete') {
+            $stopafter = true;
         }
 
         $total = (int)$summary->completionenabled;
