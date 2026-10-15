@@ -31,7 +31,7 @@ class format_selfstudy_test extends advanced_testcase {
 
         // The format adds nothing of its own, so exactly the shared set must arrive.
         foreach (['enableavatar', 'enableactivitynavigation', 'shownavprevious', 'shownavmap', 'shownavnext',
-                'showactivitystatus', 'useactivitymetadata', 'showlockedactivities', 'allowpersonalpaths',
+                'showactivitystatus', 'uselearninggoals', 'useduration', 'usecompetencies', 'showlockedactivities', 'allowpersonalpaths',
                 'pathpointcolor', 'nextbuttoncolor', 'previousbuttonlabel', 'mapbuttonlabel', 'nextbuttonlabel',
                 'customnavbuttonlabel', 'customnavbuttonurl'] as $name) {
             $this->assertArrayHasKey($name, $options, 'Missing shared course format option ' . $name);

@@ -251,7 +251,8 @@ function format_selfstudy_render_coursehero_contacts(stdClass $course, array $co
  * die beide Fragen beantwortet - was steckt drin, und wo gehe ich hinein.
  *
  * Bei freier Reihenfolge fuehrt jede Karte in ihren Abschnitt. Bei fester
- * Reihenfolge nur die, in denen die Lernenden schon waren: die uebrigen sind
+ * Reihenfolge stehen alle da, fuehren aber nur bis zum ersten unfertigen
+ * Abschnitt hinein: die uebrigen sind
  * ueber die Moodle-Verfuegbarkeit gesperrt, und Moodle schickt einen von dort
  * kommentarlos auf die Kursseite zurueck.
  *
@@ -265,7 +266,7 @@ function format_selfstudy_render_section_overview(stdClass $course, array $summa
     $freeorder = (string)($formatoptions['modulesequence'] ?? 'free') === 'free';
 
     $cards = [];
-    $stopafter = false;
+    $lockrest = false;
     foreach ($summaries as $summary) {
         $section = $summary->section;
         // Ein Abschnitt ohne Aktivitaeten hat nichts zu zeigen - sonst steht hier
@@ -274,15 +275,14 @@ function format_selfstudy_render_section_overview(stdClass $course, array $summa
             continue;
         }
 
-        // Bei fester Reihenfolge reicht die Liste bis dorthin, wo die Lernenden
-        // stehen, und keinen Abschnitt weiter. Sonst entstehen Loecher: wer
-        // irgendwann einmal etwas in Abschnitt 6 abgeschlossen hat, saehe 1, 2, 6 -
-        // eine Reihenfolge, die als Reihenfolge nichts mehr aussagt.
-        if (!$freeorder && $stopafter) {
-            break;
-        }
+        // Bei fester Reihenfolge stehen alle Abschnitte da, damit man den ganzen
+        // Weg sieht. Begehbar ist er aber nur bis dorthin, wo die Lernenden stehen:
+        // alles hinter dem ersten unfertigen Abschnitt ist gesperrt. Nach dem
+        // Status allein zu gehen, ergaebe Loecher - wer irgendwann einmal etwas in
+        // Abschnitt 6 abgeschlossen hat, koennte 1 und 6 betreten, 2 aber nicht.
+        $locked = !$freeorder && $lockrest;
         if (!$freeorder && $summary->statuskey !== 'complete') {
-            $stopafter = true;
+            $lockrest = true;
         }
 
         $total = (int)$summary->completionenabled;
@@ -300,7 +300,7 @@ function format_selfstudy_render_section_overview(stdClass $course, array $summa
         ]) : '';
 
         $entryurl = !empty($summary->nextcm) && !empty($summary->nextcm->url) ? $summary->nextcm->url : null;
-        $reachable = $entryurl && ($freeorder || in_array($summary->statuskey, ['complete', 'inprogress'], true));
+        $reachable = $entryurl && !$locked;
 
         $action = '';
         if ($reachable) {
@@ -335,7 +335,8 @@ function format_selfstudy_render_section_overview(stdClass $course, array $summa
                 html_writer::tag('h3', $title) .
                 html_writer::div(
                     html_writer::span($kindlabel, 'format-selfstudy-sectionoverview-chip') .
-                    html_writer::span($summary->statuslabel, 'format-selfstudy-sectionoverview-status'),
+                    html_writer::span($locked ? get_string('learningpathstatuslocked', 'local_selfstudy') :
+                        $summary->statuslabel, 'format-selfstudy-sectionoverview-status'),
                     'format-selfstudy-sectionoverview-meta'
                 ) .
                 ($summary->learninggoal !== '' ? html_writer::div(format_text($summary->learninggoal, FORMAT_PLAIN),
@@ -354,7 +355,8 @@ function format_selfstudy_render_section_overview(stdClass $course, array $summa
                     ($isdone ? ' format-selfstudy-sectionoverview-card-done' : ''),
             ]) :
             html_writer::tag('article', $cardbody, ['class' => 'format-selfstudy-sectionoverview-card' .
-                ($isdone ? ' format-selfstudy-sectionoverview-card-done' : '')]);
+                ($isdone ? ' format-selfstudy-sectionoverview-card-done' : '') .
+                ($locked ? ' format-selfstudy-sectionoverview-card-locked' : '')]);
     }
 
     if (!$cards) {
