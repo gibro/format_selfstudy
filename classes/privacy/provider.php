@@ -12,7 +12,9 @@ defined('MOODLE_INTERNAL') || die();
 
 use core_privacy\local\metadata\collection;
 use core_privacy\local\request\approved_contextlist;
+use core_privacy\local\request\approved_userlist;
 use core_privacy\local\request\contextlist;
+use core_privacy\local\request\userlist;
 use core_privacy\local\request\writer;
 
 /**
@@ -24,7 +26,8 @@ use core_privacy\local\request\writer;
  */
 class provider implements
         \core_privacy\local\metadata\provider,
-        \core_privacy\local\request\plugin\provider {
+        \core_privacy\local\request\plugin\provider,
+        \core_privacy\local\request\core_userlist_provider {
 
     /**
      * Returns metadata about the user data stored by this plugin.
@@ -62,6 +65,39 @@ class provider implements
         ]);
 
         return $contextlist;
+    }
+
+    /**
+     * Gets the users with data in one course.
+     *
+     * @param userlist $userlist
+     */
+    public static function get_users_in_context(userlist $userlist): void {
+        $context = $userlist->get_context();
+        if ($context->contextlevel !== CONTEXT_COURSE) {
+            return;
+        }
+
+        $userlist->add_from_sql('userid', "SELECT userid FROM {format_selfstudy_contacts} WHERE courseid = :courseid",
+            ['courseid' => (int)$context->instanceid]);
+    }
+
+    /**
+     * Deletes the data of several users in one course.
+     *
+     * @param approved_userlist $userlist
+     */
+    public static function delete_data_for_users(approved_userlist $userlist): void {
+        global $DB;
+
+        $context = $userlist->get_context();
+        if ($context->contextlevel !== CONTEXT_COURSE || !$userlist->get_userids()) {
+            return;
+        }
+
+        [$usersql, $params] = $DB->get_in_or_equal($userlist->get_userids(), SQL_PARAMS_NAMED, 'user');
+        $params['courseid'] = (int)$context->instanceid;
+        $DB->delete_records_select('format_selfstudy_contacts', "courseid = :courseid AND userid $usersql", $params);
     }
 
     /**
