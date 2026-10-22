@@ -77,6 +77,13 @@ if ($pathcomplete) {
     );
 }
 
+// Die naechste Etappe: der Abschnitt, in den "Weiterlernen" fuehrt. Kleine
+// Etappen tragen weiter als die Zahl fuer den ganzen Kurs darunter.
+if (!$pathcomplete && !empty($activepath)) {
+    echo format_selfstudy_render_coursehero_stage($format->get_course_stage((int)$USER->id, (int)$activepath->id,
+        (int)($activepathprogress->nextcmid ?? 0)));
+}
+
 echo html_writer::start_div('format-selfstudy-actions format-selfstudy-coursehero-actions');
 // Also show this before the first activity: that is exactly when learners need
 // a way in.
@@ -152,6 +159,50 @@ if ($caneditsections) {
 }
 
 echo html_writer::end_div();
+
+/**
+ * Renders the section the learner is about to continue in, with its own small bar.
+ *
+ * @param array|null $stage As returned by \local_selfstudy\courseformat\base::get_course_stage().
+ * @return string
+ */
+function format_selfstudy_render_coursehero_stage(?array $stage): string {
+    if (!$stage) {
+        return '';
+    }
+
+    $info = '';
+    foreach ([$stage['summary'], $stage['remaining']] as $text) {
+        if ($text !== '') {
+            $info .= html_writer::span(s($text), 'format-selfstudy-progressband-stage-info');
+        }
+    }
+    $total = max(1, (int)$stage['total']);
+    $complete = min($total, max(0, (int)$stage['complete']));
+    $bar = html_writer::div(
+        html_writer::span('', 'format-selfstudy-progressband-stage-fill',
+            ['style' => 'width: ' . round($complete / $total * 100, 1) . '%']),
+        'format-selfstudy-progressband-stage-bar',
+        [
+            'role' => 'progressbar',
+            'aria-valuemin' => 0,
+            'aria-valuemax' => $total,
+            'aria-valuenow' => $complete,
+            'aria-valuetext' => $stage['summary'],
+        ]
+    );
+
+    return html_writer::div(
+        html_writer::span(s($stage['label']), 'format-selfstudy-coursehero-stagelabel') .
+        html_writer::div(
+            html_writer::tag('strong', s($stage['title']), ['class' => 'format-selfstudy-progressband-stage-title']) .
+            $info,
+            'format-selfstudy-progressband-stage-head'
+        ) .
+        $bar,
+        'format-selfstudy-progressband-stage format-selfstudy-coursehero-stage'
+    );
+}
 
 /**
  * Renders one compact course hero fact.
