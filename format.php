@@ -27,9 +27,6 @@ $coursecontext = context_course::instance($course->id);
 $canmanagecourse = has_capability('moodle/course:update', $coursecontext);
 $caneditsections = $PAGE->user_is_editing() && $canmanagecourse;
 
-$nextcm = \local_selfstudy\learning_summary::find_next_cm($learningsummaries);
-$requiredopen = \local_selfstudy\learning_summary::count_sections($learningsummaries, 'required', false);
-$requiredcomplete = \local_selfstudy\learning_summary::count_sections($learningsummaries, 'required', true);
 $pathrepository = new \local_selfstudy\path_repository();
 $learningpaths = $pathrepository->get_paths((int)$course->id, true);
 $hasavailablepathchoices = count($learningpaths) > 1 || (!empty($formatoptions['allowpersonalpaths']) &&
@@ -40,9 +37,24 @@ $activepathprogress = $baseview->progress;
 $activepathoutline = $baseview->outline;
 $visibleactivepathoutline = \local_selfstudy\path_outline::filter_locked($activepathoutline, $showlockedactivities);
 $pathstarted = \local_selfstudy\path_stats::has_started($activepathprogress, $visibleactivepathoutline);
-$pathdurationminutes = \local_selfstudy\path_stats::sum_duration_minutes($visibleactivepathoutline);
-$remainingdurationminutes = \local_selfstudy\path_stats::sum_remaining_duration_minutes($visibleactivepathoutline);
-$pathstationcount = \local_selfstudy\path_stats::count_stations($visibleactivepathoutline);
+if (!empty($activepath)) {
+    // Der Lernpfad weiss, was zur Wahl steht: Von den Wegen einer Alternative
+    // und von Abschnitten, die einander ersetzen, zaehlt einer - wie im
+    // Fortschritt und im Band.
+    $learningsummaries = \local_selfstudy\learning_summary::apply_path_states($learningsummaries,
+        \local_selfstudy\path_progress::milestone_states($course, (int)$activepath->id, (int)$USER->id));
+    $band = \local_selfstudy\path_progress::band($course, (int)$activepath->id, (int)$USER->id);
+    $pathdurationminutes = \local_selfstudy\path_progress::duration_minutes($course, (int)$activepath->id);
+    $remainingdurationminutes = (int)($band->remainingminutes ?? 0);
+    $pathstationcount = (int)$band->total;
+} else {
+    $pathdurationminutes = \local_selfstudy\path_stats::sum_duration_minutes($visibleactivepathoutline);
+    $remainingdurationminutes = \local_selfstudy\path_stats::sum_remaining_duration_minutes($visibleactivepathoutline);
+    $pathstationcount = \local_selfstudy\path_stats::count_stations($visibleactivepathoutline);
+}
+$nextcm = \local_selfstudy\learning_summary::find_next_cm($learningsummaries);
+$requiredopen = \local_selfstudy\learning_summary::count_sections($learningsummaries, 'required', false);
+$requiredcomplete = \local_selfstudy\learning_summary::count_sections($learningsummaries, 'required', true);
 $heroimageurl = format_selfstudy_get_hero_image_url($course);
 $coursecontacts = format_selfstudy_get_course_contacts((int)$course->id);
 $continueurl = \local_selfstudy\learning_summary::get_continue_url($course, $activepathprogress, $nextcm);
@@ -318,6 +330,16 @@ function format_selfstudy_render_section_overview(stdClass $course, array $summa
 
     $cards = [];
     $lockrest = false;
+    // Abschnitte einer Wahl oeffnen gemeinsam; dahinter geht es weiter, sobald
+    // einer von ihnen fertig ist.
+    $groupdone = [];
+    foreach ($summaries as $summary) {
+        if (!empty($summary->choicegroup)) {
+            $groupdone[$summary->choicegroup] = !empty($groupdone[$summary->choicegroup]) ||
+                $summary->statuskey === 'complete';
+        }
+    }
+    $grouplocked = [];
     foreach ($summaries as $summary) {
         $section = $summary->section;
         // Ein Abschnitt ohne Aktivitaeten hat nichts zu zeigen - sonst steht hier
@@ -331,9 +353,18 @@ function format_selfstudy_render_section_overview(stdClass $course, array $summa
         // alles hinter dem ersten unfertigen Abschnitt ist gesperrt. Nach dem
         // Status allein zu gehen, ergaebe Loecher - wer irgendwann einmal etwas in
         // Abschnitt 6 abgeschlossen hat, koennte 1 und 6 betreten, 2 aber nicht.
-        $locked = !$freeorder && $lockrest;
-        if (!$freeorder && $summary->statuskey !== 'complete') {
-            $lockrest = true;
+        $group = (string)($summary->choicegroup ?? '');
+        if ($group !== '') {
+            $grouplocked[$group] = $grouplocked[$group] ?? (!$freeorder && $lockrest);
+            $locked = $grouplocked[$group];
+            if (!$freeorder && empty($groupdone[$group])) {
+                $lockrest = true;
+            }
+        } else {
+            $locked = !$freeorder && $lockrest;
+            if (!$freeorder && $summary->statuskey !== 'complete') {
+                $lockrest = true;
+            }
         }
 
         $total = (int)$summary->completionenabled;
@@ -341,7 +372,8 @@ function format_selfstudy_render_section_overview(stdClass $course, array $summa
         $isdone = $total > 0 && $complete >= $total;
         $title = \local_selfstudy\output\course_renderer::get_section_title($course, $section);
         $imageurl = \local_selfstudy\helper::get_section_image_url($course, (int)$section->id);
-        $kindlabel = get_string($summary->pathkind === 'optional' ? 'optional' : 'required', 'local_selfstudy');
+        $kindlabel = get_string(!empty($summary->choicegroup) ? 'sectionchoice' :
+            ($summary->pathkind === 'optional' ? 'optional' : 'required'), 'local_selfstudy');
 
         // Gezaehlt wird, was in den Fortschritt zaehlt - dieselbe Grundlage wie die
         // Kachel "Stationen" im Hero.
