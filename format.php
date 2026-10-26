@@ -149,6 +149,9 @@ echo format_selfstudy_render_coursehero_fact(get_string('courseherorequired', 'f
 echo html_writer::end_div();
 echo html_writer::end_tag('section');
 
+// Nach einem Einstiegstest: welche Abschnitte sich lohnen und welche man schon kann.
+echo \local_selfstudy\output\diagnosis_box::render($course, (int)$USER->id);
+
 echo format_selfstudy_render_section_overview($course, $learningsummaries, $formatoptions);
 
 // "Das hast du bisher gelernt" steht auf der eigenen Seite hinter dem Hero-Button
