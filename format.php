@@ -432,14 +432,15 @@ function format_selfstudy_render_section_overview(stdClass $course, array $summa
                 'format-selfstudy-sectionoverview-body'
             );
 
-        $cards[] = $reachable ?
+        $cards[] = (object)['group' => $group, 'title' => html_entity_decode($title, ENT_QUOTES, 'UTF-8'),
+            'done' => $isdone, 'html' => $reachable ?
             html_writer::link($entryurl, $cardbody, [
                 'class' => 'format-selfstudy-sectionoverview-card format-selfstudy-sectionoverview-card-link' .
                     ($isdone ? ' format-selfstudy-sectionoverview-card-done' : ''),
             ]) :
             html_writer::tag('article', $cardbody, ['class' => 'format-selfstudy-sectionoverview-card' .
                 ($isdone ? ' format-selfstudy-sectionoverview-card-done' : '') .
-                ($locked ? ' format-selfstudy-sectionoverview-card-locked' : '')]);
+                ($locked ? ' format-selfstudy-sectionoverview-card-locked' : '')])];
     }
 
     if (!$cards) {
@@ -460,7 +461,62 @@ function format_selfstudy_render_section_overview(stdClass $course, array $summa
             html_writer::div($intro, 'format-selfstudy-sectionoverview-intro'),
             'format-selfstudy-sectionoverview-head'
         ) .
-        html_writer::div(implode('', $cards), 'format-selfstudy-sectionoverview-grid'),
+        html_writer::div(format_selfstudy_render_choice_groups($cards), 'format-selfstudy-sectionoverview-grid'),
         ['class' => 'format-selfstudy-sectionoverview']
     );
+}
+
+/**
+ * Puts the cards of sections that stand in for each other into one frame.
+ *
+ * Side by side and under one heading, the choice reads as a choice: pick one
+ * of these, then it continues with the next section. Once one is done the
+ * heading says which, and the others stay open for whoever wants more.
+ *
+ * @param stdClass[] $cards group, title, done and html of each card, in course order.
+ * @return string
+ */
+function format_selfstudy_render_choice_groups(array $cards): string {
+    $html = '';
+    $first = true;
+    for ($index = 0; $index < count($cards); $index++) {
+        $group = (string)$cards[$index]->group;
+        if ($group === '') {
+            $html .= $cards[$index]->html;
+            continue;
+        }
+        $members = [];
+        while ($index < count($cards) && (string)$cards[$index]->group === $group) {
+            $members[] = $cards[$index];
+            $index++;
+        }
+        $then = $cards[$index]->title ?? '';
+        $index--;
+
+        if (count($members) < 2) {
+            $html .= implode('', array_map(static fn($card): string => $card->html, $members));
+            continue;
+        }
+        $chosen = array_values(array_filter($members, static fn($card): bool => $card->done));
+        if ($chosen) {
+            $text = get_string('choicegroupchosen', 'local_selfstudy', $chosen[0]->title);
+        } else {
+            $text = $then !== '' ? get_string('choicetextsectionsthen', 'local_selfstudy', $then) :
+                get_string('choicetextsections', 'local_selfstudy');
+        }
+        $html .= html_writer::div(
+            html_writer::div(
+                html_writer::tag('h3', get_string('choicetitle', 'local_selfstudy')) .
+                html_writer::tag('p', s($text)),
+                'format-selfstudy-choicegroup-head'
+            ) .
+            html_writer::div(implode('', array_map(static fn($card): string => $card->html, $members)),
+                'format-selfstudy-choicegroup-cards'),
+            'format-selfstudy-choicegroup',
+            // Das Fenster "Abschnitt geschafft" fuehrt hierher, wenn als Naechstes eine Wahl ansteht.
+            $first ? ['id' => 'format-selfstudy-choicegroup'] : []
+        );
+        $first = false;
+    }
+    return $html;
 }
