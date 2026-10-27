@@ -21,5 +21,14 @@ defined('MOODLE_INTERNAL') || die();
  * @return bool
  */
 function xmldb_format_selfstudy_upgrade(int $oldversion): bool {
+    global $DB;
+
+    if ($oldversion < 2026102700) {
+        // Kontakte geloeschter Kurse blieben bisher liegen.
+        $DB->execute("DELETE FROM {format_selfstudy_contacts}
+                       WHERE NOT EXISTS (SELECT 1 FROM {course} c WHERE c.id = courseid)");
+        upgrade_plugin_savepoint(true, 2026102700, 'format', 'selfstudy');
+    }
+
     return true;
 }

@@ -14,6 +14,26 @@ require_once($CFG->dirroot . '/course/format/selfstudy/lib.php');
  */
 class format_selfstudy_test extends advanced_testcase {
 
+    public function test_deleting_a_course_removes_its_contact_persons(): void {
+        global $DB;
+
+        $this->resetAfterTest();
+        $user = $this->getDataGenerator()->create_user();
+        $courses = [];
+        foreach (['gone', 'kept'] as $key) {
+            $courses[$key] = $this->getDataGenerator()->create_course(['format' => 'selfstudy']);
+            $DB->insert_record('format_selfstudy_contacts', (object)[
+                'courseid' => $courses[$key]->id, 'userid' => $user->id, 'roles' => 'Ansprechperson',
+                'sortorder' => 0, 'timecreated' => 1, 'timemodified' => 1,
+            ]);
+        }
+
+        delete_course($courses['gone'], false);
+
+        $this->assertFalse($DB->record_exists('format_selfstudy_contacts', ['courseid' => $courses['gone']->id]));
+        $this->assertTrue($DB->record_exists('format_selfstudy_contacts', ['courseid' => $courses['kept']->id]));
+    }
+
     public function test_format_is_built_on_the_shared_base(): void {
         $this->resetAfterTest();
         $course = $this->getDataGenerator()->create_course(['format' => 'selfstudy']);
